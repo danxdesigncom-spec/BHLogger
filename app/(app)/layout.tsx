@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TabBar } from "@/components/layout/TabBar";
 import { ThemeProvider, type Theme, type ProfileColor } from "@/lib/theme-context";
 import { HouseholdProvider, type ProfileSummary, type MemberSummary } from "@/lib/context/household-provider";
+import { ReactQueryProvider } from "@/lib/query-client";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -106,13 +107,15 @@ export default async function AppLayout({
         currentMember={currentMember}
         initialActiveProfileId={activeProfileId}
       >
-        <main
-          className="min-h-screen"
-          style={{ paddingBottom: "calc(64px + max(12px, env(safe-area-inset-bottom, 0px)))" }}
-        >
-          {children}
-        </main>
-        <TabBar />
+        <ReactQueryProvider>
+          <main
+            className="min-h-screen"
+            style={{ paddingBottom: "calc(64px + max(12px, env(safe-area-inset-bottom, 0px)))" }}
+          >
+            {children}
+          </main>
+          <TabBar />
+        </ReactQueryProvider>
       </HouseholdProvider>
     </ThemeProvider>
   );
