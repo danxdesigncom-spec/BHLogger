@@ -37,6 +37,7 @@ export async function updateSession(request: NextRequest) {
   // Public routes that don't require auth
   const isPublic =
     pathname.startsWith("/auth") ||
+    pathname.startsWith("/invite") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
     pathname === "/manifest.webmanifest" ||

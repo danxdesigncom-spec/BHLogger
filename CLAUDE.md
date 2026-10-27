@@ -24,11 +24,12 @@ Read these before planning any milestone.
 
 ## Status
 
-- **Phase:** M2 complete. M3 (auth, households, profiles, invites, roles — screens S21–S25) is next.
+- **Phase:** M3 complete. M4 (quick-log entry screens — S01–S08 core logging flow) is next.
 - **Decisions made:** D1 cloud sync, D2 email + magic link, D3 stack as written, D12 member_profile_access + ship UI; schema decisions A1–A5 confirmed.
 - **M1 deliverables:** Next.js 15 + React 19 scaffold, Tailwind v4 + design tokens, Fredoka/Nunito fonts, light/dark/night themes, profile accent, PWA manifest + Serwist service worker, tab-bar shell, Supabase SSR helpers, middleware (auth guard), next-intl v4 (en strings), GitHub Actions CI.
 - **M2 deliverables:** Supabase migrations (13 tables + RLS with SECURITY DEFINER helpers), Zod schemas for all 5 entry types plus household/profile/carecard, hand-written Database TS types, seed script (Rodriguez Family — Leo + Maya, 60 days). Lint, typecheck and contrast all pass.
-- **Blocked on M3:** Supabase project URL + anon key (set in `.env.local`). Once set, run `pnpm db:reset && pnpm db:seed` to load the Leo/Maya seed scenario.
+- **M3 deliverables:** Auth (magic-link via Supabase, S21 login screen), onboarding (household create + profile wizard, S22), More tab (S22 caregivers list), invite caregiver (S23 InviteSheet), join from invite (S24 AcceptInviteForm), manage caregiver (S25 role + profile access). Server actions for all flows, Zod validation, RLS enforced via SECURITY DEFINER. Lint, typecheck and unit tests all pass. Fixed @supabase/ssr v0.6.1 type-arity bug (as unknown as SupabaseClient<Database> cast in server.ts).
+- **Blocked on M3 runtime:** Supabase project URL + anon key (set in `.env.local`). Once set, run `pnpm db:reset && pnpm db:seed` to load the Leo/Maya seed scenario.
 
 ## Stack
 

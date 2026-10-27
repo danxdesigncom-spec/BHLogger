@@ -79,6 +79,7 @@ export interface Database {
           email: string;
           role: Role;
           token: string;
+          profile_ids: string[];
           expires_at: string;
           accepted_at: string | null;
           created_by: string;
@@ -90,6 +91,7 @@ export interface Database {
           email: string;
           role: Role;
           token?: string;
+          profile_ids?: string[];
           expires_at?: string;
           accepted_at?: string | null;
           created_by: string;
@@ -101,6 +103,7 @@ export interface Database {
           email?: string;
           role?: Role;
           token?: string;
+          profile_ids?: string[];
           expires_at?: string;
           accepted_at?: string | null;
           created_by?: string;
@@ -491,8 +494,8 @@ export interface Database {
       };
     };
 
-    Views: Record<string, never>;
-    CompositeTypes: Record<string, never>;
+    Views: Record<never, never>;
+    CompositeTypes: Record<never, never>;
 
     Functions: {
       get_member_role: {
@@ -514,6 +517,17 @@ export interface Database {
       accept_invite: {
         Args: { p_token: string; p_display_name: string; p_initials: string };
         Returns: void;
+      };
+      get_invite_preview: {
+        Args: { p_token: string };
+        Returns: {
+          household_name: string;
+          inviter_name: string;
+          role: Role;
+          profiles: Json;
+          expires_at: string;
+          status: "valid" | "expired" | "accepted";
+        } | null;
       };
     };
 

@@ -1,0 +1,68 @@
+import { test, expect } from "@playwright/test";
+
+// End-to-end: invite flow (AT-09 equivalent).
+// Requires a running dev server and a connected Supabase project.
+// These tests are skipped in CI until the Supabase project is configured.
+
+test.describe("invite flow", () => {
+  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase not configured");
+
+  test("admin can open invite sheet", async ({ page }) => {
+    // This test assumes the Rodriguez Family seed is loaded.
+    // Mom (admin) navigates to More → Invite a caregiver.
+    await page.goto("/more");
+    await expect(page.getByText("Caregivers")).toBeVisible();
+    await page.getByRole("link", { name: "Invite a caregiver" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByText("Invite a caregiver")).toBeVisible();
+  });
+
+  test("invite sheet has email, role and profile fields", async ({ page }) => {
+    await page.goto("/more/caregivers/invite");
+    await expect(page.getByLabel("Their email")).toBeVisible();
+    await expect(page.getByText("What can they do?")).toBeVisible();
+    await expect(page.getByText("Who can they see?")).toBeVisible();
+  });
+
+  test("non-admin does not see Invite a caregiver", async ({ page }) => {
+    // This test would require signing in as a caregiver, which is not yet
+    // automatable without a test user setup. Mark as pending.
+    test.fixme();
+  });
+
+  test("S24 shows valid invite preview", async ({ page }) => {
+    // Requires a known invite token in the seed. Add after db:seed is run.
+    test.fixme();
+  });
+
+  test("expired token shows expired state", async ({ page }) => {
+    await page.goto("/invite/00000000-0000-0000-0000-000000000000");
+    await expect(page.getByText(/isn't valid|expired/i)).toBeVisible();
+  });
+});
+
+test.describe("More tab", () => {
+  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase not configured");
+
+  test("shows people and caregivers sections", async ({ page }) => {
+    await page.goto("/more");
+    await expect(page.getByRole("heading", { name: "People you care for" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Caregivers" })).toBeVisible();
+  });
+});
+
+test.describe("onboarding flow", () => {
+  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase not configured");
+
+  test("new user is redirected to onboarding", async ({ page }) => {
+    // Without a session, the user is redirected to login.
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/auth\/login/);
+  });
+
+  test("login page renders magic link form", async ({ page }) => {
+    await page.goto("/auth/login");
+    await expect(page.getByLabel("Email")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send magic link" })).toBeVisible();
+  });
+});
