@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S07 Give a dose (as needed) · Behavior Logger mockup</title>
+<!-- Design mockup (Give a dose, Ibuprofen, Leo). Reference for layout, sizes, colors and copy; not production code. Spec: docs/DESIGN.md · Screen notes: docs/SCREENS.md, S07 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F1A2E}a:hover{color:#000000}
+.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+</style>
+<style>
+html{background:#E7E3EE}
+body{margin:0 !important;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 16px 32px;box-sizing:border-box;background:#E7E3EE !important;font-family:'Nunito',system-ui,sans-serif}
+.mock-bar{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#3D3654}
+.mock-bar a{color:#3B21B8;font-weight:800;text-decoration:none}
+.mock-bar b{color:#1F1A2E}
+.mock-frame{flex:none;box-shadow:0 10px 30px rgba(31,26,46,.18);border-radius:28px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="mock-bar"><a href="index.html">All screens</a><span><b>S07</b> · Give a dose (as needed) · MVP</span></div>
+<div class="mock-frame" data-screen="S07">
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F5F1FC; color: #1F1A2E; font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(31, 26, 46, 0.42)"></div>
+
+  <section role="dialog" aria-modal="true" aria-labelledby="sheet-title" style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 32px 32px 0 0">
+    <div aria-hidden="true" style="width: 40px; height: 5px; flex: none; align-self: center; margin-top: 10px; border-radius: 3px; background: #D9D2EA"></div>
+
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px 4px 20px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 48px; height: 48px; flex: none; border-radius: 50%; background: #E9DFFF; color: #5B21B6; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z"></path><path d="M8.5 8.5l7 7"></path></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 id="sheet-title" style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 26px; font-weight: 600; line-height: 1.1">Ibuprofen</h1>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #5B5470"><span style="width: 10px; height: 10px; border-radius: 50%; background: #5B3BE6"></span>for Leo · as needed</span>
+        </div>
+      </div>
+      <a href="06-medications.html" aria-label="Close" style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #F5F1FC; color: #1F1A2E; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+    </header>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 12px 20px 0 20px; overflow: hidden">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 16px; background: #FFF1D6; color: #5C3200">
+        <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        <span style="display: flex; flex-direction: column; gap: 1px">
+          <span style="font-size: 14px; font-weight: 800">Last given 6:00 PM by Dad (1 h 5 min ago)</span>
+          <span style="font-size: 13px">Your setting: at least 6 h between doses</span>
+        </span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: #5B5470">Dose</h2>
+        <div style="display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; gap: 8px; padding: 12px; border-radius: 24px; background: #F5F1FC">
+          <button type="button" aria-label="Decrease dose" style="width: 56px; height: 56px; border: none; border-radius: 50%; background: #FFFFFF; color: #1F1A2E; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+            <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 32px; font-weight: 600; line-height: 1.1">7.5 mL</span>
+            <span style="font-size: 13px; font-weight: 700; color: #5B5470">Saved dose</span>
+          </div>
+          <button type="button" aria-label="Increase dose" style="width: 56px; height: 56px; border: none; border-radius: 50%; background: #FFFFFF; color: #1F1A2E; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Half dose</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: #5B5470">What happened?</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" aria-pressed="true" style="min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; border: 1px solid #5B3BE6; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Given</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Partial</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Refused</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Spit up</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Skipped</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: #5B5470">Reason</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" aria-pressed="true" style="min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; border: 1px solid #5B3BE6; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Fever</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Pain</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Agitation</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Sleep</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Cough or cold</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Allergy</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #F5F1FC; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Other</button>
+        </div>
+      </div>
+
+      <button type="button" aria-expanded="false" style="min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border: none; border-radius: 16px; background: #F5F1FC; color: #1F1A2E; font: inherit; text-align: left; cursor: pointer">
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+          <span style="font-size: 15px; font-weight: 800">Add details</span>
+          <span style="font-size: 13px; color: #5B5470">Note, flag for doctor</span>
+        </span>
+        <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+    </div>
+
+    <footer style="flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 20px 28px 20px; border-top: 1px solid #EEE9F7">
+      <button type="button" aria-label="Time: now. Change time" style="min-height: 52px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; border: 1px solid #CFC6E3; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Now<svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <a href="08-dose-warning.html" style="flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #1F1A2E; color: #FFFFFF; text-decoration: none; font-size: 17px; font-weight: 800">Save dose</a>
+    </footer>
+  </section>
+</div>
+</div>
+</body>
+</html>

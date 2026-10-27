@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S18 Home, Maya (baby) with Undo toast · Behavior Logger mockup</title>
+<!-- Design mockup (Home, Maya). Reference for layout, sizes, colors and copy; not production code. Spec: docs/DESIGN.md · Screen notes: docs/SCREENS.md, S18 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F1A2E}a:hover{color:#000000}
+.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+</style>
+<style>
+html{background:#E7E3EE}
+body{margin:0 !important;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 16px 32px;box-sizing:border-box;background:#E7E3EE !important;font-family:'Nunito',system-ui,sans-serif}
+.mock-bar{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#3D3654}
+.mock-bar a{color:#3B21B8;font-weight:800;text-decoration:none}
+.mock-bar b{color:#1F1A2E}
+.mock-frame{flex:none;box-shadow:0 10px 30px rgba(31,26,46,.18);border-radius:28px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="mock-bar"><a href="index.html">All screens</a><span><b>S18</b> · Home, Maya (baby) with Undo toast · MVP</span></div>
+<div class="mock-frame" data-screen="S18">
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #F5F1FC; color: #1F1A2E; font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px 4px 20px">
+    <button type="button" aria-label="Switch profile. Current profile: Maya" style="display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 6px 14px 6px 6px; border: none; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); color: #1F1A2E; font: inherit; cursor: pointer">
+      <span style="width: 36px; height: 36px; flex: none; border-radius: 50%; background: #0F766E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 600">M</span>
+      <span style="font-size: 17px; font-weight: 800">Maya</span>
+      <svg class="i" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <a href="01-home.html" aria-label="Switch to Leo" style="width: 48px; height: 48px; flex: none; box-sizing: border-box; border-radius: 50%; border: 3px solid #FFFFFF; background: #5B3BE6; color: #FFFFFF; display: flex; align-items: center; justify-content: center; text-decoration: none; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 18px; font-weight: 600; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10)">L</a>
+  </header>
+
+  <h1 style="margin: 14px 20px 0 20px; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 32px; font-weight: 600; line-height: 1.1">How's Maya doing?</h1>
+
+  <section aria-label="Feeding" style="margin: 16px 20px 0 20px; padding: 12px; display: flex; align-items: center; gap: 12px; background: #FFFFFF; border-radius: 24px; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <span style="width: 48px; height: 48px; flex: none; border-radius: 16px; background: #FFE3D3; color: #9A3412; display: flex; align-items: center; justify-content: center">
+      <svg class="i" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M9 3h6"></path><path d="M10 3v3l-2 3v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V9l-2-3V3"></path><path d="M8 13h8"></path></svg>
+    </span>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 16px; font-weight: 800">Last fed 2 h ago</span>
+      <span style="font-size: 14px; color: #5B5470">Bottle · 4 oz formula · 5:00 PM</span>
+    </span>
+    <a href="19-log-feeding.html" style="min-height: 44px; padding: 0 16px; flex: none; display: flex; align-items: center; border-radius: 999px; background: #1F1A2E; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 800">Log feed</a>
+  </section>
+
+  <nav aria-label="Log for Maya" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 20px 0 20px">
+    <a href="20-log-diaper.html" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 124px; box-sizing: border-box; padding: 16px; border-radius: 28px; background: #DCEBFF; color: #1F1A2E; text-decoration: none">
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; color: #1D4F91; display: flex; align-items: center; justify-content: center">
+        <svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3c2.8 3.4 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 3.2-7.6 6-11z"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 21px; font-weight: 600">Diaper</span>
+        <span style="font-size: 14px; font-weight: 700; color: #3D3654">Wet · just now</span>
+      </span>
+    </a>
+
+    <a href="19-log-feeding.html" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 124px; box-sizing: border-box; padding: 16px; border-radius: 28px; background: #FFE3D3; color: #1F1A2E; text-decoration: none">
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; color: #9A3412; display: flex; align-items: center; justify-content: center">
+        <svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 3h6"></path><path d="M10 3v3l-2 3v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V9l-2-3V3"></path><path d="M8 13h8"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 21px; font-weight: 600">Feeding</span>
+        <span style="font-size: 14px; font-weight: 700; color: #3D3654">4 oz · 5:00 PM</span>
+      </span>
+    </a>
+
+    <a href="#" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 124px; box-sizing: border-box; padding: 16px; border-radius: 28px; background: #FFF0B5; color: #1F1A2E; text-decoration: none">
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; color: #7A5A00; display: flex; align-items: center; justify-content: center">
+        <svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><path d="M9 9.5h.01"></path><path d="M15 9.5h.01"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 21px; font-weight: 600">Mood</span>
+        <span style="font-size: 14px; font-weight: 700; color: #3D3654">Content · 6:30 PM</span>
+      </span>
+    </a>
+
+    <a href="#" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 12px; min-height: 124px; box-sizing: border-box; padding: 16px; border-radius: 28px; background: #D5F3E2; color: #1F1A2E; text-decoration: none">
+      <span style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; color: #166534; display: flex; align-items: center; justify-content: center">
+        <svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 21px; font-weight: 600">Activity</span>
+        <span style="font-size: 14px; font-weight: 700; color: #3D3654">Tummy time · 15 min</span>
+      </span>
+    </a>
+
+    <a href="#" style="grid-column: span 2; display: flex; align-items: center; gap: 14px; min-height: 80px; box-sizing: border-box; padding: 16px; border-radius: 28px; background: #E9DFFF; color: #1F1A2E; text-decoration: none">
+      <span style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #FFFFFF; color: #5B21B6; display: flex; align-items: center; justify-content: center">
+        <svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z"></path><path d="M8.5 8.5l7 7"></path></svg>
+      </span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 21px; font-weight: 600">Medication</span>
+        <span style="font-size: 14px; font-weight: 700; color: #3D3654">Vitamin D given 9:00 AM</span>
+      </span>
+      <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+    </a>
+  </nav>
+
+  <section aria-label="Quick taps" style="margin: 20px 20px 0 20px; display: flex; flex-direction: column; gap: 10px">
+    <h2 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 19px; font-weight: 600">Quick taps</h2>
+    <div style="display: flex; gap: 16px">
+      <button type="button" style="width: 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; color: #1F1A2E; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer">
+        <span style="width: 60px; height: 60px; border-radius: 50%; background: #FFFFFF; color: #0F766E; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3c2.8 3.4 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 3.2-7.6 6-11z"></path></svg></span>
+        Wet diaper
+      </button>
+      <button type="button" style="width: 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; color: #1F1A2E; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer">
+        <span style="width: 60px; height: 60px; border-radius: 50%; background: #FFFFFF; color: #0F766E; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="13" r="7"></circle><path d="M9.5 11.5h.01M14.5 11.5h.01"></path></svg></span>
+        Dirty diaper
+      </button>
+      <button type="button" style="width: 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; color: #1F1A2E; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer">
+        <span style="width: 60px; height: 60px; border-radius: 50%; background: #FFFFFF; color: #0F766E; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M9 3h6"></path><path d="M10 3v3l-2 3v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V9l-2-3V3"></path><path d="M8 13h8"></path></svg></span>
+        Bottle 4 oz
+      </button>
+    </div>
+  </section>
+
+  <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 100px; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 20px; background: #1F1A2E; color: #FFFFFF; box-shadow: 0 10px 30px rgba(31, 26, 46, 0.25)">
+    <span style="width: 28px; height: 28px; flex: none; border-radius: 50%; background: #0F766E; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+      <span style="font-size: 14px; font-weight: 800">Wet diaper logged for Maya</span>
+      <span style="font-size: 13px; color: #D9D2EA">7:12 PM</span>
+    </span>
+    <button type="button" style="min-height: 44px; padding: 0 16px; flex: none; border: none; border-radius: 14px; background: #3A3350; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">Undo</button>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 16px; right: 16px; bottom: 18px; height: 68px; box-sizing: border-box; padding: 6px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; background: #FFFFFF; border-radius: 34px; box-shadow: 0 10px 30px rgba(31, 26, 46, 0.14)">
+    <a href="18-home-baby.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; background: #DDECEB; color: #0F766E; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><path d="M12 8v8M8 12h8"></path></svg>Log</a>
+    <a href="10-timeline.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Timeline</a>
+    <a href="12-insights-today.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-5"></path></svg>Insights</a>
+    <a href="15-reports.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path></svg>Reports</a>
+    <a href="22-more.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg>More</a>
+  </nav>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S13 Insights: Trends · Behavior Logger mockup</title>
+<!-- Design mockup (Insights, Trends, Leo). Reference for layout, sizes, colors and copy; not production code. Spec: docs/DESIGN.md · Screen notes: docs/SCREENS.md, S13 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F1A2E}a:hover{color:#000000}
+.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+</style>
+<style>
+html{background:#E7E3EE}
+body{margin:0 !important;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 16px 32px;box-sizing:border-box;background:#E7E3EE !important;font-family:'Nunito',system-ui,sans-serif}
+.mock-bar{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#3D3654}
+.mock-bar a{color:#3B21B8;font-weight:800;text-decoration:none}
+.mock-bar b{color:#1F1A2E}
+.mock-frame{flex:none;box-shadow:0 10px 30px rgba(31,26,46,.18);border-radius:28px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="mock-bar"><a href="index.html">All screens</a><span><b>S13</b> · Insights: Trends · MVP</span></div>
+<div class="mock-frame" data-screen="S13">
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #F5F1FC; color: #1F1A2E; font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 20px 4px 20px">
+    <h1 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.1">Insights</h1>
+    <button type="button" aria-label="Switch profile. Current profile: Leo" style="display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 4px 12px 4px 4px; border: none; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); color: #1F1A2E; font: inherit; cursor: pointer">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 16px; font-weight: 600">L</span>
+      <span style="font-size: 15px; font-weight: 800">Leo</span>
+      <svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </header>
+
+  <nav aria-label="Insights views" style="margin: 14px 20px 0 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <a href="12-insights-today.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #1F1A2E; text-decoration: none; font-size: 15px; font-weight: 700">Today</a>
+    <a href="13-insights-trends.html" aria-current="page" style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #5B3BE6; color: #FFFFFF; text-decoration: none; font-size: 15px; font-weight: 800">Trends</a>
+    <a href="14-insights-patterns.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #1F1A2E; text-decoration: none; font-size: 15px; font-weight: 700">Patterns</a>
+  </nav>
+
+  <div role="group" aria-label="Date range" style="margin: 12px 20px 0 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+    <button type="button" aria-pressed="false" style="min-height: 44px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">7 days</button>
+    <button type="button" aria-pressed="true" style="min-height: 44px; border-radius: 999px; border: 1px solid #1F1A2E; background: #1F1A2E; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">30 days</button>
+    <button type="button" aria-pressed="false" style="min-height: 44px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">90 days</button>
+    <button type="button" aria-pressed="false" style="min-height: 44px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Custom</button>
+  </div>
+
+  <section aria-labelledby="mood-h" style="margin: 14px 20px 0 20px; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #7A5A00"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><path d="M9 9.5h.01"></path><path d="M15 9.5h.01"></path></svg>Mood</span>
+    <h2 id="mood-h" style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 19px; font-weight: 600; line-height: 1.25">Mood is up: 3.4 average since Oct 12, 2.8 before</h2>
+    <svg viewBox="0 0 310 140" width="318" height="144" role="img" aria-label="Daily mood average over 30 days. Around 2.8 until melatonin started on Oct 12, then around 3.4." style="margin-top: 4px">
+      <line x1="40" y1="20" x2="308" y2="20" style="stroke: #EEE9F7; stroke-width: 1"></line>
+      <line x1="40" y1="70" x2="308" y2="70" style="stroke: #EEE9F7; stroke-width: 1"></line>
+      <line x1="40" y1="120" x2="308" y2="120" style="stroke: #CFC6E3; stroke-width: 1"></line>
+      <text x="32" y="24" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">5</text>
+      <text x="32" y="74" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">3</text>
+      <text x="32" y="124" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">1</text>
+      <line x1="179" y1="18" x2="179" y2="120" style="stroke: #5B21B6; stroke-width: 1.5; stroke-dasharray: 4 3"></line>
+      <text x="184" y="13" style="font-size: 11.5px; font-weight: 800; fill: #5B21B6">Melatonin started</text>
+      <polyline points="44,75 53,80 62,70 71,85 80,72.5 89,77.5 98,67.5 107,82.5 116,75 125,70 134,80 143,72.5 152,77.5 161,70 170,75 179,67.5 188,62.5 197,70 206,60 215,55 224,65 233,57.5 242,50 251,60 260,55 269,62.5 278,52.5 287,57.5 296,47.5 305,60" style="fill: none; stroke: #B45309; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round"></polyline>
+      <circle cx="305" cy="60" r="4" style="fill: #B45309"></circle>
+      <text x="44" y="137" style="font-size: 11px; font-weight: 700; fill: #5B5470">Sep 27</text>
+      <text x="179" y="137" text-anchor="middle" style="font-size: 11px; font-weight: 700; fill: #5B5470">Oct 12</text>
+      <text x="306" y="137" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">Oct 26</text>
+    </svg>
+    <span style="font-size: 12.5px; color: #5B5470">Daily average · 1 = very upset, 5 = great</span>
+  </section>
+
+  <section aria-labelledby="bm-h" style="margin: 12px 20px 0 20px; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #1D4F91"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3c2.8 3.4 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 3.2-7.6 6-11z"></path></svg>Bathroom</span>
+    <h2 id="bm-h" style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 19px; font-weight: 600; line-height: 1.25">About 1 BM a day; none in the last 3 days</h2>
+    <svg viewBox="0 0 310 112" width="318" height="115" role="img" aria-label="BMs per day over 30 days, usually 1 or 2, with no BMs on the last 3 days" style="margin-top: 4px">
+      <rect x="280" y="20" width="29" height="70" rx="4" style="fill: #FFF1D6"></rect>
+      <text x="294.5" y="15" text-anchor="middle" style="font-size: 11px; font-weight: 800; fill: #7A4100">None</text>
+      <line x1="40" y1="30" x2="308" y2="30" style="stroke: #EEE9F7; stroke-width: 1"></line>
+      <line x1="40" y1="60" x2="308" y2="60" style="stroke: #EEE9F7; stroke-width: 1"></line>
+      <line x1="40" y1="90" x2="308" y2="90" style="stroke: #CFC6E3; stroke-width: 1"></line>
+      <text x="32" y="34" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">2</text>
+      <text x="32" y="64" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">1</text>
+      <text x="32" y="94" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">0</text>
+      <line x1="179" y1="20" x2="179" y2="90" style="stroke: #5B21B6; stroke-width: 1.5; stroke-dasharray: 4 3"></line>
+      <rect x="41" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="50" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="59" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="68" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="77" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="95" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="104" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="113" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="122" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="131" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="140" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="149" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="167" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="176" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="185" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="194" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="203" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="212" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="221" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="230" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="248" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="257" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="266" y="30" width="6" height="60" rx="2" style="fill: #1D4F91"></rect>
+      <rect x="275" y="60" width="6" height="30" rx="2" style="fill: #1D4F91"></rect>
+      <text x="44" y="108" style="font-size: 11px; font-weight: 700; fill: #5B5470">Sep 27</text>
+      <text x="179" y="108" text-anchor="middle" style="font-size: 11px; font-weight: 700; fill: #5B5470">Oct 12</text>
+      <text x="306" y="108" text-anchor="end" style="font-size: 11px; font-weight: 700; fill: #5B5470">Oct 26</text>
+    </svg>
+  </section>
+
+  <section aria-labelledby="beh-h" style="margin: 12px 20px 0 20px; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #3D3654"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path></svg>Behaviors</span>
+    <h2 id="beh-h" style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 19px; font-weight: 600; line-height: 1.25">Meltdowns: 2 since Oct 12, 5 in the 15 days before</h2>
+  </section>
+
+  <nav aria-label="Main" style="position: absolute; left: 16px; right: 16px; bottom: 18px; height: 68px; box-sizing: border-box; padding: 6px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; background: #FFFFFF; border-radius: 34px; box-shadow: 0 10px 30px rgba(31, 26, 46, 0.14)">
+    <a href="01-home.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><path d="M12 8v8M8 12h8"></path></svg>Log</a>
+    <a href="10-timeline.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Timeline</a>
+    <a href="12-insights-today.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; background: #E8E4FC; color: #5B3BE6; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-5"></path></svg>Insights</a>
+    <a href="15-reports.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path></svg>Reports</a>
+    <a href="22-more.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg>More</a>
+  </nav>
+</div>
+</div>
+</body>
+</html>

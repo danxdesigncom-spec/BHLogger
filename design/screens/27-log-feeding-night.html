@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S27 Log feeding, night mode · Behavior Logger mockup</title>
+<!-- Design mockup (Log feeding, Maya, night mode). Reference for layout, sizes, colors and copy; not production code. Spec: docs/DESIGN.md · Screen notes: docs/SCREENS.md, S27 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#15110E}
+a{color:#F2E6DA}a:hover{color:#FFFFFF}
+.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+</style>
+<style>
+html{background:#E7E3EE}
+body{margin:0 !important;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 16px 32px;box-sizing:border-box;background:#E7E3EE !important;font-family:'Nunito',system-ui,sans-serif}
+.mock-bar{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#3D3654}
+.mock-bar a{color:#3B21B8;font-weight:800;text-decoration:none}
+.mock-bar b{color:#1F1A2E}
+.mock-frame{flex:none;box-shadow:0 10px 30px rgba(31,26,46,.18);border-radius:28px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="mock-bar"><a href="index.html">All screens</a><span><b>S27</b> · Log feeding, night mode · MVP · P1</span></div>
+<div class="mock-frame" data-screen="S27">
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #15110E; color: #F2E6DA; font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.55)"></div>
+
+  <section role="dialog" aria-modal="true" aria-labelledby="sheet-title" style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; display: flex; flex-direction: column; background: #211A15; border-top: 1px solid #3A3029; border-radius: 32px 32px 0 0">
+    <div aria-hidden="true" style="width: 40px; height: 5px; flex: none; align-self: center; margin-top: 10px; border-radius: 3px; background: #4A3E35"></div>
+
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px 4px 20px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 48px; height: 48px; flex: none; border-radius: 50%; background: #3D2A20; color: #F4B48E; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M9 3h6"></path><path d="M10 3v3l-2 3v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V9l-2-3V3"></path><path d="M8 13h8"></path></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 id="sheet-title" style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 26px; font-weight: 600; line-height: 1.1">Feeding</h1>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #CBB9A8"><span style="width: 10px; height: 10px; border-radius: 50%; background: #7FD1C3"></span>for Maya · 3:05 AM</span>
+        </div>
+      </div>
+      <a href="26-home-night.html" aria-label="Close" style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #2A221C; color: #F2E6DA; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+    </header>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 12px 20px 0 20px; overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: #CBB9A8">How?</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          <button type="button" aria-pressed="false" style="min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 20px; border: 1.5px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; cursor: pointer"><span style="font-size: 17px; font-weight: 800">Breast</span><span style="font-size: 12.5px; font-weight: 700; color: #CBB9A8">Start on right</span></button>
+          <button type="button" aria-pressed="true" style="min-height: 64px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 20px; border: 1.5px solid #7FD1C3; background: #7FD1C3; color: #15110E; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Bottle</button>
+          <button type="button" aria-pressed="false" style="min-height: 64px; border-radius: 20px; border: 1.5px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer">Solids</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: #CBB9A8">What's in the bottle?</h2>
+        <div style="display: flex; gap: 8px">
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Breast milk</button>
+          <button type="button" aria-pressed="true" style="min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; border: 1px solid #7FD1C3; background: #7FD1C3; color: #15110E; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Formula</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Other</button>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 800; color: #CBB9A8">How much?</h2>
+        <div style="display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; gap: 8px; padding: 12px; border-radius: 24px; background: #2A221C">
+          <button type="button" aria-label="Less" style="width: 56px; height: 56px; border: 1px solid #4A3E35; border-radius: 50%; background: #33291F; color: #F2E6DA; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+            <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 32px; font-weight: 600; line-height: 1.1">3 oz</span>
+            <span style="font-size: 13px; font-weight: 700; color: #CBB9A8">Last feed 10:40 PM · 4 oz</span>
+          </div>
+          <button type="button" aria-label="More" style="width: 56px; height: 56px; border: 1px solid #4A3E35; border-radius: 50%; background: #33291F; color: #F2E6DA; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px">
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">2 oz</button>
+          <button type="button" aria-pressed="true" style="min-height: 44px; padding: 0; border-radius: 999px; border: 1px solid #7FD1C3; background: #7FD1C3; color: #15110E; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">3 oz</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">4 oz</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">5 oz</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">6 oz</button>
+          <button type="button" aria-pressed="false" style="min-height: 44px; padding: 0; border-radius: 999px; border: 1px solid #3A3029; background: #2A221C; color: #F2E6DA; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">8 oz</button>
+        </div>
+      </div>
+
+      <button type="button" aria-expanded="false" style="min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border: none; border-radius: 16px; background: #2A221C; color: #F2E6DA; font: inherit; text-align: left; cursor: pointer">
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+          <span style="font-size: 15px; font-weight: 800">Add details</span>
+          <span style="font-size: 13px; color: #CBB9A8">Spit up, fussy, note, flag for doctor</span>
+        </span>
+        <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+    </div>
+
+    <footer style="flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 20px 28px 20px; border-top: 1px solid #3A3029">
+      <button type="button" aria-label="Time: now. Change time" style="min-height: 52px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; border: 1px solid #4A3E35; background: transparent; color: #F2E6DA; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Now<svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <a href="26-home-night.html" style="flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #7FD1C3; color: #15110E; text-decoration: none; font-size: 17px; font-weight: 800">Save</a>
+    </footer>
+  </section>
+</div>
+</div>
+</body>
+</html>

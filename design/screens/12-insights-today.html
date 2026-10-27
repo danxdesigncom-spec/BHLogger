@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S12 Insights: Today · Behavior Logger mockup</title>
+<!-- Design mockup (Insights, Today, Leo). Reference for layout, sizes, colors and copy; not production code. Spec: docs/DESIGN.md · Screen notes: docs/SCREENS.md, S12 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F1A2E}a:hover{color:#000000}
+.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+</style>
+<style>
+html{background:#E7E3EE}
+body{margin:0 !important;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 16px 32px;box-sizing:border-box;background:#E7E3EE !important;font-family:'Nunito',system-ui,sans-serif}
+.mock-bar{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#3D3654}
+.mock-bar a{color:#3B21B8;font-weight:800;text-decoration:none}
+.mock-bar b{color:#1F1A2E}
+.mock-frame{flex:none;box-shadow:0 10px 30px rgba(31,26,46,.18);border-radius:28px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="mock-bar"><a href="index.html">All screens</a><span><b>S12</b> · Insights: Today · MVP</span></div>
+<div class="mock-frame" data-screen="S12">
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #F5F1FC; color: #1F1A2E; font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 20px 4px 20px">
+    <h1 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.1">Insights</h1>
+    <button type="button" aria-label="Switch profile. Current profile: Leo" style="display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 4px 12px 4px 4px; border: none; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); color: #1F1A2E; font: inherit; cursor: pointer">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 16px; font-weight: 600">L</span>
+      <span style="font-size: 15px; font-weight: 800">Leo</span>
+      <svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+  </header>
+
+  <nav aria-label="Insights views" style="margin: 14px 20px 0 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <a href="12-insights-today.html" aria-current="page" style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #5B3BE6; color: #FFFFFF; text-decoration: none; font-size: 15px; font-weight: 800">Today</a>
+    <a href="13-insights-trends.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #1F1A2E; text-decoration: none; font-size: 15px; font-weight: 700">Trends</a>
+    <a href="14-insights-patterns.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #1F1A2E; text-decoration: none; font-size: 15px; font-weight: 700">Patterns</a>
+  </nav>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 20px 0 20px">
+    <a href="13-insights-trends.html" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 150px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #DCEBFF; color: #1F1A2E; text-decoration: none">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #1D4F91"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3c2.8 3.4 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 3.2-7.6 6-11z"></path></svg>Bathroom</span>
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.15">3 days</span>
+      <span style="font-size: 14px; font-weight: 700; color: #3D3654">since last BM</span>
+      <span style="margin-top: auto; font-size: 12.5px; font-weight: 800; color: #7A4100; background: #FFFFFF; border-radius: 999px; padding: 3px 10px">At your 3-day alert</span>
+    </a>
+
+    <a href="13-insights-trends.html" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 150px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFE3D3; color: #1F1A2E; text-decoration: none">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #9A3412"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 3v6a2 2 0 0 0 4 0V3"></path><path d="M8 11v10"></path><path d="M16.5 3c-1.7 0-3 2-3 4.5s1.3 4.5 3 4.5 3-2 3-4.5-1.3-4.5-3-4.5z"></path><path d="M16.5 12v9"></path></svg>Eating</span>
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.15">3 meals</span>
+      <span style="font-size: 14px; font-weight: 700; color: #3D3654">All at breakfast, half at dinner</span>
+    </a>
+
+    <a href="13-insights-trends.html" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 150px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFF0B5; color: #1F1A2E; text-decoration: none">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #7A5A00"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><path d="M9 9.5h.01"></path><path d="M15 9.5h.01"></path></svg>Mood</span>
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.15">3.2 avg</span>
+      <span style="font-size: 14px; font-weight: 700; color: #3D3654">Lowest at 5:30 PM</span>
+      <svg viewBox="0 0 120 32" width="120" height="32" role="img" aria-label="Mood today: good in the morning and midday, upset at 5:30 PM" style="margin-top: auto"><polyline points="4,8 44,8 84,26 116,20" style="fill: none; stroke: #7A5A00; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round"></polyline><circle cx="84" cy="26" r="3.5" style="fill: #7A5A00"></circle></svg>
+    </a>
+
+    <a href="06-medications.html" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 150px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #E9DFFF; color: #1F1A2E; text-decoration: none">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #5B21B6"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M10.5 3.5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7z"></path><path d="M8.5 8.5l7 7"></path></svg>Medication</span>
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.15">2 of 3</span>
+      <span style="font-size: 14px; font-weight: 700; color: #3D3654">Next: melatonin at 7:30 PM</span>
+    </a>
+
+    <a href="13-insights-trends.html" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 150px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #D5F3E2; color: #1F1A2E; text-decoration: none">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #166534"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"></path></svg>Activity</span>
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.15">30 min</span>
+      <span style="font-size: 14px; font-weight: 700; color: #3D3654">Playground, loved it</span>
+    </a>
+
+    <a href="13-insights-trends.html" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 150px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFFFFF; color: #1F1A2E; text-decoration: none; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #3D3654"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4"></path><path d="M12 17h.01"></path></svg>Behaviors</span>
+      <span style="font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.15">1 meltdown</span>
+      <span style="font-size: 14px; font-weight: 700; color: #3D3654">Moderate · 5:30 PM</span>
+    </a>
+  </div>
+
+  <a href="14-insights-patterns.html" style="margin: 16px 20px 0 20px; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 24px; background: #FFFFFF; color: #1F1A2E; text-decoration: none; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.08)">
+    <span style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: #E8E4FC; color: #5B3BE6; display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 21h4"></path><path d="M12 3a6 6 0 0 0-3.5 10.9c.7.5 1 1.2 1 2.1h5c0-.9.3-1.6 1-2.1A6 6 0 0 0 12 3z"></path></svg></span>
+    <span style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+      <span style="font-size: 15px; font-weight: 800">New pattern: 4 to 7 PM is hardest</span>
+      <span style="font-size: 13px; color: #5B5470">See what we noticed this month</span>
+    </span>
+    <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="color: #5B5470"><path d="M9 6l6 6-6 6"></path></svg>
+  </a>
+
+  <nav aria-label="Main" style="position: absolute; left: 16px; right: 16px; bottom: 18px; height: 68px; box-sizing: border-box; padding: 6px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; background: #FFFFFF; border-radius: 34px; box-shadow: 0 10px 30px rgba(31, 26, 46, 0.14)">
+    <a href="01-home.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><path d="M12 8v8M8 12h8"></path></svg>Log</a>
+    <a href="10-timeline.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Timeline</a>
+    <a href="12-insights-today.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; background: #E8E4FC; color: #5B3BE6; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-5"></path></svg>Insights</a>
+    <a href="15-reports.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path></svg>Reports</a>
+    <a href="22-more.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 28px; color: #5B5470; text-decoration: none; font-size: 11.5px; font-weight: 800"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></svg>More</a>
+  </nav>
+</div>
+</div>
+</body>
+</html>

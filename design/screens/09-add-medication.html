@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S09 Add medication · Behavior Logger mockup</title>
+<!-- Design mockup (Add medication, Leo). Reference for layout, sizes, colors and copy; not production code. Spec: docs/DESIGN.md · Screen notes: docs/SCREENS.md, S09 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F1A2E}a:hover{color:#000000}
+.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+</style>
+<style>
+html{background:#E7E3EE}
+body{margin:0 !important;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 16px 32px;box-sizing:border-box;background:#E7E3EE !important;font-family:'Nunito',system-ui,sans-serif}
+.mock-bar{width:100%;max-width:390px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:#3D3654}
+.mock-bar a{color:#3B21B8;font-weight:800;text-decoration:none}
+.mock-bar b{color:#1F1A2E}
+.mock-frame{flex:none;box-shadow:0 10px 30px rgba(31,26,46,.18);border-radius:28px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="mock-bar"><a href="index.html">All screens</a><span><b>S09</b> · Add medication · MVP</span></div>
+<div class="mock-frame" data-screen="S09">
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #F5F1FC; color: #1F1A2E; font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <header style="display: flex; align-items: center; gap: 12px; padding: 18px 20px 4px 20px">
+    <a href="06-medications.html" aria-label="Back to Medications" style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #FFFFFF; color: #1F1A2E; box-shadow: 0 1px 3px rgba(31, 26, 46, 0.10); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+  </header>
+
+  <div style="padding: 10px 20px 0 20px; display: flex; flex-direction: column; gap: 4px">
+    <h1 style="margin: 0; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 30px; font-weight: 600; line-height: 1.1">Add medication</h1>
+    <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #5B5470"><span style="width: 10px; height: 10px; border-radius: 50%; background: #5B3BE6"></span>for Leo</span>
+  </div>
+
+  <form style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 18px 20px 0 20px; overflow: hidden">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <label for="med-name" style="font-size: 14px; font-weight: 800; color: #5B5470">Name</label>
+      <input id="med-name" type="text" value="Melatonin" style="min-height: 52px; box-sizing: border-box; padding: 0 16px; border-radius: 16px; border: 1.5px solid #CFC6E3; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 17px; font-weight: 700">
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span id="form-label" style="font-size: 14px; font-weight: 800; color: #5B5470">Form</span>
+      <div role="group" aria-labelledby="form-label" style="display: flex; gap: 8px; overflow: hidden">
+        <button type="button" aria-pressed="false" style="flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Liquid</button>
+        <button type="button" aria-pressed="false" style="flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Tablet</button>
+        <button type="button" aria-pressed="true" style="flex: none; min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 999px; border: 1px solid #5B3BE6; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Chewable</button>
+        <button type="button" aria-pressed="false" style="flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Capsule</button>
+        <button type="button" aria-pressed="false" style="flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid #E2DBF0; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Drops</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <label for="dose" style="font-size: 14px; font-weight: 800; color: #5B5470">Dose</label>
+      <div style="display: flex; gap: 8px">
+        <input id="dose" type="text" inputmode="decimal" value="1" style="width: 110px; min-height: 52px; box-sizing: border-box; padding: 0 16px; border-radius: 16px; border: 1.5px solid #CFC6E3; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 17px; font-weight: 700">
+        <button type="button" aria-label="Unit: mg. Change unit" style="min-height: 52px; display: flex; align-items: center; gap: 6px; padding: 0 16px; border-radius: 16px; border: 1.5px solid #CFC6E3; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer">mg<svg class="i" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span id="type-label" style="font-size: 14px; font-weight: 800; color: #5B5470">How is it given?</span>
+      <div role="group" aria-labelledby="type-label" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 3px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E2DBF0">
+        <button type="button" aria-pressed="true" style="min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 999px; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>On a schedule</button>
+        <button type="button" aria-pressed="false" style="min-height: 44px; border: none; border-radius: 999px; background: transparent; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">As needed</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span id="when-label" style="font-size: 14px; font-weight: 800; color: #5B5470">When</span>
+      <div role="group" aria-labelledby="when-label" style="display: flex; gap: 8px">
+        <button type="button" style="min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 999px; border: 1px solid #5B3BE6; background: #E8E4FC; color: #3B21B8; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>7:30 PM</button>
+        <button type="button" style="min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 999px; border: 1.5px dashed #9C93B5; background: #FFFFFF; color: #1F1A2E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer"><svg class="i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add a time</button>
+      </div>
+      <div role="group" aria-label="Days" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+        <button type="button" aria-pressed="true" aria-label="Sunday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">S</button>
+        <button type="button" aria-pressed="true" aria-label="Monday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">M</button>
+        <button type="button" aria-pressed="true" aria-label="Tuesday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">T</button>
+        <button type="button" aria-pressed="true" aria-label="Wednesday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">W</button>
+        <button type="button" aria-pressed="true" aria-label="Thursday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">T</button>
+        <button type="button" aria-pressed="true" aria-label="Friday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">F</button>
+        <button type="button" aria-pressed="true" aria-label="Saturday" style="height: 44px; border: none; border-radius: 50%; background: #5B3BE6; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">S</button>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: #E6F0FF; color: #1D3F73">
+      <svg class="i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path></svg>
+      <span style="font-size: 14px; line-height: 1.4; font-weight: 700">Enter the dose your doctor or pharmacist gave you. The app never suggests doses.</span>
+    </div>
+  </form>
+
+  <footer style="flex: none; padding: 12px 20px 28px 20px">
+    <a href="06-medications.html" style="min-height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #1F1A2E; color: #FFFFFF; text-decoration: none; font-size: 17px; font-weight: 800">Save medication</a>
+  </footer>
+</div>
+</div>
+</body>
+</html>

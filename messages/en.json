@@ -1,0 +1,125 @@
+{
+  "app": {
+    "name": "Behavior Logger"
+  },
+  "nav": {
+    "log": "Log",
+    "timeline": "Timeline",
+    "insights": "Insights",
+    "reports": "Reports",
+    "more": "More"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "magicLinkButton": "Send magic link",
+    "magicLinkSent": "Check your email for the sign-in link.",
+    "error": "Something went wrong. Please try again."
+  },
+  "profile": {
+    "switchProfile": "Switch profile",
+    "addProfile": "Add profile",
+    "allProfiles": "All profiles"
+  },
+  "log": {
+    "title": "Log",
+    "save": "Save",
+    "cancel": "Cancel",
+    "undo": "Undo",
+    "savedFor": "Saved for {name}",
+    "undoneFor": "Undone for {name}"
+  },
+  "bathroom": {
+    "title": "Bathroom",
+    "urineLabel": "Urine",
+    "stoolLabel": "Stool",
+    "stoolScaleLabel": "Bristol scale",
+    "notesLabel": "Notes",
+    "durationLabel": "Duration (min)"
+  },
+  "eating": {
+    "title": "Eating",
+    "amountLabel": "Amount",
+    "foodLabel": "Food",
+    "notesLabel": "Notes"
+  },
+  "activity": {
+    "title": "Activity",
+    "typeLabel": "Activity type",
+    "durationLabel": "Duration (min)",
+    "notesLabel": "Notes"
+  },
+  "mood": {
+    "title": "Mood",
+    "levelLabel": "Mood level",
+    "notesLabel": "Notes"
+  },
+  "medication": {
+    "title": "Medications",
+    "nameLabel": "Medication",
+    "doseLabel": "Dose",
+    "unitLabel": "Unit",
+    "notesLabel": "Notes",
+    "duplicateGuard": "This medication was logged {ago}. Log again?",
+    "duplicateConfirm": "Log again",
+    "duplicateCancel": "Cancel",
+    "neverDiagnose": "The app never calculates or suggests doses.",
+    "adherenceLabel": "Adherence"
+  },
+  "timeline": {
+    "title": "Timeline",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "noEntries": "No entries yet."
+  },
+  "insights": {
+    "title": "Insights",
+    "patternDisclaimer": "Patterns aren’t proof of cause. Share them with your care team.",
+    "sampleSize": "{n, plural, one {# entry} other {# entries}}"
+  },
+  "reports": {
+    "title": "Reports",
+    "generate": "Generate report",
+    "dateRange": "Date range",
+    "includeModules": "Include modules",
+    "print": "Print"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeNight": "Night",
+    "language": "Language",
+    "careStage": "Care stage",
+    "careStageInfant": "Infant (0–1 yr)",
+    "careStageToddler": "Toddler (1–3 yr)",
+    "careStageChild": "Child (3–12 yr)",
+    "careStageTeen": "Teen (12–18 yr)",
+    "careStageAdult": "Adult"
+  },
+  "caregivers": {
+    "title": "Caregivers",
+    "invite": "Invite caregiver",
+    "roles": {
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    }
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "offline": "You’re offline. Changes will sync when you reconnect.",
+    "notFound": "Page not found.",
+    "unauthorized": "You don’t have permission to do this.",
+    "urgent": "If this is an emergency, call 911."
+  },
+  "a11y": {
+    "loading": "Loading…",
+    "close": "Close",
+    "menu": "Menu",
+    "back": "Back"
+  }
+}

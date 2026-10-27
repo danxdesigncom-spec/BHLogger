@@ -1,0 +1,32 @@
+{
+  "name": "Behavior Logger",
+  "short_name": "BehaviorLog",
+  "description": "Log bathroom, eating, activities, mood and medications in three taps or fewer.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F1FC",
+  "theme_color": "#F5F1FC",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["health", "lifestyle"]
+}

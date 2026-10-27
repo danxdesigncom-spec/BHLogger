@@ -1,0 +1,611 @@
+/*
+  Behavior Logger · "Little Wins" design tokens for Tailwind CSS v4 + shadcn/ui
+  Generated from design/tokens.json. Do not edit by hand: change tokens.json, then run
+    node design/scripts/build-theme.mjs     (rewrites this file)
+    node design/scripts/check-contrast.mjs  (WCAG checks; exits 1 on failure)
+
+  Use in app/globals.css:
+    @import "tailwindcss";
+    @import "../design/theme.css";      (or copy this file into src/styles)
+
+  Runtime switches (set on <html>):
+    data-theme="light" | "dark" | "night"       light is the default; dark = SET-02 (P0); night = SET-03 (P1)
+  Set on <html> or the app shell, from the active profile (QL-07):
+    data-profile-color="violet" | "teal" | "rose" | "amber" | "blue"
+
+  Fonts: load with next/font and expose --font-fredoka and --font-nunito (see docs/DESIGN.md, section 2.6).
+*/
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant night (&:where([data-theme="night"], [data-theme="night"] *));
+
+/* ---------- light theme ---------- */
+:root,
+[data-theme="light"] {
+  --background: #F5F1FC;
+  --foreground: #1F1A2E;
+  --card: #FFFFFF;
+  --card-foreground: #1F1A2E;
+  --popover: #FFFFFF;
+  --popover-foreground: #1F1A2E;
+  --primary: #1F1A2E;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F1FC;
+  --secondary-foreground: #1F1A2E;
+  --muted: #EEE9F7;
+  --muted-foreground: #5B5470;
+  --foreground-2: #3D3654;
+  --destructive: #B42318;
+  --destructive-border: #D9675C;
+  --border: #E2DBF0;
+  --divider: #EEE9F7;
+  --border-strong: #CFC6E3;
+  --input: #8E85AD;
+  --dashed-line: #9C93B5;
+  --grabber: #D9D2EA;
+  --switch-off: #8E85AD;
+  --overlay: rgba(31, 26, 46, 0.42);
+  --overlay-strong: rgba(31, 26, 46, 0.55);
+  --toast: #1F1A2E;
+  --toast-foreground: #FFFFFF;
+  --toast-muted: #D9D2EA;
+  --toast-action: #3A3350;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --module-bathroom: #DCEBFF;
+  --module-bathroom-ink: #1D4F91;
+  --module-bathroom-icon: #FFFFFF;
+  --module-eating: #FFE3D3;
+  --module-eating-ink: #9A3412;
+  --module-eating-icon: #FFFFFF;
+  --module-mood: #FFF0B5;
+  --module-mood-ink: #7A5A00;
+  --module-mood-icon: #FFFFFF;
+  --module-activity: #D5F3E2;
+  --module-activity-ink: #166534;
+  --module-activity-icon: #FFFFFF;
+  --module-medication: #E9DFFF;
+  --module-medication-ink: #5B21B6;
+  --module-medication-icon: #FFFFFF;
+  --module-sleep: #E0E7FF;
+  --module-sleep-ink: #3730A3;
+  --module-sleep-icon: #FFFFFF;
+  --module-behavior: #FFE0E6;
+  --module-behavior-ink: #9F1239;
+  --module-behavior-icon: #FFFFFF;
+  --status-warning: #FFF1D6;
+  --status-warning-ink: #7A4100;
+  --status-warning-border: #F2CF8C;
+  --status-info: #E6F0FF;
+  --status-info-ink: #1D3F73;
+  --status-info-border: #BFD5F5;
+  --status-success: #DCF5E6;
+  --status-success-ink: #14532D;
+  --status-success-border: #A8DDBE;
+  --status-flag: #FFE4EA;
+  --status-flag-ink: #9F1239;
+  --status-flag-border: #F5B8C6;
+  --chart-grid: #EEE9F7;
+  --chart-axis: #5B5470;
+  --chart-baseline: #1F1A2E;
+  --chart-neutral: #8E85AD;
+  --chart-highlight: #B45309;
+  --chart-highlight-ink: #9A4700;
+  --chart-marker: #5B21B6;
+  --chart-band: #FFF1D6;
+  --chart-band-ink: #7A4100;
+  --chart-mood: #B45309;
+  --chart-asleep: #4F46E5;
+  --chart-awake: #D97706;
+  --chart-1: #1D4F91;
+  --chart-2: #B45309;
+  --chart-3: #5B21B6;
+  --chart-4: #166534;
+  --chart-5: #9A3412;
+  --stool-yellow: #E3B53B;
+  --stool-green: #5E7F2A;
+  --stool-brown: #7B4B2A;
+  --stool-black: #2A2522;
+  --stool-red: #B42318;
+  --stool-pale: #EDE7D9;
+  --stool-pale-border: #B9AE95;
+  --radius: 1rem;
+  --sheet-duration: 240ms;
+  --toast-duration: 180ms;
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --toast-min-visible: 5000ms;
+  color-scheme: light;
+}
+
+/* ---------- dark theme ---------- */
+[data-theme="dark"] {
+  --background: #14111C;
+  --foreground: #F3F0FA;
+  --card: #1E1A29;
+  --card-foreground: #F3F0FA;
+  --popover: #1E1A29;
+  --popover-foreground: #F3F0FA;
+  --primary: #F3F0FA;
+  --primary-foreground: #14111C;
+  --secondary: #282336;
+  --secondary-foreground: #F3F0FA;
+  --muted: #2F2940;
+  --muted-foreground: #BDB5D0;
+  --foreground-2: #D9D3E8;
+  --destructive: #F59A90;
+  --destructive-border: #B4554B;
+  --border: #3A3349;
+  --divider: #2F2940;
+  --border-strong: #4D4560;
+  --input: #7C7394;
+  --dashed-line: #7C7394;
+  --grabber: #4D4560;
+  --switch-off: #7C7394;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --overlay-strong: rgba(0, 0, 0, 0.7);
+  --toast: #F3F0FA;
+  --toast-foreground: #14111C;
+  --toast-muted: #5B5470;
+  --toast-action: #E2DBF0;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --module-bathroom: #172338;
+  --module-bathroom-ink: #9CC3F0;
+  --module-bathroom-icon: #22314D;
+  --module-eating: #2E1D16;
+  --module-eating-ink: #F4B48E;
+  --module-eating-icon: #3D281F;
+  --module-mood: #2B2612;
+  --module-mood-ink: #F2D27A;
+  --module-mood-icon: #3A331A;
+  --module-activity: #142A1E;
+  --module-activity-ink: #8FD9AE;
+  --module-activity-icon: #1D3A2A;
+  --module-medication: #241B36;
+  --module-medication-ink: #CDB4FF;
+  --module-medication-icon: #33274A;
+  --module-sleep: #1C1D38;
+  --module-sleep-ink: #B9B5FF;
+  --module-sleep-icon: #282A4D;
+  --module-behavior: #2E1620;
+  --module-behavior-ink: #F4A3B5;
+  --module-behavior-icon: #40202D;
+  --status-warning: #3A2A14;
+  --status-warning-ink: #F6CB93;
+  --status-warning-border: #6B4E22;
+  --status-info: #172338;
+  --status-info-ink: #B5D0F7;
+  --status-info-border: #2E4569;
+  --status-success: #142A1E;
+  --status-success-ink: #A9E5C4;
+  --status-success-border: #2A5640;
+  --status-flag: #3A1D2A;
+  --status-flag-ink: #F7BFD4;
+  --status-flag-border: #6B3049;
+  --chart-grid: #2F2940;
+  --chart-axis: #BDB5D0;
+  --chart-baseline: #F3F0FA;
+  --chart-neutral: #7C7394;
+  --chart-highlight: #F2B66B;
+  --chart-highlight-ink: #F6CB93;
+  --chart-marker: #CDB4FF;
+  --chart-band: #3A2A14;
+  --chart-band-ink: #F6CB93;
+  --chart-mood: #F2B66B;
+  --chart-asleep: #8B85F0;
+  --chart-awake: #F2B66B;
+  --chart-1: #9CC3F0;
+  --chart-2: #F2B66B;
+  --chart-3: #CDB4FF;
+  --chart-4: #8FD9AE;
+  --chart-5: #F4B48E;
+  color-scheme: dark;
+}
+
+/* ---------- night theme ---------- */
+[data-theme="night"] {
+  --background: #15110E;
+  --foreground: #F2E6DA;
+  --card: #211A15;
+  --card-foreground: #F2E6DA;
+  --popover: #211A15;
+  --popover-foreground: #F2E6DA;
+  --primary: var(--profile);
+  --primary-foreground: var(--profile-on);
+  --secondary: #2A221C;
+  --secondary-foreground: #F2E6DA;
+  --muted: #33291F;
+  --muted-foreground: #CBB9A8;
+  --foreground-2: #E0D0C0;
+  --destructive: #F2A49A;
+  --destructive-border: #A8544A;
+  --border: #3A3029;
+  --divider: #3A3029;
+  --border-strong: #4A3E35;
+  --input: #85735F;
+  --dashed-line: #85735F;
+  --grabber: #4A3E35;
+  --switch-off: #85735F;
+  --overlay: rgba(0, 0, 0, 0.55);
+  --overlay-strong: rgba(0, 0, 0, 0.7);
+  --toast: #33291F;
+  --toast-foreground: #F2E6DA;
+  --toast-muted: #CBB9A8;
+  --toast-action: #4A3E35;
+  --night-amber: #F2B66B;
+  --night-amber-foreground: #15110E;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --module-bathroom: #1C2633;
+  --module-bathroom-ink: #9CC3F0;
+  --module-bathroom-icon: #26344A;
+  --module-eating: #2E1F18;
+  --module-eating-ink: #F4B48E;
+  --module-eating-icon: #3D2A20;
+  --module-mood: #2B2414;
+  --module-mood-ink: #F2D27A;
+  --module-mood-icon: #3A3019;
+  --module-activity: #1A2A20;
+  --module-activity-ink: #8FD9AE;
+  --module-activity-icon: #22382B;
+  --module-medication: #2A2036;
+  --module-medication-ink: #CDB4FF;
+  --module-medication-icon: #372A48;
+  --module-sleep: #222137;
+  --module-sleep-ink: #B9B5FF;
+  --module-sleep-icon: #2E2C4D;
+  --module-behavior: #2E1A20;
+  --module-behavior-ink: #F4A3B5;
+  --module-behavior-icon: #3F2329;
+  --status-warning: #33261A;
+  --status-warning-ink: #F6CB93;
+  --status-warning-border: #5C4526;
+  --status-info: #1C2633;
+  --status-info-ink: #BDD6F5;
+  --status-info-border: #33465E;
+  --status-success: #1A2A20;
+  --status-success-ink: #A9E5C4;
+  --status-success-border: #2F5240;
+  --status-flag: #33202A;
+  --status-flag-ink: #F0C0D2;
+  --status-flag-border: #5E3445;
+  --chart-grid: #3A3029;
+  --chart-axis: #CBB9A8;
+  --chart-baseline: #F2E6DA;
+  --chart-neutral: #85735F;
+  --chart-highlight: #F2B66B;
+  --chart-highlight-ink: #F6CB93;
+  --chart-marker: #CDB4FF;
+  --chart-band: #33261A;
+  --chart-band-ink: #F6CB93;
+  --chart-mood: #F2B66B;
+  --chart-asleep: #8B85F0;
+  --chart-awake: #F2B66B;
+  --chart-1: #9CC3F0;
+  --chart-2: #F2B66B;
+  --chart-3: #CDB4FF;
+  --chart-4: #8FD9AE;
+  --chart-5: #F4B48E;
+  color-scheme: dark;
+}
+
+/* ---------- profile accents (QL-07: switching profile changes the accent) ---------- */
+[data-profile-color="violet"] {
+  --profile: #5B3BE6;
+  --profile-tint: #E8E4FC;
+  --profile-ink: #3B21B8;
+  --profile-on: #FFFFFF;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="dark"][data-profile-color="violet"],
+[data-theme="dark"] [data-profile-color="violet"] {
+  --profile: #A898E8;
+  --profile-tint: #2C2547;
+  --profile-ink: #C9BEF5;
+  --profile-on: #14111C;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="night"][data-profile-color="violet"],
+[data-theme="night"] [data-profile-color="violet"] {
+  --profile: #A898E8;
+  --profile-tint: #2A2238;
+  --profile-ink: #C9BEF5;
+  --profile-on: #15110E;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --primary: var(--profile);
+  --primary-foreground: var(--profile-on);
+}
+[data-profile-color="teal"] {
+  --profile: #0F766E;
+  --profile-tint: #DDECEB;
+  --profile-ink: #0B5A54;
+  --profile-on: #FFFFFF;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="dark"][data-profile-color="teal"],
+[data-theme="dark"] [data-profile-color="teal"] {
+  --profile: #5FC9BA;
+  --profile-tint: #173532;
+  --profile-ink: #8FDDD2;
+  --profile-on: #14111C;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="night"][data-profile-color="teal"],
+[data-theme="night"] [data-profile-color="teal"] {
+  --profile: #7FD1C3;
+  --profile-tint: #1D3330;
+  --profile-ink: #A6E0D6;
+  --profile-on: #15110E;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --primary: var(--profile);
+  --primary-foreground: var(--profile-on);
+}
+[data-profile-color="rose"] {
+  --profile: #B4235F;
+  --profile-tint: #FBE3EC;
+  --profile-ink: #8A1748;
+  --profile-on: #FFFFFF;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="dark"][data-profile-color="rose"],
+[data-theme="dark"] [data-profile-color="rose"] {
+  --profile: #F29BBE;
+  --profile-tint: #3A1D2A;
+  --profile-ink: #F7BFD4;
+  --profile-on: #14111C;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="night"][data-profile-color="rose"],
+[data-theme="night"] [data-profile-color="rose"] {
+  --profile: #E6A0BA;
+  --profile-tint: #33202A;
+  --profile-ink: #F0C0D2;
+  --profile-on: #15110E;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --primary: var(--profile);
+  --primary-foreground: var(--profile-on);
+}
+[data-profile-color="amber"] {
+  --profile: #9A4A00;
+  --profile-tint: #FCEBD7;
+  --profile-ink: #6E3500;
+  --profile-on: #FFFFFF;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="dark"][data-profile-color="amber"],
+[data-theme="dark"] [data-profile-color="amber"] {
+  --profile: #F2B66B;
+  --profile-tint: #3A2A14;
+  --profile-ink: #F6CB93;
+  --profile-on: #14111C;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="night"][data-profile-color="amber"],
+[data-theme="night"] [data-profile-color="amber"] {
+  --profile: #F2B66B;
+  --profile-tint: #33261A;
+  --profile-ink: #F6CB93;
+  --profile-on: #15110E;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --primary: var(--profile);
+  --primary-foreground: var(--profile-on);
+}
+[data-profile-color="blue"] {
+  --profile: #1D4F91;
+  --profile-tint: #E1ECFA;
+  --profile-ink: #163E73;
+  --profile-on: #FFFFFF;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="dark"][data-profile-color="blue"],
+[data-theme="dark"] [data-profile-color="blue"] {
+  --profile: #8DB8F2;
+  --profile-tint: #1B2A44;
+  --profile-ink: #B5D0F7;
+  --profile-on: #14111C;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+}
+[data-theme="night"][data-profile-color="blue"],
+[data-theme="night"] [data-profile-color="blue"] {
+  --profile: #9CC3F0;
+  --profile-tint: #1E2A3A;
+  --profile-ink: #BDD6F5;
+  --profile-on: #15110E;
+  --accent: var(--profile-tint);
+  --accent-foreground: var(--profile-ink);
+  --ring: var(--profile);
+  --primary: var(--profile);
+  --primary-foreground: var(--profile-on);
+}
+
+/* Default accent before a profile exists (sign-up, onboarding). Profile blocks above redeclare the
+   derived variables, so data-profile-color works on <html> or on any wrapper. */
+:root:not([data-profile-color]) { --profile: #5B3BE6; --profile-tint: #E8E4FC; --profile-ink: #3B21B8; --profile-on: #FFFFFF; }
+[data-theme="dark"]:not([data-profile-color]) { --profile: #A898E8; --profile-tint: #2C2547; --profile-ink: #C9BEF5; --profile-on: #14111C; }
+[data-theme="night"]:not([data-profile-color]) { --profile: #A898E8; --profile-tint: #2A2238; --profile-ink: #C9BEF5; --profile-on: #15110E; }
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-foreground-2: var(--foreground-2);
+  --color-destructive-border: var(--destructive-border);
+  --color-divider: var(--divider);
+  --color-border-strong: var(--border-strong);
+  --color-dashed-line: var(--dashed-line);
+  --color-grabber: var(--grabber);
+  --color-switch-off: var(--switch-off);
+  --color-toast: var(--toast);
+  --color-toast-foreground: var(--toast-foreground);
+  --color-toast-muted: var(--toast-muted);
+  --color-toast-action: var(--toast-action);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-profile: var(--profile);
+  --color-profile-tint: var(--profile-tint);
+  --color-profile-ink: var(--profile-ink);
+  --color-on-profile: var(--profile-on);
+  --color-bathroom: var(--module-bathroom);
+  --color-bathroom-ink: var(--module-bathroom-ink);
+  --color-bathroom-icon: var(--module-bathroom-icon);
+  --color-eating: var(--module-eating);
+  --color-eating-ink: var(--module-eating-ink);
+  --color-eating-icon: var(--module-eating-icon);
+  --color-mood: var(--module-mood);
+  --color-mood-ink: var(--module-mood-ink);
+  --color-mood-icon: var(--module-mood-icon);
+  --color-activity: var(--module-activity);
+  --color-activity-ink: var(--module-activity-ink);
+  --color-activity-icon: var(--module-activity-icon);
+  --color-medication: var(--module-medication);
+  --color-medication-ink: var(--module-medication-ink);
+  --color-medication-icon: var(--module-medication-icon);
+  --color-sleep: var(--module-sleep);
+  --color-sleep-ink: var(--module-sleep-ink);
+  --color-sleep-icon: var(--module-sleep-icon);
+  --color-behavior: var(--module-behavior);
+  --color-behavior-ink: var(--module-behavior-ink);
+  --color-behavior-icon: var(--module-behavior-icon);
+  --color-warning: var(--status-warning);
+  --color-warning-ink: var(--status-warning-ink);
+  --color-warning-border: var(--status-warning-border);
+  --color-info: var(--status-info);
+  --color-info-ink: var(--status-info-ink);
+  --color-info-border: var(--status-info-border);
+  --color-success: var(--status-success);
+  --color-success-ink: var(--status-success-ink);
+  --color-success-border: var(--status-success-border);
+  --color-flag: var(--status-flag);
+  --color-flag-ink: var(--status-flag-ink);
+  --color-flag-border: var(--status-flag-border);
+  --color-stool-yellow: var(--stool-yellow);
+  --color-stool-green: var(--stool-green);
+  --color-stool-brown: var(--stool-brown);
+  --color-stool-black: var(--stool-black);
+  --color-stool-red: var(--stool-red);
+  --color-stool-pale: var(--stool-pale);
+  --color-stool-pale-border: var(--stool-pale-border);
+  --color-night-amber: var(--night-amber, #F2B66B);
+  --font-display: var(--font-fredoka), "Fredoka", "Nunito", system-ui, sans-serif;
+  --font-sans: var(--font-nunito), "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-display-1: 2rem;
+  --text-display-1--line-height: 1.1;
+  --text-display-1--font-weight: 600;
+  --text-display-2: 1.875rem;
+  --text-display-2--line-height: 1.1;
+  --text-display-2--font-weight: 600;
+  --text-title-1: 1.625rem;
+  --text-title-1--line-height: 1.1;
+  --text-title-1--font-weight: 600;
+  --text-title-2: 1.5rem;
+  --text-title-2--line-height: 1.2;
+  --text-title-2--font-weight: 600;
+  --text-title-3: 1.3125rem;
+  --text-title-3--line-height: 1.15;
+  --text-title-3--font-weight: 600;
+  --text-title-4: 1.1875rem;
+  --text-title-4--line-height: 1.25;
+  --text-title-4--font-weight: 600;
+  --text-title-5: 1.125rem;
+  --text-title-5--line-height: 1.2;
+  --text-title-5--font-weight: 600;
+  --text-body-lg: 1.0625rem;
+  --text-body-lg--line-height: 1.3;
+  --text-body-lg--font-weight: 800;
+  --text-body-md: 1rem;
+  --text-body-md--line-height: 1.35;
+  --text-body-md--font-weight: 800;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.35;
+  --text-body--font-weight: 700;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.3;
+  --text-label--font-weight: 800;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 400;
+  --text-micro: 0.75rem;
+  --text-micro--line-height: 1.3;
+  --text-micro--font-weight: 700;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-card: 24px;
+  --radius-tile: 28px;
+  --radius-sheet: 32px;
+  --shadow-card: 0 1px 3px rgba(31, 26, 46, 0.08);
+  --shadow-raised: 0 1px 3px rgba(31, 26, 46, 0.10);
+  --shadow-float: 0 10px 30px rgba(31, 26, 46, 0.14);
+  --shadow-toast: 0 10px 30px rgba(31, 26, 46, 0.25);
+  --shadow-dialog: 0 20px 50px rgba(31, 26, 46, 0.30);
+  --spacing-gutter: 1.25rem;
+  --spacing-touch: 3rem;
+  --spacing-touch-min: 2.75rem;
+  --spacing-button: 3.25rem;
+  --spacing-tabbar: 4.25rem;
+  --spacing-tabbar-clearance: 6.5rem;
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Base: body copy, display headings, focus ring and reduced motion */
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 600; }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+}

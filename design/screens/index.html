@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Behavior Logger · design mockups</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&amp;family=Nunito:wght@400;700;800&amp;display=swap">
+<style>
+:root{--bg:#F5F1FC;--ink:#1F1A2E;--muted:#5B5470;--line:#E2DBF0;--accent:#3B21B8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;line-height:1.45}
+header{max-width:1200px;margin:0 auto;padding:32px 20px 8px}
+h1{font-family:'Fredoka','Nunito',sans-serif;font-weight:600;font-size:32px;margin:0 0 8px}
+header p{margin:0 0 6px;max-width:760px;color:#3D3654}
+code{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:.92em}
+main{max-width:1200px;margin:0 auto;padding:8px 20px 48px}
+h2{font-family:'Fredoka','Nunito',sans-serif;font-weight:600;font-size:21px;margin:28px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.card{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:20px;background:#fff;box-shadow:0 1px 3px rgba(31,26,46,.08);color:inherit;text-decoration:none}
+.card.wide{grid-column:span 2}
+.card:hover,.card:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.card:focus-visible{outline:none}
+.card img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
+.meta{font-size:14px;font-weight:700}
+.badge{align-self:flex-start;font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px}
+.refs{font-size:12px;color:var(--muted)}
+@media (max-width:420px){.card.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<header>
+<h1>Behavior Logger · design mockups</h1>
+<p>29 screens in the chosen “Little Wins” direction. Open any screen; its buttons link to other screens the way the app will. Sample family: Leo (6, violet) and Maya (7 months, teal), cared for by Mom, Dad and Grandma.</p>
+<p>These are references, not code. Build from <code>docs/DESIGN.md</code> and <code>docs/SCREENS.md</code>; the PRD wins whenever a mockup disagrees with it.</p>
+</header>
+<main>
+<section><h2>Daily logging (child profile)</h2><div class="grid"><a class="card" href="01-home.html">
+  <img src="../screenshots/01-home.png" alt="Home (Log tab), Leo mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S01</b> Home (Log tab), Leo</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">QL-01, QL-07, QL-08, QL-09, BTH-08, MED-04</span>
+</a><a class="card" href="02-log-bathroom.html">
+  <img src="../screenshots/02-log-bathroom.png" alt="Log bathroom, toilet user mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S02</b> Log bathroom, toilet user</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">QL-02, QL-03, QL-05, BTH-01 to BTH-07</span>
+</a><a class="card" href="03-log-eating.html">
+  <img src="../screenshots/03-log-eating.png" alt="Log eating, meal mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S03</b> Log eating, meal</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">EAT-01, EAT-04, EAT-06, EAT-07, EAT-08</span>
+</a><a class="card" href="04-log-activity.html">
+  <img src="../screenshots/04-log-activity.png" alt="Log activity mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S04</b> Log activity</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">ACT-01, ACT-02, ACT-03</span>
+</a><a class="card" href="05-log-mood.html">
+  <img src="../screenshots/05-log-mood.png" alt="Log mood and behaviors mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S05</b> Log mood and behaviors</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">MOOD-01 to MOOD-05</span>
+</a></div></section><section><h2>Medications</h2><div class="grid"><a class="card" href="06-medications.html">
+  <img src="../screenshots/06-medications.png" alt="Medications list mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S06</b> Medications list</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">MED-04, MED-08, MED-09</span>
+</a><a class="card" href="07-give-dose.html">
+  <img src="../screenshots/07-give-dose.png" alt="Give a dose (as needed) mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S07</b> Give a dose (as needed)</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">MED-05, MED-06, MED-07</span>
+</a><a class="card" href="08-dose-warning.html">
+  <img src="../screenshots/08-dose-warning.png" alt="Duplicate-dose check mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S08</b> Duplicate-dose check</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">MED-07, AT-04</span>
+</a><a class="card" href="09-add-medication.html">
+  <img src="../screenshots/09-add-medication.png" alt="Add medication mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S09</b> Add medication</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">MED-01, MED-02, MED-03, MED-11</span>
+</a></div></section><section><h2>Timeline and editing</h2><div class="grid"><a class="card" href="10-timeline.html">
+  <img src="../screenshots/10-timeline.png" alt="Timeline mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S10</b> Timeline</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">TL-01, TL-03, TL-04, ACC-11</span>
+</a><a class="card" href="11-edit-entry.html">
+  <img src="../screenshots/11-edit-entry.png" alt="Edit an entry mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S11</b> Edit an entry</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">TL-02, TL-05, QL-05</span>
+</a></div></section><section><h2>Insights</h2><div class="grid"><a class="card" href="12-insights-today.html">
+  <img src="../screenshots/12-insights-today.png" alt="Insights: Today mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S12</b> Insights: Today</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">DSH-01</span>
+</a><a class="card" href="13-insights-trends.html">
+  <img src="../screenshots/13-insights-trends.png" alt="Insights: Trends mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S13</b> Insights: Trends</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">DSH-02, DSH-03, DSH-05, DSH-08, DSH-10, DSH-11</span>
+</a><a class="card" href="14-insights-patterns.html">
+  <img src="../screenshots/14-insights-patterns.png" alt="Insights: Patterns mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S14</b> Insights: Patterns</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">DSH-12, DSH-13, PAT-01, PAT-02, PAT-03</span>
+</a></div></section><section><h2>Reports and the doctor PDF</h2><div class="grid"><a class="card" href="15-reports.html">
+  <img src="../screenshots/15-reports.png" alt="Reports (report builder) mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S15</b> Reports (report builder)</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">RPT-01, RPT-04, RPT-06</span>
+</a><a class="card wide" href="16-report-page-1.html">
+  <img src="../screenshots/16-report-page-1.png" alt="Doctor report, page 1 (Letter) mockup" loading="lazy" width="816" height="1056">
+  <span class="meta"><b>S16</b> Doctor report, page 1 (Letter)</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">RPT-02, RPT-03, RPT-09, MED-10, AT-13</span>
+</a><a class="card wide" href="17-report-page-2.html">
+  <img src="../screenshots/17-report-page-2.png" alt="Doctor report, page 2 (Letter) mockup" loading="lazy" width="816" height="1056">
+  <span class="meta"><b>S17</b> Doctor report, page 2 (Letter)</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">RPT-02, RPT-03, RPT-08, DSH-13</span>
+</a></div></section><section><h2>Baby profile</h2><div class="grid"><a class="card" href="18-home-baby.html">
+  <img src="../screenshots/18-home-baby.png" alt="Home, Maya (baby) with Undo toast mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S18</b> Home, Maya (baby) with Undo toast</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">QL-01, QL-04, QL-07, QL-09, AT-01, AT-14</span>
+</a><a class="card" href="19-log-feeding.html">
+  <img src="../screenshots/19-log-feeding.png" alt="Log feeding, bottle mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S19</b> Log feeding, bottle</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">EAT-02, EAT-03, QL-06</span>
+</a><a class="card" href="20-log-diaper.html">
+  <img src="../screenshots/20-log-diaper.png" alt="Log diaper with pale-stool notice mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S20</b> Log diaper with pale-stool notice</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">BTH-01, BTH-03, BTH-05, BTH-06, AT-06, AT-07</span>
+</a></div></section><section><h2>Setup, More tab and caregivers</h2><div class="grid"><a class="card" href="21-create-profile.html">
+  <img src="../screenshots/21-create-profile.png" alt="Create a profile (onboarding step 1) mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S21</b> Create a profile (onboarding step 1)</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">ACC-05, ACC-06</span>
+</a><a class="card" href="22-more.html">
+  <img src="../screenshots/22-more.png" alt="More tab: people, caregivers, settings mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S22</b> More tab: people, caregivers, settings</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">ACC-04, ACC-07, ACC-10, SET-01 to SET-07</span>
+</a><a class="card" href="23-invite-caregiver.html">
+  <img src="../screenshots/23-invite-caregiver.png" alt="Invite a caregiver mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S23</b> Invite a caregiver</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">ACC-07, ACC-08</span>
+</a><a class="card" href="24-join-invite.html">
+  <img src="../screenshots/24-join-invite.png" alt="Join from an invite mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S24</b> Join from an invite</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">ACC-01, ACC-07</span>
+</a><a class="card" href="25-caregiver-detail.html">
+  <img src="../screenshots/25-caregiver-detail.png" alt="Manage a caregiver mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S25</b> Manage a caregiver</span>
+  <span class="badge" style="background:#DCF5E6;color:#14532D">MVP</span>
+  <span class="refs">ACC-08, ACC-09, ACC-10</span>
+</a></div></section><section><h2>Night mode (P1)</h2><div class="grid"><a class="card" href="26-home-night.html">
+  <img src="../screenshots/26-home-night.png" alt="Home, night mode mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S26</b> Home, night mode</span>
+  <span class="badge" style="background:#FFF1D6;color:#7A4100">MVP · P1</span>
+  <span class="refs">SET-03</span>
+</a><a class="card" href="27-log-feeding-night.html">
+  <img src="../screenshots/27-log-feeding-night.png" alt="Log feeding, night mode mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S27</b> Log feeding, night mode</span>
+  <span class="badge" style="background:#FFF1D6;color:#7A4100">MVP · P1</span>
+  <span class="refs">SET-03, EAT-03</span>
+</a></div></section><section><h2>Phase 2: do not build in the MVP</h2><div class="grid"><a class="card" href="28-log-sleep.html">
+  <img src="../screenshots/28-log-sleep.png" alt="Log sleep mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S28</b> Log sleep</span>
+  <span class="badge" style="background:#FFE4EA;color:#9F1239">Phase 2 · don't build yet</span>
+  <span class="refs">QL-14 (Sleep), PAT-08</span>
+</a><a class="card" href="29-log-incident.html">
+  <img src="../screenshots/29-log-incident.png" alt="Log a behavior incident (ABC) mockup" loading="lazy" width="390" height="844">
+  <span class="meta"><b>S29</b> Log a behavior incident (ABC)</span>
+  <span class="badge" style="background:#FFE4EA;color:#9F1239">Phase 2 · don't build yet</span>
+  <span class="refs">MOOD-07, QL-14, PAT-09</span>
+</a></div></section>
+</main>
+</body>
+</html>
