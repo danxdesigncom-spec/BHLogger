@@ -23,6 +23,8 @@ export interface LogSheetProps {
 export interface ModuleFormContext {
   /** Module content should call this with data when ready to let Save proceed */
   setData: (data: Record<string, unknown>, summary: string) => void;
+  /** Module content may call this to pre-flag the entry (e.g. calm-notice "Flag for doctor") */
+  setFlagged: (flagged: boolean) => void;
 }
 
 const MODULE_ICONS: Record<ModuleType, ReactNode> = {
@@ -155,7 +157,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-5">
           {/* Module content */}
           {children
-            ? children({ setData: handleSetData })
+            ? children({ setData: handleSetData, setFlagged })
             : (
               <p className="text-muted-foreground text-[15px]">
                 Options coming in M5.

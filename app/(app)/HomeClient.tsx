@@ -9,6 +9,10 @@ import { LogSheet, type ModuleType } from "@/components/log/LogSheet";
 import { ModuleTile } from "@/components/log/ModuleTile";
 import { UndoToast, type ToastEntry } from "@/components/log/UndoToast";
 import { BathroomSheet } from "@/components/log/modules/BathroomSheet";
+import { EatingSheet } from "@/components/log/modules/EatingSheet";
+import { FeedingSheet } from "@/components/log/modules/FeedingSheet";
+import { ActivitySheet } from "@/components/log/modules/ActivitySheet";
+import { MoodSheet } from "@/components/log/modules/MoodSheet";
 import { undoEntry } from "@/lib/actions/entries";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -274,17 +278,47 @@ export function HomeClient() {
         {(ctx) => <BathroomSheet ctx={ctx} />}
       </LogSheet>
 
-      {/* ── Stub sheets for other modules ── */}
-      {(["eating", "mood", "activity", "medication"] as ModuleType[]).map((mod) => (
-        <LogSheet
-          key={mod}
-          module={mod}
-          moduleLabel={mod === "eating" && isBaby ? "Feeding" : mod.charAt(0).toUpperCase() + mod.slice(1)}
-          open={openSheet === mod}
-          onClose={() => setOpenSheet(null)}
-          onSaved={setToast}
-        />
-      ))}
+      {/* ── Eating / Feeding log sheet ── */}
+      <LogSheet
+        module="eating"
+        moduleLabel={isBaby ? "Feeding" : "Eating"}
+        open={openSheet === "eating"}
+        onClose={() => setOpenSheet(null)}
+        onSaved={setToast}
+      >
+        {(ctx) => isBaby ? <FeedingSheet ctx={ctx} /> : <EatingSheet ctx={ctx} />}
+      </LogSheet>
+
+      {/* ── Activity log sheet ── */}
+      <LogSheet
+        module="activity"
+        moduleLabel="Activity"
+        open={openSheet === "activity"}
+        onClose={() => setOpenSheet(null)}
+        onSaved={setToast}
+      >
+        {(ctx) => <ActivitySheet ctx={ctx} />}
+      </LogSheet>
+
+      {/* ── Mood log sheet ── */}
+      <LogSheet
+        module="mood"
+        moduleLabel="Mood"
+        open={openSheet === "mood"}
+        onClose={() => setOpenSheet(null)}
+        onSaved={setToast}
+      >
+        {(ctx) => <MoodSheet ctx={ctx} />}
+      </LogSheet>
+
+      {/* ── Medication log sheet (stub — M6) ── */}
+      <LogSheet
+        module="medication"
+        moduleLabel="Medication"
+        open={openSheet === "medication"}
+        onClose={() => setOpenSheet(null)}
+        onSaved={setToast}
+      />
 
       {/* ── Undo toast ── */}
       <UndoToast toast={toast} onUndo={handleUndo} onDismiss={dismissToast} />
