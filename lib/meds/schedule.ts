@@ -1,6 +1,7 @@
 // Medication rules: scheduled slots (computed, never stored), slot status (MED-08),
 // the duplicate-dose guard (MED-07) and adherence (MED-10).
 
+import { formatTime } from "@/lib/prefs";
 export interface MedLike {
   id: string;
   name: string;
@@ -218,7 +219,7 @@ export function describeSchedule(med: MedLike): string {
   if (!s) return "as needed";
   const times = s.times.map((t) => {
     const [h, m] = t.split(":").map(Number);
-    return new Date(2000, 0, 1, h, m).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return formatTime(new Date(2000, 0, 1, h, m));
   });
   const days = s.days.length === 7 ? "daily" : s.days.map((d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ");
   return `${times.join(" and ")} ${days}`;

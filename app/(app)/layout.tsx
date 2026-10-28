@@ -11,6 +11,7 @@ import { isDemoMode } from "@/app/auth/demo/actions";
 import { DemoBanner } from "@/components/layout/DemoBanner";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { demoHousehold, DEMO_HOUSEHOLD_ID } from "@/lib/demo/household";
+import { readDemoOverrides } from "@/lib/demo/overrides";
 
 function Shell({ demo, children }: { demo: boolean; children: React.ReactNode }) {
   return (
@@ -39,7 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const activeProfileCookie = cookieStore.get("bl-active-profile")?.value ?? null;
 
   if (await isDemoMode()) {
-    const demo = demoHousehold();
+    const demo = demoHousehold(await readDemoOverrides());
     const active = pickActive(demo.profiles, activeProfileCookie);
     const color = demo.profiles.find((p) => p.id === active)?.color ?? "violet";
     return (
@@ -50,6 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           householdName={demo.name}
           householdSettings={demo.settings}
           profiles={demo.profiles}
+          archivedProfiles={demo.archivedProfiles}
           members={demo.members}
           currentMember={demo.currentMember}
           initialActiveProfileId={active}
@@ -80,9 +82,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     supabase.from("households").select("name, settings").eq("id", member.household_id).maybeSingle(),
     supabase
       .from("profiles")
-      .select("id, name, color, care_stage, dob, toileting, feeding_methods, enabled_modules, settings, care_card")
+      .select("id, name, color, care_stage, dob, toileting, feeding_methods, enabled_modules, settings, care_card, archived_at")
       .eq("household_id", member.household_id)
-      .is("archived_at", null)
       .order("created_at"),
     supabase.from("household_members").select("id, user_id, role, display_name, initials, access_from").eq("household_id", member.household_id),
   ]);
@@ -92,7 +93,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select("member_id, profile_id")
     .in("member_id", (memberRows ?? []).map((m) => m.id));
 
-  const profiles = (profileRows ?? []).map(toProfileSummary);
+  const profiles = (profileRows ?? []).filter((p) => !p.archived_at).map(toProfileSummary);
+  const archivedProfiles = (profileRows ?? []).filter((p) => p.archived_at).map(toProfileSummary);
 
   const members: MemberSummary[] = (memberRows ?? []).map((m) => ({
     id: m.id,
@@ -125,6 +127,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         householdName={household?.name ?? ""}
         householdSettings={household?.settings}
         profiles={profiles}
+        archivedProfiles={archivedProfiles}
         members={members}
         currentMember={currentMember}
         initialActiveProfileId={active}

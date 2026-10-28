@@ -89,6 +89,7 @@ export interface Repo {
   addAppointment(a: { profileId: string; date: string; provider: string | null; notes: string | null }): Promise<Result>;
   listOptions(profileId: string, module: string): Promise<OptionRow[]>;
   addOption(o: { profileId: string; module: string; label: string; icon: string | null }): Promise<Result>;
+  archiveOption(id: string): Promise<Result>;
   updateProfileSettings(profileId: string, settings: Record<string, unknown>): Promise<Result>;
   /** Pending outbox count, for the offline banner (M8). */
   pendingCount(): Promise<number>;

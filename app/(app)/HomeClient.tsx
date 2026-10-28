@@ -52,6 +52,8 @@ export function HomeClient() {
   const meds = useMedications(activeProfileId);
   const todayStart = useMemo(() => startOfDay(new Date()).toISOString(), []);
   const todayDoses = useEntries({ profileId: activeProfileId ?? undefined, types: ["medication"], from: todayStart }, !!activeProfileId);
+  const wetMin = settings.wet_diaper_min;
+  const todayBathroom = useEntries({ profileId: activeProfileId ?? undefined, types: ["bathroom"], from: todayStart }, !!activeProfileId && wetMin !== null);
 
   const medName = (id: string) => meds.data?.find((m) => m.id === id)?.name;
   const ctx: SummaryContext = { careStage: stage, toileting, volumeUnit: householdSettings.volume_unit, medicationName: medName };
@@ -67,7 +69,9 @@ export function HomeClient() {
   const givenCount = slots.filter((s) => s.state === "given").length;
   const notLogged = slots.filter((s) => s.state === "not_logged");
   const nextSlot = slots.filter((s) => s.state === "due" || s.state === "upcoming").sort((a, b) => a.slot.getTime() - b.slot.getTime())[0];
-  const medStatus = !meds.data?.some((m) => m.active)
+  const medStatus = !meds.isFetched || !todayDoses.isFetched
+    ? ""
+    : !meds.data?.some((m) => m.active)
     ? "No medications yet"
     : slots.length
       ? notLogged.length
@@ -91,6 +95,21 @@ export function HomeClient() {
       icon: <Droplet size={24} strokeWidth={2} aria-hidden="true" />,
       title: `${bm.days} days since ${activeProfile?.name}'s last BM`, sub: `Your alert is set to ${settings.bm_alert_days} days`,
       action: { label: "Log BM", onClick: () => setOpenSheet("bathroom") },
+    });
+  }
+  // BTH-09: fewer wet diapers than the caregiver's minimum by the chosen time.
+  const wetBy = (settings as { wet_diaper_by?: string }).wet_diaper_by ?? "18:00";
+  const [wetH, wetM] = wetBy.split(":").map(Number);
+  const wetDeadline = new Date(now);
+  wetDeadline.setHours(wetH, wetM, 0, 0);
+  const wetToday = (todayBathroom.data ?? []).filter((e) => ["pee", "both"].includes(String((e.data as { kind?: string }).kind))).length;
+  if (wetMin !== null && todayBathroom.isFetched && now >= wetDeadline && wetToday < wetMin && enabled.has("bathroom")) {
+    banners.push({
+      key: `wet-${activeProfileId}-${todayStart}`, priority: 1, tone: "warning",
+      icon: <Droplet size={24} strokeWidth={2} aria-hidden="true" />,
+      title: `Fewer than ${wetMin} wet diapers by ${formatClock(wetDeadline.toISOString())}`,
+      sub: `${wetToday} so far today`,
+      action: { label: "Log diaper", onClick: () => setOpenSheet("bathroom") },
     });
   }
   if (nextSlot && nextSlot.slot.getTime() - now.getTime() < 2 * 3_600_000) {
@@ -174,19 +193,19 @@ export function HomeClient() {
               module="bathroom"
               label={tileLabels.bathroom}
               icon={<Droplet size={22} strokeWidth={2} aria-hidden="true" />}
-              status={tileStatus(bathroom.data, ctx, now)}
+              status={bathroom.isFetched ? tileStatus(bathroom.data, ctx, now) : null}
               alertPill={bm.alert ? bm.label : null}
               onClick={() => canLog && setOpenSheet("bathroom")}
             />
           )}
           {enabled.has("eating") && (
-            <ModuleTile module="eating" label={tileLabels.eating} icon={MODULE_ICONS.eating} status={tileStatus(eating.data, ctx, now)} onClick={() => canLog && setOpenSheet("eating")} />
+            <ModuleTile module="eating" label={tileLabels.eating} icon={MODULE_ICONS.eating} status={eating.isFetched ? tileStatus(eating.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("eating")} />
           )}
           {enabled.has("mood") && (
-            <ModuleTile module="mood" label="Mood" icon={MODULE_ICONS.mood} status={tileStatus(mood.data, ctx, now)} onClick={() => canLog && setOpenSheet("mood")} />
+            <ModuleTile module="mood" label="Mood" icon={MODULE_ICONS.mood} status={mood.isFetched ? tileStatus(mood.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("mood")} />
           )}
           {enabled.has("activity") && (
-            <ModuleTile module="activity" label="Activity" icon={MODULE_ICONS.activity} status={tileStatus(activity.data, ctx, now)} onClick={() => canLog && setOpenSheet("activity")} />
+            <ModuleTile module="activity" label="Activity" icon={MODULE_ICONS.activity} status={activity.isFetched ? tileStatus(activity.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("activity")} />
           )}
           {enabled.has("medication") && (
             <Link

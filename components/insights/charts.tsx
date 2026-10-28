@@ -5,6 +5,7 @@ import {
   Scatter, ScatterChart, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { shortDate } from "@/lib/dates";
+import { formatHour } from "@/lib/prefs";
 
 // DESIGN 6: tokens only. CSS variables resolve per theme (light, dark, night).
 const AXIS = { fontSize: 12, fill: "var(--chart-axis)", fontWeight: 700 } as const;
@@ -182,7 +183,7 @@ export function TopBars({ data, color = "var(--chart-4)", height }: { data: { la
 export function DoseTimes({ points, days, height = 170 }: { points: { day: string; hour: number; name: string }[]; days: string[]; height?: number }) {
   const index = new Map(days.map((d, i) => [d, i]));
   const data = points.map((p) => ({ x: index.get(p.day) ?? 0, y: Math.round(p.hour * 10) / 10, name: p.name, day: p.day }));
-  const hourLabel = (h: number) => new Date(2000, 0, 1, Math.floor(h), Math.round((h % 1) * 60)).toLocaleTimeString("en-US", { hour: "numeric" });
+  const hourLabel = formatHour;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: -10 }}>

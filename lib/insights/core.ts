@@ -1,6 +1,7 @@
 // Insights math (DSH-01 to DSH-08, PAT-01 to PAT-03). Pure functions over entry rows.
 // Day and time-of-day use each entry's own IANA time zone (PRD section 11).
 
+import { weekStartIndex } from "@/lib/prefs";
 export interface InsightEntry {
   id: string;
   type: string;
@@ -201,7 +202,7 @@ export function activityStats(entries: InsightEntry[]) {
 
 export function weekKey(day: string): string {
   const d = new Date(`${day}T00:00:00`);
-  d.setDate(d.getDate() - d.getDay());
+  d.setDate(d.getDate() - ((d.getDay() - weekStartIndex() + 7) % 7));
   return ymdLocal(d);
 }
 

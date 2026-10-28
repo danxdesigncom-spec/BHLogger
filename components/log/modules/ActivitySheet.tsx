@@ -7,7 +7,8 @@ import type { ModuleFormContext } from "../LogSheet";
 import { FaceScale, Group, OptionTiles, RadioChips } from "../controls";
 import { ActivityIcon } from "../activity-icons";
 import { useHousehold } from "@/lib/context/household-provider";
-import { useEntries, useOptions } from "@/lib/data/hooks";
+import { useEntries } from "@/lib/data/hooks";
+import { useOptionSet } from "@/lib/data/useOptionSet";
 import { useRepo } from "@/lib/data/repo-context";
 import { ACTIVITY_DURATIONS, ACTIVITY_LIBRARY, activityLabel, ENJOYMENT_LABELS, type Option } from "@/lib/options";
 
@@ -20,7 +21,7 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
   const repo = useRepo();
   const qc = useQueryClient();
 
-  const custom = useOptions(profileId, "activity");
+  const optionSet = useOptionSet(profileId, "activity", ACTIVITY_LIBRARY[stage]);
   const since = useMemo(() => new Date(Date.now() - 60 * 86_400_000).toISOString(), []);
   const recent = useEntries({ profileId: profileId ?? undefined, types: ["activity"], from: since }, !!profileId);
 
@@ -40,10 +41,10 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
       const id = (e.data as { activity_id?: string }).activity_id;
       if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
     }
-    const all = [...(custom.data ?? []).map((o) => ({ key: o.key, label: o.label })), ...ACTIVITY_LIBRARY[stage]];
+    const all = [...optionSet.options];
     const libraryOrder = new Map(all.map((o, i) => [o.key, i]));
     return all.sort((a, b) => (counts.get(b.key) ?? 0) - (counts.get(a.key) ?? 0) || libraryOrder.get(a.key)! - libraryOrder.get(b.key)!);
-  }, [custom.data, recent.data, stage]);
+  }, [optionSet.options, recent.data]);
 
   const visible = showAll ? options : options.slice(0, VISIBLE);
   if (activity && !visible.some((o) => o.key === activity)) {

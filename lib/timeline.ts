@@ -3,6 +3,7 @@ import { startOfDay } from "@/lib/dates";
 import { slotsForDay, slotStatus, type MedLike } from "@/lib/meds/schedule";
 import { consistencyLabel } from "@/lib/entries/summary";
 import { behaviorLabel, feelingLabel, humanize, labelFor, moodLabels, portionLabel, STOOL_COLORS } from "@/lib/options";
+import { formatWeekdayTime } from "@/lib/prefs";
 
 interface E {
   id: string;
@@ -89,7 +90,7 @@ export function describeRevision(
   if (before.deleted_at !== after.deleted_at) out.push(after.deleted_at ? "deleted this" : "restored this");
   if (before.profile_id !== after.profile_id) out.push(`moved it to ${profileName(String(after.profile_id))}`);
   if (before.occurred_at !== after.occurred_at) {
-    out.push(`changed the time to ${new Date(String(after.occurred_at)).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}`);
+    out.push(`changed the time to ${formatWeekdayTime(String(after.occurred_at))}`);
   }
   if (before.flagged_for_doctor !== after.flagged_for_doctor) out.push(after.flagged_for_doctor ? "flagged it for the doctor" : "removed the doctor flag");
   if ((before.note ?? null) !== (after.note ?? null)) out.push(after.note ? "edited the note" : "removed the note");

@@ -122,6 +122,15 @@ export async function addOption(input: { profileId: string; module: string; labe
   return error ? { error: error.message } : { success: true };
 }
 
+export async function archiveOption(id: string): Promise<Result> {
+  if (!z.string().uuid().safeParse(id).success) return { error: "Invalid option." };
+  if (await isDemoMode()) return { success: true };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("option_lists").update({ archived: true }).eq("id", id).select("id").maybeSingle();
+  if (error) return { error: error.message };
+  return data ? { success: true } : { error: "Couldn't archive that option." };
+}
+
 export async function updateProfileSettings(profileId: string, settings: Record<string, unknown>): Promise<Result> {
   const parsed = z.object({
     bm_alert_days: z.number().int().min(1).max(14).nullable().optional(),
@@ -130,6 +139,7 @@ export async function updateProfileSettings(profileId: string, settings: Record<
     med_dose_window_min: z.number().int().min(0).max(240).optional(),
     med_duplicate_window_min: z.number().int().min(0).max(1440).optional(),
     tile_order: z.array(z.string()).optional(),
+    hidden_options: z.record(z.array(z.string().max(60)).max(60)).optional(),
     hidden_tiles: z.array(z.string()).optional(),
   }).strict().safeParse(settings);
   if (!parsed.success || !z.string().uuid().safeParse(profileId).success) return { error: "Invalid settings." };

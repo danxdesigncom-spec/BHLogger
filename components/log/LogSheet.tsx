@@ -8,6 +8,7 @@ import { useRepo } from "@/lib/data/repo-context";
 import { recordLoggingSession } from "@/lib/install";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatTime } from "@/lib/prefs";
 
 export type ModuleType = "bathroom" | "eating" | "activity" | "mood" | "medication";
 
@@ -170,7 +171,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
       householdId,
       profileName: activeProfile.name,
       summary: moduleSummary || moduleLabel,
-      time: time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+      time: formatTime(time),
     });
 
     reset();

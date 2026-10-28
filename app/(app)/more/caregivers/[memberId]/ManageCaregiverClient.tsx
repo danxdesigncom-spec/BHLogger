@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2, Check, Loader2 } from "lucide-react";
 import { saveMember, removeMemberAction } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
+import { formatTime } from "@/lib/prefs";
 
 const COLOR_CLASSES: Record<ProfileColor, string> = {
   violet: "bg-profile text-white",
@@ -57,7 +58,7 @@ function formatRelative(iso: string) {
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins} min ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `today at ${new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  if (hrs < 24) return `today at ${formatTime(iso)}`;
   return formatDate(iso);
 }
 

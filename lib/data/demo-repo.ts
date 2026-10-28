@@ -45,7 +45,10 @@ function openDb(): Promise<DemoDb> {
   dbPromise ??= (async () => {
     const db = new DemoDb();
     const seeded = await db.meta.get("version");
-    if (seeded?.value !== DATA_VERSION) {
+    const seededDay = await db.meta.get("day");
+    const today = new Date().toDateString();
+    // Sample data follows the clock: a new day regenerates the story so "today" is never empty.
+    if (seeded?.value !== DATA_VERSION || seededDay?.value !== today) {
       const data = generateHouseholdData({ anchor: new Date(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
       await db.transaction("rw", [db.entries, db.revisions, db.medications, db.medicationChanges, db.appointments, db.options, db.profileSettings, db.meta], async () => {
         await Promise.all([db.entries.clear(), db.revisions.clear(), db.medications.clear(), db.medicationChanges.clear(), db.appointments.clear(), db.options.clear(), db.profileSettings.clear()]);
@@ -55,6 +58,7 @@ function openDb(): Promise<DemoDb> {
         await db.appointments.bulkPut(data.appointments);
         await db.profileSettings.bulkPut(data.profiles.map((p) => ({ profile_id: p.id, settings: p.settings as Record<string, unknown> })));
         await db.meta.put({ key: "version", value: DATA_VERSION });
+        await db.meta.put({ key: "day", value: today });
       });
     }
     return db;
@@ -223,6 +227,12 @@ export function createDemoRepo(actor: Actor): Repo {
         id: crypto.randomUUID(), household_id: SEED_IDS.household, profile_id: o.profileId, module: o.module,
         key: `opt_${slugify(o.label)}`, label: o.label, icon: o.icon, sort_order: 0, archived: false, created_at: now(),
       });
+      return ok;
+    },
+
+    async archiveOption(id) {
+      const db = await openDb();
+      await db.options.update(id, { archived: true });
       return ok;
     },
 

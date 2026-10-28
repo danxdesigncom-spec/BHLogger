@@ -10,6 +10,7 @@ import { useEntries, useProfileSettings } from "@/lib/data/hooks";
 import type { MedicationRow } from "@/lib/data/types";
 import { formatClock } from "@/lib/entries/summary";
 import { DOSE_OUTCOMES, formatDose, PRN_REASONS } from "@/lib/options";
+import { useOptionSet } from "@/lib/data/useOptionSet";
 import { duplicateCheck, formatElapsed, formatHours, lastDose, slotToFill, type DuplicateConflict } from "@/lib/meds/schedule";
 
 interface Props {
@@ -111,6 +112,7 @@ export function DoseForm({
   const [outcome, setOutcome] = useState(init.outcome ?? "given");
   const [reason, setReason] = useState<string | null>(init.prn_reason ?? null);
   const step = Number(med.default_dose) >= 10 ? 1 : 0.5;
+  const reasons = useOptionSet(med.profile_id, "prn_reason", [...PRN_REASONS]).options;
 
   useEffect(() => {
     ctx.setData(
@@ -166,7 +168,7 @@ export function DoseForm({
 
       {med.kind === "prn" && (
         <Group label="Reason">
-          <RadioChips label="Reason" value={reason} onChange={(r) => setReason(r === reason ? null : r)} options={PRN_REASONS.map((r) => ({ value: r.key, label: r.label }))} />
+          <RadioChips label="Reason" value={reason} onChange={(r) => setReason(r === reason ? null : r)} options={reasons.map((r) => ({ value: r.key, label: r.label }))} />
         </Group>
       )}
     </div>

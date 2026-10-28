@@ -46,6 +46,12 @@ class Outbox {
     return this.db;
   }
 
+  /** Closes the IndexedDB connection so the database can be deleted. */
+  close(): void {
+    this.db?.close();
+    this.db = null;
+  }
+
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
@@ -147,3 +153,12 @@ function isNetworkError(msg: string) {
 }
 
 export const outbox = new Outbox();
+
+/** Sign-out: drop this device's cached entries and app-shell caches so no health data stays behind. */
+export async function clearLocalData(): Promise<void> {
+  outbox.close();
+  await Dexie.delete("bl-outbox");
+  if (typeof caches !== "undefined") {
+    for (const key of await caches.keys()) await caches.delete(key);
+  }
+}

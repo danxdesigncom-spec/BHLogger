@@ -10,6 +10,7 @@ import { useRepo } from "@/lib/data/repo-context";
 import type { MedicationRow } from "@/lib/data/types";
 import { DOSE_UNITS, MED_FORMS } from "@/lib/options";
 import { ymd } from "@/lib/dates";
+import { formatTime } from "@/lib/prefs";
 
 const DAYS = [
   { short: "S", full: "Sunday" }, { short: "M", full: "Monday" }, { short: "T", full: "Tuesday" }, { short: "W", full: "Wednesday" },
@@ -20,7 +21,7 @@ const inputClass = "w-full h-button rounded-lg border border-input bg-card px-4 
 
 function to12h(t: string) {
   const [h, m] = t.split(":").map(Number);
-  return new Date(2000, 0, 1, h, m).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return formatTime(new Date(2000, 0, 1, h, m));
 }
 
 export function MedicationForm({ existing }: { existing?: MedicationRow }) {

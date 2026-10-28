@@ -110,6 +110,7 @@ export function createLiveRepo(actor: Actor, householdId: string): Repo {
     },
 
     addOption: (o) => medActions.addOption(o),
+    archiveOption: (id) => medActions.archiveOption(id),
     updateProfileSettings: (id, s) => medActions.updateProfileSettings(id, s),
     pendingCount: () => outbox.pendingCount(),
   };

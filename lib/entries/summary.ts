@@ -1,4 +1,5 @@
 import type { CareStage, Toileting } from "@/lib/supabase/types";
+import { formatTime } from "@/lib/prefs";
 import {
   activityLabel, behaviorLabel, BRISTOL, bathroomKindLabel, ENJOYMENT_LABELS, feelingLabel, formatDose,
   formatVolume, humanize, INFANT_CONSISTENCY, labelFor, MEAL_TYPES, moodLabels, portionLabel, PRN_REASONS,
@@ -167,7 +168,7 @@ export function formatWhen(iso: string, now = new Date()): string {
   const diffMin = Math.floor((now.getTime() - t.getTime()) / 60_000);
   if (diffMin < 1) return "just now";
   if (diffMin < 60) return `${diffMin} min ago`;
-  const clock = t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const clock = formatTime(t);
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
   const dayDiff = Math.floor((startOfToday.getTime() - new Date(t).setHours(0, 0, 0, 0)) / 86_400_000);
@@ -187,7 +188,7 @@ export function formatAgo(iso: string, now = new Date()): string {
 }
 
 export function formatClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return formatTime(iso);
 }
 
 /** Tile status: "Ate half · 6:45 PM", "Wet · just now", "Playground · loved it". */

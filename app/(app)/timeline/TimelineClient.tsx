@@ -18,6 +18,7 @@ import { entryShortLabel, type SummaryContext } from "@/lib/entries/summary";
 import { bathroomTileLabel } from "@/lib/options";
 import { daySummary, groupByDay } from "@/lib/timeline";
 import { dayHeading, startOfDay } from "@/lib/dates";
+import { formatTime } from "@/lib/prefs";
 
 const PAGE_DAYS = 7;
 
@@ -133,7 +134,7 @@ export function TimelineClient() {
             close();
             setToast({
               entryId: e.id, householdId: e.household_id, profileName: activeProfile?.name ?? "", summary: entryShortLabel(e, ctx),
-              time: new Date(e.occurred_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+              time: formatTime(e.occurred_at),
               message: `Deleted ${entryShortLabel(e, ctx).toLowerCase()} for ${activeProfile?.name ?? ""}`,
             });
           }}

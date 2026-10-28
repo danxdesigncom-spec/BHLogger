@@ -1,13 +1,15 @@
 import type { MemberSummary, ProfileSummary } from "@/lib/context/household-provider";
 import { toProfileSummary } from "@/lib/profiles";
 import { generateHouseholdData, SEED_IDS } from "@/lib/demo/generate";
+import type { DemoOverrides } from "@/lib/demo/overrides";
 
 export const DEMO_HOUSEHOLD_ID = SEED_IDS.household;
 
-export function demoHousehold(): {
+export function demoHousehold(overrides: DemoOverrides = {}): {
   name: string;
   settings: unknown;
   profiles: ProfileSummary[];
+  archivedProfiles: ProfileSummary[];
   members: MemberSummary[];
   currentMember: MemberSummary;
 } {
@@ -18,13 +20,22 @@ export function demoHousehold(): {
     displayName: m.display_name,
     initials: m.initials,
     role: m.role,
-    restrictedProfileIds: [],
+    // S22/S25 story (D12): Grandma sees Leo only.
+    restrictedProfileIds: m.user_id === SEED_IDS.grandma ? [SEED_IDS.leo] : [],
     accessFrom: m.access_from,
   }));
+
+  const all = data.profiles.map((p) => {
+    const o = overrides.profiles?.[p.id] ?? {};
+    const { archived, ...fields } = o as { archived?: boolean } & Record<string, unknown>;
+    return { summary: toProfileSummary({ ...p, ...fields } as typeof p), archived: !!archived };
+  });
+
   return {
-    name: data.household.name,
-    settings: data.household.settings,
-    profiles: data.profiles.map(toProfileSummary),
+    name: overrides.household?.name ?? data.household.name,
+    settings: { ...(data.household.settings as Record<string, unknown>), ...overrides.household?.settings },
+    profiles: all.filter((p) => !p.archived).map((p) => p.summary),
+    archivedProfiles: all.filter((p) => p.archived).map((p) => p.summary),
     members,
     // The demo visitor plays Mom, the household admin.
     currentMember: members.find((m) => m.userId === SEED_IDS.mom)!,

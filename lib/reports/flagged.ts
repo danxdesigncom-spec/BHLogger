@@ -3,6 +3,7 @@
 import { behaviorLabel, formatDose, labelFor, REACTIONS, STOOL_COLORS } from "@/lib/options";
 import { eachDay, isBm, localParts, type InsightEntry } from "@/lib/insights/core";
 import { shortDate } from "@/lib/dates";
+import { formatDateTime } from "@/lib/prefs";
 
 export interface FlaggedEvent {
   when: string;
@@ -13,7 +14,7 @@ export interface FlaggedEvent {
 
 type D = Record<string, unknown>;
 const NOTICE_COLORS = new Set(["red", "black", "white_pale_clay"]);
-const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const when = (iso: string) => formatDateTime(iso);
 
 export function flaggedEvents(
   entries: (InsightEntry & { note?: string | null; logged_by_name: string })[],

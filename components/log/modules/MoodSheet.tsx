@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { ModuleFormContext } from "../LogSheet";
 import { FaceScale, Group, RadioChips, Segmented, ToggleChips } from "../controls";
 import { useHousehold } from "@/lib/context/household-provider";
+import { useOptionSet } from "@/lib/data/useOptionSet";
 import { behaviors as behaviorOptions, FEELINGS, moodLabels, SEVERITIES } from "@/lib/options";
 
 type Severity = "mild" | "moderate" | "severe";
@@ -13,8 +14,9 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
   const { activeProfile } = useHousehold();
   const stage = activeProfile?.careStage ?? "child";
   const labels = moodLabels(stage);
-  const feelingOptions = FEELINGS[stage];
-  const behaviorList = behaviorOptions(stage);
+  const feelingOptions = useOptionSet(activeProfile?.id ?? null, "feeling", FEELINGS[stage]).options;
+  const behaviorSet = useOptionSet(activeProfile?.id ?? null, "behavior", behaviorOptions(stage)).options;
+  const behaviorList = stage === "baby" ? [] : behaviorSet;
 
   const init = (initial ?? {}) as {
     scope?: "moment" | "day"; level?: number; feelings?: string[];

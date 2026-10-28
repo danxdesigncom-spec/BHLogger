@@ -3,6 +3,7 @@ import type { CareStage } from "@/lib/supabase/types";
 import { activityLabel, behaviorLabel, ENJOYMENT_LABELS, formatVolume, humanize, MEAL_TYPES, portionLabel } from "@/lib/options";
 import { slotsForDay, slotStatus, type MedLike } from "@/lib/meds/schedule";
 import { dataOf, isBm, isWet, localParts, mean, round1, ymdLocal, type InsightEntry } from "./core";
+import { formatTime } from "@/lib/prefs";
 
 export interface TodayCard {
   module: "bathroom" | "eating" | "mood" | "medication" | "activity" | "behaviors";
@@ -14,7 +15,7 @@ export interface TodayCard {
   sparkline?: number[];
 }
 
-const clock = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+const clock = (iso: string) => formatTime(iso);
 
 export function todayCards(opts: {
   entries: InsightEntry[];

@@ -1,70 +1,186 @@
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { MorePageClient } from "./MorePageClient";
-import type { ProfileColor } from "@/lib/supabase/types";
+"use client";
 
-export const metadata: Metadata = { title: "More" };
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Bell, ChevronRight, Download, LogOut, Moon, Plus, UserPlus } from "lucide-react";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useHousehold, type ProfileSummary } from "@/lib/context/household-provider";
+import { usePendingCount, useProfileSettings } from "@/lib/data/hooks";
+import { useTheme } from "@/lib/theme-context";
+import { ageLabel } from "@/lib/options";
+import { signOut } from "@/lib/actions/auth";
+import { exitDemoMode } from "@/app/auth/demo/actions";
+import { updateProfile } from "@/lib/actions/settings";
+import { clearDemoData } from "@/lib/data/demo-repo";
+import { clearLocalData } from "@/lib/data/outbox";
 
-export default async function MorePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+const STAGE: Record<string, string> = { baby: "Baby", child: "Child", teen_adult: "Teen/Adult" };
+const ROLE: Record<string, string> = { admin: "Admin", caregiver: "Caregiver", viewer: "Viewer" };
 
-  const { data: member } = await supabase
-    .from("household_members")
-    .select("id, household_id, role, display_name")
-    .eq("user_id", user.id)
-    .single();
+function Row({ href, children, onClick }: { href?: string; children: React.ReactNode; onClick?: () => void }) {
+  const cls = "w-full min-h-[60px] flex items-center gap-3 px-3.5 py-2 text-left";
+  if (href) return <Link href={href} className={cls}>{children}</Link>;
+  if (onClick) return <button type="button" onClick={onClick} className={cls}>{children}</button>;
+  return <div className={cls}>{children}</div>;
+}
 
-  if (!member) redirect("/onboarding/profile");
+function Avatar({ profile }: { profile: ProfileSummary }) {
+  return (
+    <span aria-hidden="true" data-profile-color={profile.color} className="w-9 h-9 flex-none rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5">
+      {profile.initials}
+    </span>
+  );
+}
 
-  const { data: profileRows } = await supabase
-    .from("profiles")
-    .select("id, name, color, care_stage, dob")
-    .eq("household_id", member.household_id)
-    .is("archived_at", null)
-    .order("created_at");
+export default function MorePage() {
+  const { mode, profiles, archivedProfiles, members, currentMember, householdSettings, activeProfileId, householdName } = useHousehold();
+  const { theme } = useTheme();
+  const settings = useProfileSettings(activeProfileId);
+  const pending = usePendingCount();
+  const router = useRouter();
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [busy, startTransition] = useTransition();
+  const isAdmin = currentMember.role === "admin";
+  const others = members.filter((m) => m.id !== currentMember.id);
 
-  const { data: memberRows } = await supabase
-    .from("household_members")
-    .select("id, user_id, role, display_name, initials")
-    .eq("household_id", member.household_id)
-    .order("created_at");
+  const doSignOut = () =>
+    startTransition(async () => {
+      if (mode === "demo") {
+        await clearDemoData();
+        await exitDemoMode();
+      } else {
+        await clearLocalData();
+        await signOut();
+      }
+    });
 
-  const { data: accessRows } = await supabase
-    .from("member_profile_access")
-    .select("member_id, profile_id")
-    .in("member_id", (memberRows ?? []).map((m) => m.id));
-
-  const cookieStore = await cookies();
-  const theme = cookieStore.get("bl-theme")?.value ?? "light";
+  const access = (restricted: string[]) =>
+    restricted.length ? `${restricted.map((id) => profiles.find((p) => p.id === id)?.name).filter(Boolean).join(", ")} only` : "can log and edit own entries";
 
   return (
-    <MorePageClient
-      currentMemberId={member.id}
-      currentRole={member.role as "admin" | "caregiver" | "viewer"}
-      profiles={(profileRows ?? []).map((p) => ({
-        id: p.id,
-        name: p.name,
-        color: p.color as ProfileColor,
-        careStage: p.care_stage as "baby" | "child" | "teen_adult",
-        dob: p.dob,
-      }))}
-      members={(memberRows ?? []).map((m) => ({
-        id: m.id,
-        userId: m.user_id,
-        displayName: m.display_name,
-        initials: m.initials,
-        role: m.role as "admin" | "caregiver" | "viewer",
-        restrictedProfileIds: (accessRows ?? [])
-          .filter((a) => a.member_id === m.id)
-          .map((a) => a.profile_id),
-      }))}
-      currentTheme={theme}
-    />
+    <>
+      <AppHeader title="More" />
+      <div className="px-5 pt-2 pb-6 space-y-5">
+        {householdName && <p className="-mt-2 text-label font-normal text-muted-foreground">{householdName}</p>}
+
+        <section aria-labelledby="people-h" className="space-y-2">
+          <h2 id="people-h" className="font-display text-title-5">People you care for</h2>
+          <div className="rounded-card bg-card shadow-card divide-y divide-divider">
+            {profiles.map((p) => (
+              <Row key={p.id} href={`/more/profiles/${p.id}`}>
+                <Avatar profile={p} />
+                <span className="flex-1 min-w-0">
+                  <span className="block text-body-md">{p.name}</span>
+                  <span className="block text-caption text-muted-foreground">{[ageLabel(p.dob), STAGE[p.careStage]].filter(Boolean).join(" · ")}</span>
+                </span>
+                <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
+              </Row>
+            ))}
+            {isAdmin && (
+              <Row href="/profiles/new">
+                <span className="w-9 h-9 flex-none rounded-full border-[1.5px] border-dashed border-dashed-line flex items-center justify-center text-profile-ink">
+                  <Plus size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <span className="text-body-md text-profile-ink">Add a person</span>
+              </Row>
+            )}
+          </div>
+          {archivedProfiles.length > 0 && (
+            <div className="rounded-card bg-card shadow-card divide-y divide-divider">
+              {archivedProfiles.map((p) => (
+                <div key={p.id} className="min-h-[60px] flex items-center gap-3 px-3.5 py-2">
+                  <Avatar profile={p} />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-body-md">{p.name}</span>
+                    <span className="block text-caption text-muted-foreground">Archived · data stays in reports and exports</span>
+                  </span>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => startTransition(async () => { await updateProfile(p.id, { archived: false }); router.refresh(); })}
+                      className="min-h-touch-min px-4 rounded-full border-[1.5px] border-border-strong text-label font-extrabold"
+                    >
+                      Restore
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section aria-labelledby="care-h" className="space-y-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="care-h" className="font-display text-title-5">Caregivers</h2>
+            <span className="text-caption text-muted-foreground">You&rsquo;re {isAdmin ? "the admin" : `a ${ROLE[currentMember.role].toLowerCase()}`}</span>
+          </div>
+          <div className="rounded-card bg-card shadow-card divide-y divide-divider">
+            {others.map((m) => (
+              <Row key={m.id} href={isAdmin && mode === "live" ? `/more/caregivers/${m.id}` : undefined}>
+                <span aria-hidden="true" className="w-9 h-9 flex-none rounded-full bg-secondary flex items-center justify-center text-body font-extrabold">{m.initials}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-body-md">{m.displayName}</span>
+                  <span className="block text-caption text-muted-foreground">{ROLE[m.role]} · {access(m.restrictedProfileIds)}</span>
+                </span>
+                {isAdmin && mode === "live" && <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />}
+              </Row>
+            ))}
+            {isAdmin && (mode === "live" ? (
+              <Row href="/more/caregivers/invite">
+                <span className="w-9 h-9 flex-none rounded-full border-[1.5px] border-dashed border-dashed-line flex items-center justify-center text-profile-ink">
+                  <UserPlus size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <span className="text-body-md text-profile-ink">Invite a caregiver</span>
+              </Row>
+            ) : (
+              <div className="px-3.5 py-3 text-caption text-muted-foreground">Inviting and managing caregivers needs a signed-in account.</div>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="settings-h" className="space-y-2">
+          <h2 id="settings-h" className="font-display text-title-5">Settings</h2>
+          <div className="rounded-card bg-card shadow-card divide-y divide-divider">
+            <Row href="/more/settings/units">
+              <Bell size={20} strokeWidth={2} className="flex-none text-profile" aria-hidden="true" />
+              <span className="flex-1 text-body-md">Units and alerts</span>
+              <span className="text-caption text-muted-foreground">
+                {householdSettings.volume_unit} · {settings.bm_alert_days ? `BM alert ${settings.bm_alert_days} days` : "BM alert off"}
+              </span>
+              <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
+            </Row>
+            <Row href="/more/settings/theme">
+              <Moon size={20} strokeWidth={2} className="flex-none text-profile" aria-hidden="true" />
+              <span className="flex-1 text-body-md">Theme and night mode</span>
+              <span className="text-caption text-muted-foreground">{theme === "system" ? "Automatic" : theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
+              <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
+            </Row>
+            <Row href="/more/settings/data">
+              <Download size={20} strokeWidth={2} className="flex-none text-profile" aria-hidden="true" />
+              <span className="flex-1 text-body-md">Export or delete data</span>
+              <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
+            </Row>
+            <Row onClick={() => ((pending.data ?? 0) > 0 ? setConfirmSignOut(true) : doSignOut())}>
+              <LogOut size={20} strokeWidth={2} className="flex-none text-destructive" aria-hidden="true" />
+              <span className="flex-1 text-body-md text-destructive">{mode === "demo" ? "Exit demo" : busy ? "Signing out…" : "Sign out"}</span>
+            </Row>
+          </div>
+        </section>
+      </div>
+
+      {confirmSignOut && (
+        <ConfirmDialog
+          title="Some entries haven't synced"
+          body={`${pending.data} ${pending.data === 1 ? "entry is" : "entries are"} still on this phone. Signing out now deletes ${pending.data === 1 ? "it" : "them"}.`}
+          cancelLabel="Stay signed in"
+          confirmLabel="Sign out anyway"
+          destructive
+          onCancel={() => setConfirmSignOut(false)}
+          onConfirm={() => { setConfirmSignOut(false); doSignOut(); }}
+        />
+      )}
+    </>
   );
 }

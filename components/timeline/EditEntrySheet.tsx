@@ -18,6 +18,7 @@ import type { LocalEntry } from "@/lib/data/types";
 import { entryDetail, entryTitle, formatClock, type SummaryContext } from "@/lib/entries/summary";
 import { bathroomTileLabel, humanize } from "@/lib/options";
 import { describeRevision } from "@/lib/timeline";
+import { formatDateTime } from "@/lib/prefs";
 
 function stable(v: unknown): string {
   if (Array.isArray(v)) return `[${v.map(stable).join(",")}]`;
@@ -155,7 +156,7 @@ export function EditEntrySheet({
               <dl className="rounded-card bg-secondary divide-y divide-divider">
                 {[
                   ["Person", profile?.name ?? ""],
-                  ["When", new Date(entry.occurred_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })],
+                  ["When", formatDateTime(entry.occurred_at)],
                   ["What", entryTitle(entry, summaryCtx)],
                   ["Details", entryDetail(entry) || "—"],
                   ["Note", entry.note || "—"],

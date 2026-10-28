@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Clock } from "lucide-react";
+import { formatWeekdayTime } from "@/lib/prefs";
 
 type Preset = "now" | "15m" | "30m" | "1h" | "2h" | "custom";
 
@@ -39,7 +40,7 @@ export function TimeChip({ value, onChange }: Props) {
 
   const label =
     preset === "custom"
-      ? value.toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })
+      ? formatWeekdayTime(value)
       : PRESETS.find((p) => p.value === preset)!.label;
 
   const pick = (p: Exclude<Preset, "custom">) => {

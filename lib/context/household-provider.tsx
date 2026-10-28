@@ -3,6 +3,7 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
 import type { ProfileColor, Toileting } from "@/lib/supabase/types";
 import { HouseholdSettingsSchema, type HouseholdSettings } from "@/lib/schemas/household";
+import { setDisplayPrefs } from "@/lib/prefs";
 
 export interface ProfileSummary {
   id: string;
@@ -34,6 +35,7 @@ interface HouseholdContextValue {
   householdName: string;
   householdSettings: HouseholdSettings;
   profiles: ProfileSummary[];
+  archivedProfiles: ProfileSummary[];
   members: MemberSummary[];
   currentMember: MemberSummary;
   activeProfileId: string | null;
@@ -50,6 +52,7 @@ export function HouseholdProvider({
   householdName = "",
   householdSettings,
   profiles,
+  archivedProfiles = [],
   members,
   currentMember,
   initialActiveProfileId,
@@ -60,10 +63,15 @@ export function HouseholdProvider({
   householdName?: string;
   householdSettings?: unknown;
   profiles: ProfileSummary[];
+  archivedProfiles?: ProfileSummary[];
   members: MemberSummary[];
   currentMember: MemberSummary;
   initialActiveProfileId: string | null;
 }) {
+  const settings = HouseholdSettingsSchema.parse(householdSettings ?? {});
+  // SET-01: time format and week start for every formatter (client only).
+  setDisplayPrefs({ timeFormat: settings.time_format, weekStart: settings.week_start });
+
   const [activeProfileId, setActiveProfileIdState] = useState<string | null>(
     initialActiveProfileId ?? profiles[0]?.id ?? null,
   );
@@ -87,8 +95,9 @@ export function HouseholdProvider({
         mode,
         householdId,
         householdName,
-        householdSettings: HouseholdSettingsSchema.parse(householdSettings ?? {}),
+        householdSettings: settings,
         profiles,
+        archivedProfiles,
         members,
         currentMember,
         activeProfileId,
