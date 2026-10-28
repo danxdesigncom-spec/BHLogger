@@ -3,94 +3,145 @@
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { isDemoMode } from "@/app/auth/demo/actions";
+import { validateEntryData } from "@/lib/schemas/entry";
+import type { Json } from "@/lib/supabase/types";
+
+type Result = { success: true } | { error: string };
 
 const SaveEntrySchema = z.object({
   id: z.string().uuid(),
   householdId: z.string().uuid(),
   profileId: z.string().uuid(),
-  type: z.string(),
-  occurredAt: z.string(),
+  type: z.string().min(1),
+  occurredAt: z.string().datetime({ offset: true }),
   tz: z.string(),
   data: z.record(z.unknown()).default({}),
-  note: z.string().optional(),
+  note: z.string().max(2000).optional(),
   flaggedForDoctor: z.boolean().default(false),
 });
 
 export type SaveEntryInput = z.infer<typeof SaveEntrySchema>;
 
-export async function saveEntry(input: SaveEntryInput) {
-  const parsed = SaveEntrySchema.safeParse(input);
-  if (!parsed.success) return { error: "Invalid entry data." };
-  if (await isDemoMode()) return { success: true as const, entryId: parsed.data.id };
-
+async function authed() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated." };
+  return { supabase, user };
+}
+
+export async function saveEntry(input: SaveEntryInput): Promise<Result> {
+  const parsed = SaveEntrySchema.safeParse(input);
+  if (!parsed.success) return { error: "Invalid entry." };
+  if (new Date(parsed.data.occurredAt).getTime() > Date.now() + 60_000) return { error: "Entries can't be in the future." };
+  const data = validateEntryData(parsed.data.type, parsed.data.data);
+  if (!data.success) return { error: data.error };
+  if (await isDemoMode()) return { success: true };
+
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not signed in." };
 
   const { data: member } = await supabase
     .from("household_members")
-    .select("id, display_name, initials, role")
+    .select("display_name, initials, role")
     .eq("household_id", parsed.data.householdId)
     .eq("user_id", user.id)
     .maybeSingle();
+  if (!member || member.role === "viewer") return { error: "Not allowed to log." };
 
-  if (!member || member.role === "viewer") return { error: "Not authorized to log." };
-
-  const { error } = await supabase.from("entries").insert({
-    id: parsed.data.id,
-    household_id: parsed.data.householdId,
-    profile_id: parsed.data.profileId,
-    type: parsed.data.type,
-    occurred_at: parsed.data.occurredAt,
-    tz: parsed.data.tz,
-    data: parsed.data.data as import("@/lib/supabase/types").Json,
-    note: parsed.data.note ?? null,
-    flagged_for_doctor: parsed.data.flaggedForDoctor,
-    logged_by: user.id,
-    logged_by_name: member.display_name,
-    logged_by_initials: member.initials,
-  });
-
-  if (error) return { error: error.message };
-  return { success: true as const, entryId: parsed.data.id };
+  // Upsert-ignore on the client UUID makes outbox retries idempotent.
+  const { error } = await supabase.from("entries").upsert(
+    {
+      id: parsed.data.id,
+      household_id: parsed.data.householdId,
+      profile_id: parsed.data.profileId,
+      type: parsed.data.type,
+      occurred_at: parsed.data.occurredAt,
+      tz: parsed.data.tz,
+      data: data.data as Json,
+      note: parsed.data.note ?? null,
+      flagged_for_doctor: parsed.data.flaggedForDoctor,
+      logged_by: user.id,
+      logged_by_name: member.display_name,
+      logged_by_initials: member.initials,
+    },
+    { onConflict: "id", ignoreDuplicates: true },
+  );
+  return error ? { error: error.message } : { success: true };
 }
 
-export async function undoEntry(entryId: string, householdId: string) {
-  if (!z.string().uuid().safeParse(entryId).success) return { error: "Invalid entry ID." };
-  if (await isDemoMode()) return { success: true as const };
+const UpdateEntrySchema = z.object({
+  occurredAt: z.string().datetime({ offset: true }).optional(),
+  profileId: z.string().uuid().optional(),
+  data: z.record(z.unknown()).optional(),
+  note: z.string().max(2000).nullable().optional(),
+  flaggedForDoctor: z.boolean().optional(),
+});
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated." };
+export type UpdateEntryPatch = z.infer<typeof UpdateEntrySchema>;
 
-  // Verify the entry belongs to this household and was logged by this user
-  const { data: entry } = await supabase
-    .from("entries")
-    .select("id, logged_by")
-    .eq("id", entryId)
-    .eq("household_id", householdId)
-    .is("deleted_at", null)
-    .maybeSingle();
+export async function updateEntry(entryId: string, patch: UpdateEntryPatch): Promise<Result> {
+  if (!z.string().uuid().safeParse(entryId).success) return { error: "Invalid entry." };
+  const parsed = UpdateEntrySchema.safeParse(patch);
+  if (!parsed.success) return { error: "Invalid change." };
+  if (parsed.data.occurredAt && new Date(parsed.data.occurredAt).getTime() > Date.now() + 60_000) {
+    return { error: "Entries can't be in the future." };
+  }
+  if (await isDemoMode()) return { success: true };
 
-  if (!entry) return { error: "Entry not found." };
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not signed in." };
 
-  const { data: member } = await supabase
-    .from("household_members")
-    .select("role")
-    .eq("household_id", householdId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  // Only the logger or an admin can undo
-  if (entry.logged_by !== user.id && member?.role !== "admin") {
-    return { error: "Not authorized." };
+  const { data: before } = await supabase.from("entries").select("*").eq("id", entryId).maybeSingle();
+  if (!before) return { error: "Entry not found." };
+  if (parsed.data.data) {
+    const valid = validateEntryData(before.type, parsed.data.data);
+    if (!valid.success) return { error: valid.error };
   }
 
-  const { error } = await supabase
-    .from("entries")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", entryId);
+  const update = {
+    ...(parsed.data.occurredAt ? { occurred_at: parsed.data.occurredAt } : {}),
+    ...(parsed.data.profileId ? { profile_id: parsed.data.profileId } : {}),
+    ...(parsed.data.data ? { data: parsed.data.data as Json } : {}),
+    ...(parsed.data.note !== undefined ? { note: parsed.data.note } : {}),
+    ...(parsed.data.flaggedForDoctor !== undefined ? { flagged_for_doctor: parsed.data.flaggedForDoctor } : {}),
+    updated_at: new Date().toISOString(),
+  };
 
+  // RLS rejects the update unless the user wrote the entry or is an admin (ACC-09).
+  const { data: after, error } = await supabase.from("entries").update(update).eq("id", entryId).select("*").maybeSingle();
   if (error) return { error: error.message };
-  return { success: true as const };
+  if (!after) return { error: "You can only edit entries you logged." };
+
+  await supabase.from("entry_revisions").insert({
+    entry_id: entryId,
+    household_id: before.household_id,
+    changed_by: user.id,
+    before: before as unknown as Json,
+    after: after as unknown as Json,
+  });
+  return { success: true };
+}
+
+async function setDeleted(entryId: string, deletedAt: string | null): Promise<Result> {
+  if (!z.string().uuid().safeParse(entryId).success) return { error: "Invalid entry." };
+  if (await isDemoMode()) return { success: true };
+
+  const { supabase, user } = await authed();
+  if (!user) return { error: "Not signed in." };
+
+  const { data, error } = await supabase
+    .from("entries")
+    .update({ deleted_at: deletedAt, updated_at: new Date().toISOString() })
+    .eq("id", entryId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  return data ? { success: true } : { error: "You can only delete entries you logged." };
+}
+
+export async function deleteEntry(entryId: string): Promise<Result> {
+  return setDeleted(entryId, new Date().toISOString());
+}
+
+export async function restoreEntry(entryId: string): Promise<Result> {
+  return setDeleted(entryId, null);
 }

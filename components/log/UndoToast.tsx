@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 
 export interface ToastEntry {
@@ -17,19 +17,19 @@ interface Props {
   onDismiss: () => void;
 }
 
-const TOAST_DURATION_MS = 6000;
+export const TOAST_DURATION_MS = 6000;
 
 export function UndoToast({ toast, onUndo, onDismiss }: Props) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (!toast) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!toast || paused) return;
     timerRef.current = setTimeout(onDismiss, TOAST_DURATION_MS);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [toast, onDismiss]);
+  }, [toast, paused, onDismiss]);
 
   if (!toast) return null;
 
@@ -38,22 +38,26 @@ export function UndoToast({ toast, onUndo, onDismiss }: Props) {
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      className="fixed left-4 right-4 z-50 flex items-center gap-3 px-4 py-3.5 rounded-[20px] bg-foreground text-background shadow-lg"
-      style={{ bottom: "calc(72px + max(12px, env(safe-area-inset-bottom, 0px)))" }}
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      className="fixed left-4 right-4 z-50 flex items-center gap-3 py-2 pr-2 pl-4 rounded-xl bg-toast text-toast-foreground shadow-toast animate-toast-in md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[420px]"
+      style={{ bottom: "calc(100px + env(safe-area-inset-bottom, 0px))" }}
     >
-      <span className="w-8 h-8 flex-none rounded-full bg-[var(--color-profile)] flex items-center justify-center">
-        <Check size={16} strokeWidth={2.5} className="text-white" />
+      <span className="w-7 h-7 flex-none rounded-full bg-profile text-on-profile flex items-center justify-center">
+        <Check size={16} strokeWidth={2.5} aria-hidden="true" />
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-[15px] font-extrabold leading-snug truncate">
-          {toast.summary} for {toast.profileName}
+        <p className="text-label font-extrabold truncate">
+          {toast.summary} logged for {toast.profileName}
         </p>
-        <p className="text-[13px] opacity-70">{toast.time}</p>
+        <p className="text-caption text-toast-muted">{toast.time}</p>
       </div>
       <button
         type="button"
         onClick={() => onUndo(toast.entryId, toast.householdId)}
-        className="flex-none px-3 py-1.5 rounded-full bg-white/20 text-[15px] font-extrabold min-h-[36px]"
+        className="flex-none h-11 px-4 rounded-[14px] bg-toast-action text-body font-extrabold"
       >
         Undo
       </button>

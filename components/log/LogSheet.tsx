@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { X, Flag, ChevronDown, Loader2 } from "lucide-react";
 import { TimeChip } from "./TimeChip";
 import type { ToastEntry } from "./UndoToast";
-import { saveEntry } from "@/lib/actions/entries";
+import { useRepo } from "@/lib/data/repo-context";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -16,36 +16,48 @@ export interface LogSheetProps {
   open: boolean;
   onClose: () => void;
   onSaved: (toast: ToastEntry) => void;
-  /** Module-specific form content; receives a callback to provide entry data */
+  /** Muted summary under "Add details", e.g. "Size, rash, blowout, note" */
+  detailsHint?: string;
+  /** Sheet title when it isn't the module name (S07 uses the medication name). */
+  title?: string;
+  /** Appended to "for Leo", e.g. "as needed". */
+  subtitle?: string;
+  saveLabel?: string;
+  /** Runs before saving; return the data to save, or null to cancel (MED-07 duplicate-dose check). */
+  confirmSave?: (draft: { data: Record<string, unknown>; occurredAt: Date }) => Promise<Record<string, unknown> | null>;
   children?: (ctx: ModuleFormContext) => ReactNode;
 }
 
 export interface ModuleFormContext {
-  /** Module content should call this with data when ready to let Save proceed */
-  setData: (data: Record<string, unknown>, summary: string) => void;
-  /** Module content may call this to pre-flag the entry (e.g. calm-notice "Flag for doctor") */
+  /** ready=false keeps Save disabled until the required choice is made */
+  setData: (data: Record<string, unknown>, summary: string, ready?: boolean) => void;
   setFlagged: (flagged: boolean) => void;
+  flagged: boolean;
+  /** Portal target inside "Add details" for the module's optional chips. */
+  detailsEl: HTMLElement | null;
 }
 
-const MODULE_ICONS: Record<ModuleType, ReactNode> = {
-  bathroom:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 2a5 5 0 0 1 5 5v1H7V7a5 5 0 0 1 5-5Z"/><path d="M6 8h12l-1.5 11H7.5L6 8Z"/></svg>,
-  eating:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6h3v2a3 3 0 0 1-3 3h-1"/></svg>,
-  activity:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-  mood:       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
-  medication: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>,
+export const MODULE_ICONS: Record<ModuleType, ReactNode> = {
+  bathroom:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true"><path d="M12 3.5c3 3.6 5.5 6.6 5.5 10a5.5 5.5 0 0 1-11 0c0-3.4 2.5-6.4 5.5-10z"/></svg>,
+  eating:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1-3 3.5-3 6.5V13h3"/></svg>,
+  activity:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>,
+  mood:       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c2.2 1.6 4.8 1.6 7 0"/><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>,
+  medication: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true"><path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7z"/><path d="M8.5 8.5l7 7"/></svg>,
 };
 
-const MODULE_COLORS: Record<ModuleType, string> = {
-  bathroom:   "bg-[var(--module-bathroom)] text-[var(--module-bathroom-ink)]",
-  eating:     "bg-[var(--module-eating)] text-[var(--module-eating-ink)]",
-  activity:   "bg-[var(--module-activity)] text-[var(--module-activity-ink)]",
-  mood:       "bg-[var(--module-mood)] text-[var(--module-mood-ink)]",
-  medication: "bg-[var(--module-medication)] text-[var(--module-medication-ink)]",
+export const MODULE_CIRCLE: Record<ModuleType, string> = {
+  bathroom:   "bg-bathroom text-bathroom-ink",
+  eating:     "bg-eating text-eating-ink",
+  activity:   "bg-activity text-activity-ink",
+  mood:       "bg-mood text-mood-ink",
+  medication: "bg-medication text-medication-ink",
 };
 
-export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children }: LogSheetProps) {
+export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsHint, title, subtitle, saveLabel, confirmSave, children }: LogSheetProps) {
   const { householdId, activeProfileId, profiles } = useHousehold();
   const qc = useQueryClient();
+  const repo = useRepo();
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
 
@@ -56,27 +68,87 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children
   const [pending, setPending] = useState(false);
   const [moduleData, setModuleData] = useState<Record<string, unknown>>({});
   const [moduleSummary, setModuleSummary] = useState("");
+  const [ready, setReady] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [detailsEl, setDetailsEl] = useState<HTMLDivElement | null>(null);
 
-  const handleSetData = useCallback((data: Record<string, unknown>, summary: string) => {
+  const handleSetData = useCallback((data: Record<string, unknown>, summary: string, isReady = true) => {
     setModuleData(data);
     setModuleSummary(summary);
+    setReady(isReady);
+    if (isReady) setShowHint(false);
   }, []);
 
+  const reset = useCallback(() => {
+    setTime(new Date());
+    setNote("");
+    setFlagged(false);
+    setDetailsOpen(false);
+    setModuleData({});
+    setModuleSummary("");
+    setReady(false);
+    setConfirmDiscard(false);
+    setShowHint(false);
+    setError(null);
+  }, []);
+
+  const dirty = Object.keys(moduleData).length > 0 || note.trim() !== "";
+
+  const requestClose = useCallback(() => {
+    if (dirty && !confirmDiscard) {
+      setConfirmDiscard(true);
+      return;
+    }
+    reset();
+    onClose();
+  }, [dirty, confirmDiscard, reset, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    titleRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") requestClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, requestClose]);
+
   const handleSave = async () => {
+    if (!ready) {
+      setShowHint(true);
+      return;
+    }
     if (!activeProfileId || !activeProfile) return;
     setPending(true);
+    setError(null);
+
+    let data = moduleData;
+    if (confirmSave) {
+      const confirmed = await confirmSave({ data: moduleData, occurredAt: time });
+      if (!confirmed) {
+        setPending(false);
+        return;
+      }
+      data = confirmed;
+    }
 
     const entryId = crypto.randomUUID();
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const result = await saveEntry({
+    const result = await repo.saveEntry({
       id: entryId,
       householdId,
       profileId: activeProfileId,
       type: module,
       occurredAt: time.toISOString(),
       tz,
-      data: moduleData,
+      data,
       note: note.trim() || undefined,
       flaggedForDoctor: flagged,
     });
@@ -84,35 +156,22 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children
     setPending(false);
 
     if ("error" in result) {
-      // surface error inline — M5 adds better error states
-      alert(result.error);
+      setError(result.error ?? "Couldn't save. Try again.");
       return;
     }
 
-    // Vibrate on save (QL-04)
-    try { navigator.vibrate?.(50); } catch { /* ignore */ }
-
-    // Invalidate tile queries for this profile
-    qc.invalidateQueries({ queryKey: ["latest-entry", activeProfileId] });
-
-    const summary = moduleSummary || moduleLabel;
-    const timeStr = time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    try { navigator.vibrate?.(10); } catch { /* unsupported */ }
+    for (const key of ["latest-entry", "entries", "pending"]) qc.invalidateQueries({ queryKey: [key] });
 
     onSaved({
       entryId,
       householdId,
       profileName: activeProfile.name,
-      summary,
-      time: timeStr,
+      summary: moduleSummary || moduleLabel,
+      time: time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     });
 
-    // Reset sheet state
-    setTime(new Date());
-    setNote("");
-    setFlagged(false);
-    setDetailsOpen(false);
-    setModuleData({});
-    setModuleSummary("");
+    reset();
     onClose();
   };
 
@@ -120,108 +179,135 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children
 
   return (
     <>
-      <div aria-hidden="true" className="fixed inset-0 bg-foreground/40 z-40" onClick={onClose} />
+      <div aria-hidden="true" className="fixed inset-0 bg-[var(--overlay)] z-40 animate-fade-in" onClick={requestClose} />
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="sheet-title"
-        className="fixed left-0 right-0 bottom-0 z-50 flex flex-col rounded-t-[28px] bg-[var(--color-card)] max-h-[90dvh]"
-        style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom, 0px))" }}
+        className="fixed left-0 right-0 bottom-0 z-50 flex flex-col rounded-t-sheet bg-card max-h-[calc(100dvh-56px)] animate-sheet-in md:left-1/2 md:right-auto md:bottom-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[480px] md:rounded-sheet"
       >
-        <div aria-hidden="true" className="w-10 h-[5px] mx-auto mt-3 flex-none rounded-full bg-[var(--color-border)]" />
+        <div aria-hidden="true" className="w-10 h-[5px] mt-2.5 flex-none self-center rounded-full bg-grabber" />
 
-        {/* Sheet header */}
-        <header className="flex-none flex items-center gap-3 px-5 pt-3 pb-2">
-          <span className={`w-12 h-12 flex-none rounded-full flex items-center justify-center ${MODULE_COLORS[module]}`}>
+        <header className="flex-none flex items-center gap-3 px-5 pt-3 pb-1">
+          <span className={`w-12 h-12 flex-none rounded-full flex items-center justify-center ${MODULE_CIRCLE[module]}`}>
             {MODULE_ICONS[module]}
           </span>
           <div className="flex-1 min-w-0">
-            <h2 id="sheet-title" className="font-display text-[22px] font-semibold leading-tight">
-              {moduleLabel}
+            <h2 id="sheet-title" ref={titleRef} tabIndex={-1} className="font-display text-title-1 outline-none">
+              {title ?? moduleLabel}
             </h2>
-            <p className="text-[13px] text-muted-foreground font-bold">
-              {activeProfile?.name ?? ""}
+            <p className="flex items-center gap-1.5 text-label font-bold text-muted-foreground">
+              <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-profile" />
+              for {activeProfile?.name ?? ""}{subtitle ? ` · ${subtitle}` : ""}
             </p>
           </div>
           <button
             type="button"
             aria-label="Close"
-            onClick={onClose}
-            className="w-10 h-10 flex-none rounded-full bg-[var(--color-secondary)] flex items-center justify-center"
+            onClick={requestClose}
+            className="w-11 h-11 flex-none rounded-full bg-secondary flex items-center justify-center"
           >
-            <X size={18} strokeWidth={2} />
+            <X size={20} strokeWidth={2} aria-hidden="true" />
           </button>
         </header>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-5">
-          {/* Module content */}
-          {children
-            ? children({ setData: handleSetData, setFlagged })
-            : (
-              <p className="text-muted-foreground text-[15px]">
-                Options coming in M5.
-              </p>
-            )
-          }
+        <div className="flex-1 overflow-y-auto px-5 pt-3 pb-4 space-y-4">
+          {children?.({ setData: handleSetData, setFlagged, flagged, detailsEl })}
 
-          {/* Time chip (QL-03) */}
-          <div>
-            <p className="text-[13px] font-extrabold text-muted-foreground mb-2 uppercase tracking-wide">When</p>
-            <TimeChip value={time} onChange={setTime} />
-          </div>
-
-          {/* Add details (QL-05) */}
-          <div>
+          <div className="rounded-lg bg-secondary">
             <button
               type="button"
+              aria-expanded={detailsOpen}
               onClick={() => setDetailsOpen((v) => !v)}
-              className="flex items-center gap-1.5 text-[14px] font-extrabold text-[var(--color-profile)]"
+              className="w-full min-h-button flex items-center gap-2.5 px-4 text-left"
             >
-              <ChevronDown
-                size={16}
-                strokeWidth={2.5}
-                className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`}
-              />
-              Add details
+              <span className="flex-1 flex flex-col">
+                <span className="text-body font-extrabold">Add details</span>
+                {!detailsOpen && (
+                  <span className="text-caption text-muted-foreground">
+                    {flagged ? "Flagged for doctor" : detailsHint ?? "Note, flag for doctor"}
+                  </span>
+                )}
+              </span>
+              <ChevronDown size={20} strokeWidth={2} aria-hidden="true" className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
             </button>
-            {detailsOpen && (
-              <div className="mt-3 space-y-3">
-                <textarea
-                  placeholder="Note (optional)"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  rows={3}
-                  className="w-full rounded-2xl border-[1.5px] border-[var(--color-border)] bg-white px-4 py-3 text-[15px] font-bold resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-profile)]"
-                />
-                <label className="flex items-center gap-3 min-h-[44px]">
+            <div hidden={!detailsOpen} className="px-4 pb-4 space-y-3">
+              <div ref={setDetailsEl} className="space-y-3 empty:hidden" />
+                <label className="block">
+                  <span className="sr-only">Note</span>
+                  <textarea
+                    placeholder="Note (optional)"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border border-border bg-card px-4 py-3 text-[16px] font-bold resize-none focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 min-h-touch-min">
+                  <span className="flex flex-col">
+                    <span className="flex items-center gap-1.5 text-body font-extrabold">
+                      <Flag size={16} strokeWidth={2} aria-hidden="true" />
+                      Flag for doctor
+                    </span>
+                    <span className="text-caption text-muted-foreground">Shows up in the next doctor report</span>
+                  </span>
                   <input
                     type="checkbox"
+                    role="switch"
                     checked={flagged}
                     onChange={(e) => setFlagged(e.target.checked)}
-                    className="w-5 h-5 rounded accent-[var(--color-profile)]"
+                    className="switch"
                   />
-                  <span className="flex items-center gap-1.5 text-[15px] font-bold">
-                    <Flag size={15} strokeWidth={2} />
-                    Flag for doctor
-                  </span>
                 </label>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Sticky Save */}
-        <div className="flex-none px-5 pt-3">
+        {(showHint || error) && (
+          <p role="alert" className="flex-none px-5 pb-1 text-caption font-bold text-destructive">
+            {error ?? "Pick what happened"}
+          </p>
+        )}
+
+        <footer
+          className="flex-none flex items-center gap-2.5 px-5 pt-3 border-t border-divider"
+          style={{ paddingBottom: "calc(28px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <TimeChip value={time} onChange={setTime} />
           <button
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="w-full min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+            aria-disabled={!ready || pending}
+            className={`flex-1 h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg ${!ready ? "opacity-40" : ""} disabled:opacity-60`}
           >
-            {pending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" /> : "Save"}
+            {pending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" aria-label="Saving" /> : saveLabel ?? "Save"}
           </button>
-        </div>
+        </footer>
+
+        {confirmDiscard && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-t-sheet bg-[var(--overlay)] px-6">
+            <div role="alertdialog" aria-modal="true" aria-labelledby="discard-title" className="w-full max-w-sm rounded-tile bg-card p-6 shadow-dialog space-y-3">
+              <h3 id="discard-title" className="font-display text-title-2 text-center">Discard this entry?</h3>
+              <p className="text-body text-foreground-2 text-center">Nothing has been saved yet.</p>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setConfirmDiscard(false)}
+                className="w-full h-button rounded-full bg-primary text-primary-foreground text-body-lg"
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                onClick={() => { reset(); onClose(); }}
+                className="w-full h-button rounded-full border-[1.5px] border-border-strong bg-card text-body-lg text-destructive"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </>
   );

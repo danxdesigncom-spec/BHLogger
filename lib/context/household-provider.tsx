@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useCallback,
-  useState,
-  type ReactNode,
-} from "react";
-import type { ProfileColor } from "@/lib/supabase/types";
+import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
+import type { ProfileColor, Toileting } from "@/lib/supabase/types";
+import { HouseholdSettingsSchema, type HouseholdSettings } from "@/lib/schemas/household";
 
 export interface ProfileSummary {
   id: string;
@@ -15,6 +10,12 @@ export interface ProfileSummary {
   color: ProfileColor;
   initials: string;
   careStage: "baby" | "child" | "teen_adult";
+  dob: string | null;
+  toileting: Toileting;
+  feedingMethods: string[];
+  enabledModules: string[];
+  settings: Record<string, unknown>;
+  careCard: Record<string, unknown>;
 }
 
 export interface MemberSummary {
@@ -28,11 +29,15 @@ export interface MemberSummary {
 }
 
 interface HouseholdContextValue {
+  mode: "live" | "demo";
   householdId: string;
+  householdName: string;
+  householdSettings: HouseholdSettings;
   profiles: ProfileSummary[];
   members: MemberSummary[];
   currentMember: MemberSummary;
   activeProfileId: string | null;
+  activeProfile: ProfileSummary | null;
   setActiveProfile: (id: string) => void;
 }
 
@@ -40,14 +45,20 @@ const HouseholdContext = createContext<HouseholdContextValue | null>(null);
 
 export function HouseholdProvider({
   children,
+  mode = "live",
   householdId,
+  householdName = "",
+  householdSettings,
   profiles,
   members,
   currentMember,
   initialActiveProfileId,
 }: {
   children: ReactNode;
+  mode?: "live" | "demo";
   householdId: string;
+  householdName?: string;
+  householdSettings?: unknown;
   profiles: ProfileSummary[];
   members: MemberSummary[];
   currentMember: MemberSummary;
@@ -59,22 +70,29 @@ export function HouseholdProvider({
 
   const setActiveProfile = useCallback((id: string) => {
     setActiveProfileIdState(id);
-    const profile = profiles.find((p) => p.id === id);
-    if (profile) {
-      document.documentElement.setAttribute("data-profile-color", profile.color);
-      document.cookie = `bl-profile-color=${profile.color}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-    }
     document.cookie = `bl-active-profile=${id}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  }, [profiles]);
+  }, []);
+
+  // Non-negotiable 4: the accent always follows the active profile (data-profile-color on <html>).
+  const activeColor = profiles.find((p) => p.id === activeProfileId)?.color;
+  useEffect(() => {
+    if (!activeColor) return;
+    document.documentElement.setAttribute("data-profile-color", activeColor);
+    document.cookie = `bl-profile-color=${activeColor}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  }, [activeColor]);
 
   return (
     <HouseholdContext.Provider
       value={{
+        mode,
         householdId,
+        householdName,
+        householdSettings: HouseholdSettingsSchema.parse(householdSettings ?? {}),
         profiles,
         members,
         currentMember,
         activeProfileId,
+        activeProfile: profiles.find((p) => p.id === activeProfileId) ?? null,
         setActiveProfile,
       }}
     >

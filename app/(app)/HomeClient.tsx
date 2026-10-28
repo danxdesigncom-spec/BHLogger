@@ -1,327 +1,228 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { useHousehold } from "@/lib/context/household-provider";
-import { useLatestEntry } from "@/lib/hooks/useLatestEntry";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, ChevronRight, Droplet, Moon } from "lucide-react";
 import { ProfileSwitcherSheet } from "@/components/profile/ProfileSwitcherSheet";
-import { LogSheet, type ModuleType } from "@/components/log/LogSheet";
+import { LogSheet, MODULE_ICONS, type ModuleType } from "@/components/log/LogSheet";
 import { ModuleTile } from "@/components/log/ModuleTile";
-import { UndoToast, type ToastEntry } from "@/components/log/UndoToast";
+import { useUndoToast } from "@/components/log/useUndoToast";
 import { BathroomSheet } from "@/components/log/modules/BathroomSheet";
 import { EatingSheet } from "@/components/log/modules/EatingSheet";
-import { FeedingSheet } from "@/components/log/modules/FeedingSheet";
 import { ActivitySheet } from "@/components/log/modules/ActivitySheet";
 import { MoodSheet } from "@/components/log/modules/MoodSheet";
-import { undoEntry } from "@/lib/actions/entries";
-import { useQueryClient } from "@tanstack/react-query";
+import { Banners, type BannerItem } from "@/components/home/Banners";
+import { useHousehold } from "@/lib/context/household-provider";
+import { useEntries, useLatestEntry, useMedications, useProfileSettings } from "@/lib/data/hooks";
+import { entryShortLabel, formatAgo, formatClock, tileStatus, type SummaryContext } from "@/lib/entries/summary";
+import { bathroomTileLabel, formatDose } from "@/lib/options";
+import { todaySlots } from "@/lib/meds/schedule";
+import { bmAlert } from "@/lib/home/alerts";
+import { startOfDay } from "@/lib/dates";
 
-// ─── Profile color map ────────────────────────────────────────────────────────
-
-const COLOR_BG: Record<string, string> = {
-  violet: "bg-profile",
-  teal:   "bg-profile",
-  rose:   "bg-profile",
-  amber:  "bg-profile",
-  blue:   "bg-profile",
+const LOG_PARAM: Record<string, ModuleType> = {
+  bathroom: "bathroom", diaper: "bathroom", eating: "eating", feeding: "eating", activity: "activity", mood: "mood",
 };
 
-// ─── Module icon SVGs ─────────────────────────────────────────────────────────
-
-function BathroomIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M12 2a5 5 0 0 1 5 5v1H7V7a5 5 0 0 1 5-5Z"/>
-      <path d="M6 8h12l-1.5 11H7.5L6 8Z"/>
-    </svg>
-  );
-}
-function EatingIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/>
-      <path d="M21 15V2a5 5 0 0 0-5 5v6h3v2a3 3 0 0 1-3 3h-1"/>
-    </svg>
-  );
-}
-function MoodIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-      <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-    </svg>
-  );
-}
-function ActivityIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-    </svg>
-  );
-}
-function MedIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/>
-      <path d="m8.5 8.5 7 7"/>
-    </svg>
-  );
-}
-
-// ─── Relative time formatter ──────────────────────────────────────────────────
-
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1)  return "just now";
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs} h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days} d ago`;
-}
-
-// ─── Tile status formatters ───────────────────────────────────────────────────
-
-function bathroomStatus(entry: { occurred_at: string; data: unknown } | null, isBaby: boolean): { status: string | null; alert: string | null } {
-  if (!entry) return { status: "Nothing logged yet", alert: null };
-  const data = entry.data as Record<string, unknown>;
-  const t = data?.type as string;
-  const label = t === "pee" ? (isBaby ? "Wet" : "Pee") : t === "bm" ? (isBaby ? "Dirty" : "BM") : "Both";
-  return { status: `${label} · ${relativeTime(entry.occurred_at)}`, alert: null };
-}
-
-function simpleStatus(entry: { occurred_at: string } | null): string | null {
-  if (!entry) return "Nothing logged yet";
-  return relativeTime(entry.occurred_at);
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-
-type SheetModule = ModuleType | null;
-
 export function HomeClient() {
-  const { profiles, activeProfileId, setActiveProfile } = useHousehold();
-  const qc = useQueryClient();
-
-  const activeProfile = profiles.find((p) => p.id === activeProfileId);
-  const isBaby = activeProfile?.careStage === "baby";
-  const otherProfiles = profiles.filter((p) => p.id !== activeProfileId);
+  const { profiles, activeProfile, activeProfileId, setActiveProfile, householdSettings, currentMember } = useHousehold();
+  const router = useRouter();
+  const params = useSearchParams();
+  const openSheet = LOG_PARAM[params.get("log") ?? ""] ?? null;
+  const setOpenSheet = (m: ModuleType | null) => router.replace(m ? `/?log=${m}` : "/", { scroll: false });
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
-  const [openSheet, setOpenSheet] = useState<SheetModule>(null);
-  const [toast, setToast] = useState<ToastEntry | null>(null);
+  const { showToast, toastElement } = useUndoToast();
+  const settings = useProfileSettings(activeProfileId);
 
-  // Tile status queries
+  const stage = activeProfile?.careStage ?? "child";
+  const toileting = activeProfile?.toileting ?? "toilet";
+  const isBaby = stage === "baby";
+  const enabled = new Set(activeProfile?.enabledModules ?? []);
+  const other = profiles.find((p) => p.id !== activeProfileId);
+
   const bathroom = useLatestEntry(activeProfileId, "bathroom");
-  const eating   = useLatestEntry(activeProfileId, "eating");
-  const mood     = useLatestEntry(activeProfileId, "mood");
+  const eating = useLatestEntry(activeProfileId, "eating");
+  const mood = useLatestEntry(activeProfileId, "mood");
   const activity = useLatestEntry(activeProfileId, "activity");
-  const medication = useLatestEntry(activeProfileId, "medication");
+  const lastBm = useLatestEntry(activeProfileId, "bathroom", { kind: "bm" });
+  const lastBoth = useLatestEntry(activeProfileId, "bathroom", { kind: "both" });
+  const meds = useMedications(activeProfileId);
+  const todayStart = useMemo(() => startOfDay(new Date()).toISOString(), []);
+  const todayDoses = useEntries({ profileId: activeProfileId ?? undefined, types: ["medication"], from: todayStart }, !!activeProfileId);
 
-  const dismissToast = useCallback(() => setToast(null), []);
+  const medName = (id: string) => meds.data?.find((m) => m.id === id)?.name;
+  const ctx: SummaryContext = { careStage: stage, toileting, volumeUnit: householdSettings.volume_unit, medicationName: medName };
 
-  const handleUndo = useCallback(async (entryId: string, householdId: string) => {
-    setToast(null);
-    await undoEntry(entryId, householdId);
-    qc.invalidateQueries({ queryKey: ["latest-entry", activeProfileId] });
-  }, [activeProfileId, qc]);
+  const now = new Date();
+  const lastBmIso = [lastBm.data?.occurred_at, lastBoth.data?.occurred_at].filter(Boolean).sort().at(-1) ?? null;
+  const bm = bmAlert(lastBmIso, settings.bm_alert_days, now);
 
-  const { status: bathroomStatusText, alert: bathroomAlert } = bathroomStatus(bathroom.data ?? null, isBaby);
+  // ─── Medications: today's slots across active scheduled meds ──────────────
+  const slots = (meds.data ?? [])
+    .filter((m) => m.active && m.kind === "scheduled")
+    .flatMap((m) => todaySlots(m, todayDoses.data ?? [], now).map((s) => ({ med: m, ...s })));
+  const givenCount = slots.filter((s) => s.state === "given").length;
+  const notLogged = slots.filter((s) => s.state === "not_logged");
+  const nextSlot = slots.filter((s) => s.state === "due" || s.state === "upcoming").sort((a, b) => a.slot.getTime() - b.slot.getTime())[0];
+  const medStatus = !meds.data?.some((m) => m.active)
+    ? "No medications yet"
+    : slots.length
+      ? notLogged.length
+        ? `${notLogged.length} not logged`
+        : `${givenCount} of ${slots.length} given today`
+      : "As needed only";
+
+  // ─── Banners (QL-08) ─────────────────────────────────────────────────────
+  const banners: BannerItem[] = [];
+  for (const s of notLogged) {
+    banners.push({
+      key: `med-${s.med.id}-${s.slot.toISOString()}`, priority: 0, tone: "warning",
+      icon: <span className="[&_svg]:w-6 [&_svg]:h-6">{MODULE_ICONS.medication}</span>,
+      title: `${s.med.name} not logged`, sub: `Was due ${formatClock(s.slot.toISOString())} · ${formatDose(Number(s.med.default_dose), s.med.dose_unit)}`,
+      action: { label: "Give", href: `/meds?give=${s.med.id}` },
+    });
+  }
+  if (bm.alert && enabled.has("bathroom")) {
+    banners.push({
+      key: `bm-${activeProfileId}-${lastBmIso ?? "none"}`, priority: 1, tone: "warning",
+      icon: <Droplet size={24} strokeWidth={2} aria-hidden="true" />,
+      title: `${bm.days} days since ${activeProfile?.name}'s last BM`, sub: `Your alert is set to ${settings.bm_alert_days} days`,
+      action: { label: "Log BM", onClick: () => setOpenSheet("bathroom") },
+    });
+  }
+  if (nextSlot && nextSlot.slot.getTime() - now.getTime() < 2 * 3_600_000) {
+    const mins = Math.round((nextSlot.slot.getTime() - now.getTime()) / 60_000);
+    banners.push({
+      key: `due-${nextSlot.med.id}-${nextSlot.slot.toISOString()}`, priority: 2, tone: "amber",
+      icon: <Moon size={24} strokeWidth={2} aria-hidden="true" />,
+      title: `${nextSlot.med.name} at ${formatClock(nextSlot.slot.toISOString())}`,
+      sub: `${mins > 0 ? `In ${mins} minutes` : "Due now"} · ${formatDose(Number(nextSlot.med.default_dose), nextSlot.med.dose_unit)}`,
+      action: { label: "Give", href: `/meds?give=${nextSlot.med.id}` },
+    });
+  }
+  if (isBaby && eating.data && enabled.has("eating")) {
+    banners.push({
+      key: `fed-${eating.data.id}`, priority: 3, tone: "profile",
+      icon: <span className="[&_svg]:w-6 [&_svg]:h-6">{MODULE_ICONS.eating}</span>,
+      title: `Last fed ${formatAgo(eating.data.occurred_at, now)}`,
+      sub: `${entryShortLabel(eating.data, ctx)} · ${formatClock(eating.data.occurred_at)}`,
+      action: { label: "Log feed", onClick: () => setOpenSheet("eating") },
+    });
+  }
+
+  const nothingYet = [bathroom, eating, mood, activity].every((q) => q.isFetched && !q.data);
+  const canLog = currentMember.role !== "viewer";
+  const tileLabels: Record<ModuleType, string> = {
+    bathroom: bathroomTileLabel(stage, toileting),
+    eating: isBaby ? "Feeding" : "Eating",
+    mood: "Mood",
+    activity: "Activity",
+    medication: "Medication",
+  };
 
   return (
     <>
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-30 bg-[var(--color-card)]/95 backdrop-blur-sm">
-        <div
-          className="flex items-center justify-between px-4 h-14"
-          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      <header className="flex items-center justify-between gap-3 px-5 pt-[18px] pb-1">
+        <button
+          type="button"
+          aria-label={`Switch profile. Current profile: ${activeProfile?.name ?? ""}`}
+          onClick={() => setSwitcherOpen(true)}
+          className="min-h-touch flex items-center gap-2 py-1.5 pl-1.5 pr-3.5 rounded-full bg-card shadow-raised"
         >
-          {/* Profile switcher pill */}
+          <span aria-hidden="true" data-profile-color={activeProfile?.color} className="w-9 h-9 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5">
+            {activeProfile?.initials}
+          </span>
+          <span className="text-body-lg">{activeProfile?.name}</span>
+          <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
+        </button>
+        {other && (
           <button
             type="button"
-            aria-label={`Active profile: ${activeProfile?.name ?? "Profile"}. Tap to switch.`}
-            onClick={() => setSwitcherOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 min-h-[44px] rounded-full bg-[var(--color-profile-tint)] text-[var(--color-profile)] font-extrabold text-[15px]"
+            aria-label={`Switch to ${other.name}`}
+            onClick={() => setActiveProfile(other.id)}
+            data-profile-color={other.color}
+            className="w-12 h-12 rounded-full border-[3px] border-card bg-profile text-on-profile shadow-raised flex items-center justify-center font-display text-title-5"
           >
-            <span
-              aria-hidden="true"
-              data-profile-color={activeProfile?.color ?? "violet"} className={`w-7 h-7 rounded-full flex items-center justify-center font-display text-[13px] font-semibold text-white ${COLOR_BG[activeProfile?.color ?? "violet"] ?? ""}`}
-            >
-              {activeProfile?.initials ?? "?"}
-            </span>
-            {activeProfile?.name ?? "Profile"}
-            <ChevronDown size={14} strokeWidth={2.5} />
+            {other.initials}
           </button>
-
-          {/* Secondary profile shortcut */}
-          {otherProfiles[0] && (
-            <button
-              type="button"
-              aria-label={`Switch to ${otherProfiles[0].name}`}
-              onClick={() => setActiveProfile(otherProfiles[0].id)}
-              data-profile-color={otherProfiles[0].color} className={`w-10 h-10 rounded-full flex items-center justify-center font-display text-[15px] font-semibold text-white ${COLOR_BG[otherProfiles[0].color] ?? ""}`}
-            >
-              {otherProfiles[0].initials}
-            </button>
-          )}
-        </div>
+        )}
       </header>
 
-      {/* ── Body ── */}
-      <div className="px-4 pt-2 pb-4 space-y-4">
-        {/* Greeting */}
-        <h1 className="font-display text-[32px] font-semibold leading-tight">
-          How&rsquo;s {activeProfile?.name ?? "they"} doing?
-        </h1>
+      <div className="px-5 pt-3.5 pb-4 space-y-4">
+        <h1 className="font-display text-display-1">How&rsquo;s {activeProfile?.name ?? "everyone"} doing?</h1>
 
-        {/* Empty state for first-run */}
-        {!bathroom.data && !eating.data && !mood.data && !activity.data && !medication.data && (
-          <div className="rounded-[20px] bg-white p-4 space-y-1.5">
-            <p className="font-extrabold text-[15px]">Nothing logged yet</p>
-            <ul className="text-[13px] text-muted-foreground space-y-1">
-              <li>• Tap a tile to log in 3 taps or fewer</li>
-              <li>• Entries sync to every caregiver instantly</li>
-              <li>• Use the Undo button if you make a mistake</li>
+        {canLog && <Banners items={banners} />}
+
+        {nothingYet && (
+          <div className="rounded-card bg-card p-4 shadow-card space-y-1.5">
+            <p className="text-body-md">Nothing logged yet</p>
+            <ul className="text-caption text-muted-foreground space-y-1">
+              <li>Tap a tile to log in 3 taps or fewer.</li>
+              <li>Entries sync to every caregiver.</li>
+              <li>Made a mistake? Tap Undo, or edit it in Timeline.</li>
             </ul>
           </div>
         )}
 
-        {/* Module tile grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <ModuleTile
-            module="bathroom"
-            label={isBaby ? "Diaper" : "Bathroom"}
-            icon={<BathroomIcon />}
-            status={bathroomStatusText}
-            alertPill={bathroomAlert}
-            onClick={() => setOpenSheet("bathroom")}
-          />
-          <ModuleTile
-            module="eating"
-            label={isBaby ? "Feeding" : "Eating"}
-            icon={<EatingIcon />}
-            status={simpleStatus(eating.data ?? null)}
-            onClick={() => setOpenSheet("eating")}
-          />
-          <ModuleTile
-            module="mood"
-            label="Mood"
-            icon={<MoodIcon />}
-            status={simpleStatus(mood.data ?? null)}
-            onClick={() => setOpenSheet("mood")}
-          />
-          <ModuleTile
-            module="activity"
-            label="Activity"
-            icon={<ActivityIcon />}
-            status={simpleStatus(activity.data ?? null)}
-            onClick={() => setOpenSheet("activity")}
-          />
-
-          {/* Medication — full width */}
-          <button
-            type="button"
-            onClick={() => setOpenSheet("medication")}
-            className="col-span-2 flex items-center gap-4 px-4 min-h-[72px] rounded-[20px] bg-[var(--module-medication)] text-left transition-opacity active:opacity-75"
-          >
-            <span className="w-10 h-10 flex-none rounded-full bg-white/70 text-[var(--module-medication-ink)] flex items-center justify-center">
-              <MedIcon />
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[17px] font-extrabold text-[var(--module-medication-ink)]">Medication</p>
-              <p className="text-[13px] font-bold text-[var(--module-medication-ink)] opacity-80">
-                {simpleStatus(medication.data ?? null)}
-              </p>
-            </div>
-            <ChevronRight size={18} strokeWidth={2} className="text-[var(--module-medication-ink)] opacity-60 flex-none" />
-          </button>
-        </div>
-
-        {/* Quick taps — P1 stubs */}
-        <div>
-          <p className="text-[15px] font-extrabold mb-3">Quick taps</p>
-          <div className="flex gap-3">
-            {[
-              { label: isBaby ? "Wet diaper" : "Pee", icon: <BathroomIcon /> },
-              { label: isBaby ? "Dirty diaper" : "BM", icon: <BathroomIcon /> },
-            ].map(({ label, icon }) => (
-              <button
-                key={label}
-                type="button"
-                aria-label={`${label} (quick tap — coming soon)`}
-                disabled
-                className="flex flex-col items-center gap-1 opacity-50"
-              >
-                <span className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center text-[var(--module-bathroom-ink)]">
-                  {icon}
+        <nav aria-label={`Log for ${activeProfile?.name ?? ""}`} className="grid grid-cols-2 gap-3">
+          {enabled.has("bathroom") && (
+            <ModuleTile
+              module="bathroom"
+              label={tileLabels.bathroom}
+              icon={<Droplet size={22} strokeWidth={2} aria-hidden="true" />}
+              status={tileStatus(bathroom.data, ctx, now)}
+              alertPill={bm.alert ? bm.label : null}
+              onClick={() => canLog && setOpenSheet("bathroom")}
+            />
+          )}
+          {enabled.has("eating") && (
+            <ModuleTile module="eating" label={tileLabels.eating} icon={MODULE_ICONS.eating} status={tileStatus(eating.data, ctx, now)} onClick={() => canLog && setOpenSheet("eating")} />
+          )}
+          {enabled.has("mood") && (
+            <ModuleTile module="mood" label="Mood" icon={MODULE_ICONS.mood} status={tileStatus(mood.data, ctx, now)} onClick={() => canLog && setOpenSheet("mood")} />
+          )}
+          {enabled.has("activity") && (
+            <ModuleTile module="activity" label="Activity" icon={MODULE_ICONS.activity} status={tileStatus(activity.data, ctx, now)} onClick={() => canLog && setOpenSheet("activity")} />
+          )}
+          {enabled.has("medication") && (
+            <Link
+              href="/meds"
+              aria-label={`Medication. ${medStatus}`}
+              className="col-span-2 flex items-center gap-3.5 min-h-20 p-4 rounded-tile bg-medication text-foreground"
+            >
+              <span className="w-11 h-11 flex-none rounded-full bg-card text-medication-ink flex items-center justify-center [&_svg]:w-[22px] [&_svg]:h-[22px]">
+                {MODULE_ICONS.medication}
+              </span>
+              <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <span className="font-display text-title-3">Medication</span>
+                <span className={notLogged.length ? "self-start px-2.5 py-0.5 rounded-full bg-card text-caption font-extrabold text-warning-ink" : "text-label font-bold text-foreground-2"}>
+                  {medStatus}
                 </span>
-                <span className="text-[12px] font-bold text-muted-foreground">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+              </span>
+              <ChevronRight size={22} strokeWidth={2} aria-hidden="true" />
+            </Link>
+          )}
+        </nav>
       </div>
 
-      {/* ── Profile switcher sheet ── */}
       <ProfileSwitcherSheet open={switcherOpen} onClose={() => setSwitcherOpen(false)} />
 
-      {/* ── Bathroom log sheet ── */}
-      <LogSheet
-        module="bathroom"
-        moduleLabel={isBaby ? "Diaper" : "Bathroom"}
-        open={openSheet === "bathroom"}
-        onClose={() => setOpenSheet(null)}
-        onSaved={setToast}
-      >
-        {(ctx) => <BathroomSheet ctx={ctx} />}
+      <LogSheet module="bathroom" moduleLabel={tileLabels.bathroom} detailsHint={toileting === "diapers" ? "Size, rash, blowout, note" : "Size, pain, blood, note"} open={openSheet === "bathroom"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+        {(c) => <BathroomSheet ctx={c} />}
+      </LogSheet>
+      <LogSheet module="eating" moduleLabel={tileLabels.eating} detailsHint={isBaby ? "Note, flag for doctor" : "Food groups, reactions, note"} open={openSheet === "eating"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+        {(c) => <EatingSheet ctx={c} />}
+      </LogSheet>
+      <LogSheet module="activity" moduleLabel="Activity" open={openSheet === "activity"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+        {(c) => <ActivitySheet ctx={c} />}
+      </LogSheet>
+      <LogSheet module="mood" moduleLabel="Mood" detailsHint="Energy, note, flag for doctor" open={openSheet === "mood"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+        {(c) => <MoodSheet ctx={c} />}
       </LogSheet>
 
-      {/* ── Eating / Feeding log sheet ── */}
-      <LogSheet
-        module="eating"
-        moduleLabel={isBaby ? "Feeding" : "Eating"}
-        open={openSheet === "eating"}
-        onClose={() => setOpenSheet(null)}
-        onSaved={setToast}
-      >
-        {(ctx) => isBaby ? <FeedingSheet ctx={ctx} /> : <EatingSheet ctx={ctx} />}
-      </LogSheet>
-
-      {/* ── Activity log sheet ── */}
-      <LogSheet
-        module="activity"
-        moduleLabel="Activity"
-        open={openSheet === "activity"}
-        onClose={() => setOpenSheet(null)}
-        onSaved={setToast}
-      >
-        {(ctx) => <ActivitySheet ctx={ctx} />}
-      </LogSheet>
-
-      {/* ── Mood log sheet ── */}
-      <LogSheet
-        module="mood"
-        moduleLabel="Mood"
-        open={openSheet === "mood"}
-        onClose={() => setOpenSheet(null)}
-        onSaved={setToast}
-      >
-        {(ctx) => <MoodSheet ctx={ctx} />}
-      </LogSheet>
-
-      {/* ── Medication log sheet (stub — M6) ── */}
-      <LogSheet
-        module="medication"
-        moduleLabel="Medication"
-        open={openSheet === "medication"}
-        onClose={() => setOpenSheet(null)}
-        onSaved={setToast}
-      />
-
-      {/* ── Undo toast ── */}
-      <UndoToast toast={toast} onUndo={handleUndo} onDismiss={dismissToast} />
+      {toastElement}
     </>
   );
 }

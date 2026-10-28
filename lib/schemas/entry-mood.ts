@@ -16,6 +16,8 @@ export const MoodDataSchema = z
     feelings: z.array(z.string()).default([]),
     // MOOD-03: notable behaviors with optional severity and duration
     behaviors: z.array(BehaviorSchema).default([]),
+    // MOOD-05 (P1): optional energy level
+    energy: z.enum(["low", "normal", "high"]).optional(),
   })
   .strict();
 

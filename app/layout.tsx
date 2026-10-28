@@ -53,7 +53,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const theme = (cookieStore.get("bl-theme")?.value ?? DEFAULT_THEME) as Theme;
+  const pref = cookieStore.get("bl-theme")?.value ?? DEFAULT_THEME;
+  const theme = (["light", "dark", "night"].includes(pref) ? pref : "light") as Theme;
   const profileColor = (
     cookieStore.get("bl-profile-color")?.value ?? DEFAULT_PROFILE_COLOR
   ) as ProfileColor;
@@ -66,6 +67,15 @@ export default async function RootLayout({
       className={`${fredoka.variable} ${nunito.variable}`}
       suppressHydrationWarning
     >
+      {pref === "system" && (
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `document.documentElement.dataset.theme=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"`,
+            }}
+          />
+        </head>
+      )}
       <body className="bg-background text-foreground font-sans antialiased">
         {children}
       </body>

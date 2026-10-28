@@ -67,6 +67,27 @@ export const EntrySchema = z.discriminatedUnion("type", [
   MedicationEntrySchema,
 ]);
 
+// ─── Per-type data validation ────────────────────────────────────────────────
+// Known types get their strict schema; unknown (Phase 2+) types accept any object (QL-14).
+
+const DATA_SCHEMAS: Record<string, z.ZodTypeAny> = {
+  bathroom: BathroomDataSchema,
+  eating: EatingDataSchema,
+  activity: ActivityDataSchema,
+  mood: MoodDataSchema,
+  medication: MedicationDataSchema,
+};
+
+export function validateEntryData(type: string, data: unknown):
+  | { success: true; data: Record<string, unknown> }
+  | { success: false; error: string } {
+  const schema = DATA_SCHEMAS[type] ?? z.record(z.string(), z.unknown());
+  const result = schema.safeParse(data);
+  if (result.success) return { success: true, data: result.data as Record<string, unknown> };
+  const issue = result.error.issues[0];
+  return { success: false, error: `${type}.${issue?.path.join(".") || "data"}: ${issue?.message ?? "invalid"}` };
+}
+
 // ─── parseEntry ───────────────────────────────────────────────────────────────
 // Parses a DB row; falls back to UnknownEntrySchema for future types so the
 // app never throws on entries added in Phase 2+ (QL-14).

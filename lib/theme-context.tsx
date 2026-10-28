@@ -1,50 +1,41 @@
 "use client";
 
-import { createContext, useContext, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useCallback, useState, type ReactNode } from "react";
 
 export type Theme = "light" | "dark" | "night";
+export type ThemePreference = Theme | "system";
 export type ProfileColor = "violet" | "teal" | "rose" | "amber" | "blue";
 
 interface ThemeContextValue {
-  theme: Theme;
-  profileColor: ProfileColor;
-  setTheme: (t: Theme) => void;
-  setProfileColor: (c: ProfileColor) => void;
+  theme: ThemePreference;
+  setTheme: (t: ThemePreference) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
+const YEAR = 60 * 60 * 24 * 365;
+
+export function resolveTheme(pref: ThemePreference): Theme {
+  if (pref !== "system") return pref;
+  return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
 
 export function ThemeProvider({
   children,
   initialTheme,
-  initialProfileColor,
 }: {
   children: ReactNode;
-  initialTheme: Theme;
-  initialProfileColor: ProfileColor;
+  initialTheme: ThemePreference;
+  initialProfileColor?: ProfileColor;
 }) {
-  const setTheme = useCallback((t: Theme) => {
-    document.documentElement.setAttribute("data-theme", t);
-    document.cookie = `bl-theme=${t}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  const [theme, setThemeState] = useState<ThemePreference>(initialTheme);
+
+  const setTheme = useCallback((t: ThemePreference) => {
+    setThemeState(t);
+    document.documentElement.setAttribute("data-theme", resolveTheme(t));
+    document.cookie = `bl-theme=${t}; path=/; max-age=${YEAR}; SameSite=Lax`;
   }, []);
 
-  const setProfileColor = useCallback((c: ProfileColor) => {
-    document.documentElement.setAttribute("data-profile-color", c);
-    document.cookie = `bl-profile-color=${c}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  }, []);
-
-  return (
-    <ThemeContext.Provider
-      value={{
-        theme: initialTheme,
-        profileColor: initialProfileColor,
-        setTheme,
-        setProfileColor,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

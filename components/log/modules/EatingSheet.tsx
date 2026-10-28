@@ -1,249 +1,238 @@
 "use client";
 
-import { useState } from "react";
-import { Check, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ModuleFormContext } from "../LogSheet";
+import { Group, Notice, OptionTiles, RadioChips, Stepper, ToggleChips } from "../controls";
 import { useHousehold } from "@/lib/context/household-provider";
+import { useLatestEntry } from "@/lib/data/hooks";
+import {
+  ageInMonths, BOTTLE_CONTENTS, BREAST_DURATIONS, BREAST_SIDES, DRINKS, eatingMethodLabel, eatingMethods, FOOD_GROUPS,
+  formatVolume, mealTypeForHour, MEAL_TYPES, ML_CHIPS, mlToOz, OZ_CHIPS, ozToMl, PORTIONS, REACTIONS, URGENT_REACTION,
+  type EatingMethod,
+} from "@/lib/options";
 
-type MealType = "meal" | "snack" | "drink";
-type WhichMeal = "breakfast" | "lunch" | "dinner";
-type Portion = 0 | 25 | 50 | 75 | 100;
-
-const PORTION_LABELS: Record<Portion, string> = {
-  0: "None",
-  25: "A little",
-  50: "Half",
-  75: "Most",
-  100: "All",
+const PLATE: Record<number, string> = {
+  0: "",
+  25: '<path d="M12 12L12 5A7 7 0 0 1 19 12Z" fill="currentColor" stroke="none"/>',
+  50: '<path d="M12 12L12 5A7 7 0 0 1 12 19Z" fill="currentColor" stroke="none"/>',
+  75: '<path d="M12 12L12 5A7 7 0 1 1 5 12Z" fill="currentColor" stroke="none"/>',
+  100: '<circle cx="12" cy="12" r="7" fill="currentColor" stroke="none"/>',
 };
 
-// Portion plate SVGs (viewBox="0 0 24 24", eating accent #EE8A5A)
-const PORTION_SVGS: Record<Portion, string> = {
-  0:   '<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/>',
-  25:  '<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 12L12 5A7 7 0 0 1 19 12Z" fill="currentColor" stroke="none"/>',
-  50:  '<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 12L12 5A7 7 0 0 1 12 19Z" fill="currentColor" stroke="none"/>',
-  75:  '<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M12 12L12 5A7 7 0 1 1 5 12Z" fill="currentColor" stroke="none"/>',
-  100: '<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="12" cy="12" r="7" fill="currentColor" stroke="none"/>',
-};
-
-const DEFAULT_FOODS = ["Pasta", "Carrots", "Chicken", "Apple slices", "Yogurt"];
-
-// Reactions that trigger the urgent notice (EAT-06)
-const URGENT_REACTIONS = ["Trouble breathing", "Swelling", "Hives", "Vomiting"];
-
-// Auto-select meal by time of day
-function autoMeal(): WhichMeal {
-  const h = new Date().getHours();
-  if (h < 11) return "breakfast";
-  if (h < 15) return "lunch";
-  return "dinner";
+function Plate({ pct }: { pct: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={30} height={30} fill="none" stroke="currentColor" strokeWidth={1.75} className="text-eating-ink" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <g dangerouslySetInnerHTML={{ __html: PLATE[pct] }} />
+    </svg>
+  );
 }
 
-const PILL_SEL = "bg-[var(--color-profile)] border-[var(--color-profile)] text-white";
-const PILL_OFF = "bg-[var(--color-secondary)] border-[var(--color-border)] text-foreground";
-const TILE_SEL = "relative bg-[var(--color-profile-tint)] border-2 border-[var(--color-profile)] text-foreground";
-const TILE_OFF = "bg-[var(--color-secondary)] border-[1.5px] border-[var(--color-border)] text-foreground";
+const CUPS = [
+  { ml: 118, label: "½ cup" },
+  { ml: 237, label: "1 cup" },
+  { ml: 473, label: "2 cups" },
+];
 
-interface Props { ctx: ModuleFormContext }
+type D = Record<string, unknown>;
 
-export function EatingSheet({ ctx }: Props) {
-  const { profiles, activeProfileId } = useHousehold();
-  const profile = profiles.find((p) => p.id === activeProfileId);
-  const isBaby = profile?.careStage === "baby";
+export function EatingSheet({ ctx }: { ctx: ModuleFormContext }) {
+  const { activeProfile, householdSettings } = useHousehold();
+  const profileId = activeProfile?.id ?? null;
+  const stage = activeProfile?.careStage ?? "child";
+  const unit = householdSettings.volume_unit;
+  const methods = eatingMethods(stage, activeProfile?.feedingMethods ?? [], ageInMonths(activeProfile?.dob ?? null));
 
-  const [mealType, setMealType] = useState<MealType>("meal");
-  const [whichMeal, setWhichMeal] = useState<WhichMeal>(autoMeal);
-  const [portion, setPortion] = useState<Portion | null>(null);
-  const [foods, setFoods] = useState<Set<string>>(new Set());
-  const [reactions, setReactions] = useState<Set<string>>(new Set());
-  const [urgentVisible, setUrgentVisible] = useState(false);
+  const last = useLatestEntry(profileId, "eating");
+  const lastBottle = useLatestEntry(profileId, "eating", { method: "bottle" });
+  const lastBreast = useLatestEntry(profileId, "eating", { method: "breast" });
 
-  if (isBaby) return null; // Baby uses FeedingSheet
+  const lastMethod = (last.data?.data as D | undefined)?.method as EatingMethod | undefined;
+  const lastSide = (lastBreast.data?.data as D | undefined)?.side as string | undefined;
+  const startSide = lastSide === "left" ? "right" : lastSide === "right" ? "left" : "left";
+  const lastBottleData = lastBottle.data?.data as D | undefined;
+  const lastAmountMl = typeof lastBottleData?.amount_ml === "number" ? lastBottleData.amount_ml : null;
 
-  const push = (overrides: Record<string, unknown> = {}) => {
-    const t = (overrides.mealType as MealType) ?? mealType;
-    const wm = (overrides.whichMeal as WhichMeal) ?? whichMeal;
-    const p = (overrides.portion as Portion | null) !== undefined ? (overrides.portion as Portion | null) : portion;
-    const f = (overrides.foods as Set<string>) ?? foods;
-    const data: Record<string, unknown> = { type: t };
-    if (t === "meal") data.which = wm;
-    if (p !== null) data.portionPct = p;
-    if (f.size > 0) data.foods = Array.from(f);
-    const label = t === "meal" ? (wm.charAt(0).toUpperCase() + wm.slice(1)) : t === "snack" ? "Snack" : "Drink";
-    ctx.setData(data, label);
-  };
+  const [method, setMethod] = useState<EatingMethod>(methods[0]);
+  const [touchedMethod, setTouchedMethod] = useState(false);
+  const [side, setSide] = useState<string>("left");
+  const [touchedSide, setTouchedSide] = useState(false);
+  const [duration, setDuration] = useState<number | null>(null);
+  const [contents, setContents] = useState<string | null>(null);
+  const [amountMl, setAmountMl] = useState<number | null>(null);
+  const [mealType, setMealType] = useState(mealTypeForHour(new Date().getHours()));
+  const [portion, setPortion] = useState<number | null>(null);
+  const [drink, setDrink] = useState("water");
+  const [drinkMl, setDrinkMl] = useState<number | null>(null);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [reactions, setReactions] = useState<string[]>([]);
 
-  const toggleFood = (food: string) => {
-    setFoods((prev) => {
-      const next = new Set(prev);
-      if (next.has(food)) next.delete(food); else next.add(food);
-      push({ foods: next });
-      return next;
-    });
-  };
+  // QL-06: preselect last-used method, breast start side and bottle amount once they load.
+  const effMethod = touchedMethod ? method : lastMethod && methods.includes(lastMethod) ? lastMethod : method;
+  const effSide = touchedSide ? side : startSide;
+  const effContents = contents ?? ((lastBottleData?.contents as string | undefined) ?? "formula");
+  const effAmount = amountMl ?? lastAmountMl ?? (unit === "oz" ? ozToMl(4) : 120);
 
-  const toggleReaction = (r: string) => {
-    setReactions((prev) => {
-      const next = new Set(prev);
-      if (next.has(r)) next.delete(r); else next.add(r);
-      const hasUrgent = URGENT_REACTIONS.some((u) => next.has(u));
-      setUrgentVisible(hasUrgent);
-      return next;
-    });
-  };
+  useEffect(() => {
+    let data: D;
+    let summary: string;
+    switch (effMethod) {
+      case "breast":
+        data = { method: "breast", side: effSide, ...(duration ? { duration_min: duration } : {}) };
+        summary = `Breastfeed, ${effSide}`;
+        break;
+      case "bottle":
+        data = { method: "bottle", contents: effContents, amount_ml: effAmount };
+        summary = `Bottle ${formatVolume(effAmount, unit)}`;
+        break;
+      case "drink":
+        data = { method: "drink", contents: drink, ...(drinkMl ? { amount_ml: drinkMl } : {}) };
+        summary = DRINKS.find((d) => d.key === drink)?.label ?? "Drink";
+        break;
+      default: {
+        const isMeal = effMethod === "meal";
+        data = {
+          method: effMethod, ...(isMeal ? { meal_type: mealType } : {}), ...(portion !== null ? { portion_pct: portion } : {}),
+          food_groups: groups, food_ids: [], new_food: false, reactions,
+        };
+        summary = isMeal ? (stage === "baby" ? "Solids" : MEAL_TYPES.find((m) => m.key === mealType)!.label) : "Snack";
+      }
+    }
+    ctx.setData(data, summary, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effMethod, effSide, duration, effContents, effAmount, mealType, portion, drink, drinkMl, groups, reactions, unit, stage]);
+
+  const amountChips = unit === "oz" ? OZ_CHIPS.map((oz) => ({ ml: ozToMl(oz), label: `${oz} oz` })) : ML_CHIPS.map((ml) => ({ ml, label: `${ml} ml` }));
+  const step = unit === "oz" ? ozToMl(0.5) : 10;
+  const sameAsLast = lastAmountMl !== null && Math.abs(effAmount - lastAmountMl) < 2;
+  const isMealLike = effMethod === "meal" || effMethod === "snack";
 
   return (
     <div className="space-y-4">
-      {/* Meal / Snack / Drink */}
-      <div>
-        <h2 className="text-[14px] font-extrabold text-muted-foreground mb-2">What kind?</h2>
-        <div className="grid grid-cols-3 gap-2">
-          {(["meal", "snack", "drink"] as MealType[]).map((t) => {
-            const sel = mealType === t;
-            return (
-              <button
-                key={t}
-                type="button"
-                aria-pressed={sel}
-                onClick={() => { setMealType(t); push({ mealType: t }); }}
-                className={`min-h-[64px] flex items-center justify-center gap-1.5 rounded-[18px] border-[1.5px] text-[17px] font-extrabold cursor-pointer transition-colors ${sel ? PILL_SEL : PILL_OFF}`}
-              >
-                {sel && <Check size={16} strokeWidth={3} />}
-                {t === "meal" ? "Meal" : t === "snack" ? "Snack" : "Drink"}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <Group label="How?">
+        <RadioChips
+          label="How"
+          variant="block"
+          columns={Math.min(methods.length, 3)}
+          value={effMethod}
+          onChange={(m) => { setMethod(m); setTouchedMethod(true); }}
+          options={methods.map((m) => ({
+            value: m,
+            label: eatingMethodLabel(m, stage),
+            sub: m === "breast" && lastSide ? `Start on ${startSide}` : undefined,
+          }))}
+        />
+      </Group>
 
-      {/* Which meal (only for Meal) */}
-      {mealType === "meal" && (
-        <div>
-          <h2 className="text-[14px] font-extrabold text-muted-foreground mb-2">Which meal?</h2>
-          <div className="flex gap-2">
-            {(["breakfast", "lunch", "dinner"] as WhichMeal[]).map((w) => {
-              const sel = whichMeal === w;
-              return (
-                <button
-                  key={w}
-                  type="button"
-                  aria-pressed={sel}
-                  onClick={() => { setWhichMeal(w); push({ whichMeal: w }); }}
-                  className={`min-h-[44px] px-4 flex items-center gap-1.5 rounded-full border font-bold text-[15px] cursor-pointer transition-colors ${sel ? PILL_SEL : PILL_OFF}`}
-                >
-                  {sel && <Check size={14} strokeWidth={3} />}
-                  {w.charAt(0).toUpperCase() + w.slice(1)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {effMethod === "breast" && (
+        <>
+          <Group label="Side" hint={lastSide ? `Last: ${lastSide}` : undefined}>
+            <RadioChips label="Side" value={effSide} onChange={(s) => { setSide(s); setTouchedSide(true); }} options={BREAST_SIDES.map((s) => ({ value: s.key, label: s.label }))} />
+          </Group>
+          <Group label="How long?">
+            <RadioChips
+              label="How long"
+              value={duration}
+              onChange={(d) => setDuration(d === duration ? null : d)}
+              options={BREAST_DURATIONS.map((d) => ({ value: d, label: `${d} min` }))}
+            />
+          </Group>
+        </>
       )}
 
-      {/* Portion plate (not for Drink) */}
-      {mealType !== "drink" && (
-        <div>
-          <h2 className="text-[14px] font-extrabold text-muted-foreground mb-2">How much?</h2>
-          <div className="grid grid-cols-5 gap-1.5">
-            {([0, 25, 50, 75, 100] as Portion[]).map((p) => {
-              const sel = portion === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  aria-pressed={sel}
-                  onClick={() => { setPortion(p); push({ portion: p }); }}
-                  className={`min-h-[76px] flex flex-col items-center justify-center gap-1.5 rounded-[18px] border-[1.5px] cursor-pointer transition-colors ${sel ? TILE_SEL : TILE_OFF}`}
-                >
-                  {sel && (
-                    <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--color-profile)] text-white flex items-center justify-center">
-                      <Check size={10} strokeWidth={3} />
-                    </span>
-                  )}
-                  <svg
-                    viewBox="0 0 24 24"
-                    width={36}
-                    height={36}
-                    className="text-[var(--module-eating-ink)]"
-                    aria-hidden="true"
-                    dangerouslySetInnerHTML={{ __html: PORTION_SVGS[p] }}
-                  />
-                  <span className="text-[12px] font-extrabold text-center leading-tight px-0.5">
-                    {PORTION_LABELS[p]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {effMethod === "bottle" && (
+        <>
+          <Group label="What's in the bottle?">
+            <RadioChips label="Bottle contents" value={effContents} onChange={setContents} options={BOTTLE_CONTENTS.map((c) => ({ value: c.key, label: c.label }))} />
+          </Group>
+          <Group label="How much?">
+            <Stepper
+              display={formatVolume(effAmount, unit)}
+              caption={sameAsLast ? "Same as last feed" : undefined}
+              onDecrease={() => setAmountMl(Math.max(step, effAmount - step))}
+              onIncrease={() => setAmountMl(Math.min(ozToMl(16), effAmount + step))}
+              canDecrease={effAmount > step}
+            />
+            <div role="radiogroup" aria-label="Amount" className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${amountChips.length}, minmax(0, 1fr))` }}>
+              {amountChips.map((c) => {
+                const sel = unit === "oz" ? mlToOz(effAmount) === mlToOz(c.ml) : effAmount === c.ml;
+                return (
+                  <button
+                    key={c.ml}
+                    type="button"
+                    role="radio"
+                    aria-checked={sel}
+                    onClick={() => setAmountMl(c.ml)}
+                    className={`min-h-touch rounded-full border text-[0.8125rem] font-bold ${sel ? "bg-profile border-profile text-on-profile font-extrabold" : "bg-secondary border-border"}`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Group>
+        </>
       )}
 
-      {/* Foods */}
-      {mealType !== "drink" && (
-        <div>
-          <h2 className="text-[14px] font-extrabold text-muted-foreground mb-2">Foods</h2>
-          <div className="flex flex-wrap gap-2">
-            {DEFAULT_FOODS.map((food) => {
-              const sel = foods.has(food);
-              return (
-                <button
-                  key={food}
-                  type="button"
-                  aria-pressed={sel}
-                  onClick={() => toggleFood(food)}
-                  className={`min-h-[44px] px-4 flex items-center gap-1.5 rounded-full border font-bold text-[15px] cursor-pointer transition-colors ${sel ? PILL_SEL : PILL_OFF}`}
-                >
-                  {sel && <Check size={14} strokeWidth={3} />}
-                  {food}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              className={`min-h-[44px] px-4 flex items-center gap-1.5 rounded-full border-[1.5px] border-dashed font-bold text-[15px] cursor-pointer ${PILL_OFF}`}
-            >
-              + Add food
-            </button>
-          </div>
-        </div>
+      {effMethod === "meal" && (
+        <Group label="Which meal?">
+          <RadioChips label="Which meal" value={mealType} onChange={setMealType} options={MEAL_TYPES.map((m) => ({ value: m.key, label: m.label }))} />
+        </Group>
       )}
 
-      {/* Reactions (EAT-06) */}
-      <div>
-        <h2 className="text-[14px] font-extrabold text-muted-foreground mb-2">Any reaction?</h2>
-        <div className="flex flex-wrap gap-2">
-          {URGENT_REACTIONS.map((r) => {
-            const sel = reactions.has(r);
-            return (
-              <button
-                key={r}
-                type="button"
-                aria-pressed={sel}
-                onClick={() => toggleReaction(r)}
-                className={`min-h-[44px] px-4 flex items-center gap-1.5 rounded-full border font-bold text-[15px] cursor-pointer transition-colors ${sel ? "bg-[var(--color-warning)] border-[var(--color-warning-border)] text-[var(--color-warning-ink)]" : PILL_OFF}`}
-              >
-                {sel && <Check size={14} strokeWidth={3} />}
-                {r}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Urgent notice (EAT-06) */}
-      {urgentVisible && (
-        <div
-          role="alert"
-          className="flex items-start gap-3 p-4 rounded-[18px] border"
-          style={{ background: "#FFF0F0", borderColor: "#FCA5A5", color: "#7F1D1D" }}
-        >
-          <AlertTriangle size={22} strokeWidth={2} className="flex-none mt-0.5" aria-hidden="true" />
-          <div className="flex flex-col gap-1">
-            <span className="text-[15px] font-extrabold">Trouble breathing or swelling?</span>
-            <span className="text-[14px] leading-snug">Call 911 immediately if there are signs of a severe allergic reaction.</span>
-          </div>
-        </div>
+      {isMealLike && (
+        <Group label="How much was eaten?">
+          <OptionTiles
+            label="How much was eaten"
+            columns={5}
+            value={portion}
+            onChange={(p) => setPortion(p === portion ? null : p)}
+            options={PORTIONS.map((p) => ({ value: p.pct, label: p.label, ariaLabel: `${p.label}, ${p.pct}%`, icon: <Plate pct={p.pct} /> }))}
+          />
+        </Group>
       )}
+
+      {effMethod === "drink" && (
+        <>
+          <Group label="What?">
+            <RadioChips label="Drink" value={drink} onChange={setDrink} options={DRINKS.map((d) => ({ value: d.key, label: d.label }))} />
+          </Group>
+          <Group label="How much?">
+            <RadioChips
+              label="How much"
+              value={drinkMl}
+              onChange={(v) => setDrinkMl(v === drinkMl ? null : v)}
+              options={CUPS.map((c) => ({ value: c.ml, label: c.label, ariaLabel: `${c.label}, ${formatVolume(c.ml, unit)}` }))}
+            />
+          </Group>
+        </>
+      )}
+
+      {ctx.detailsEl && isMealLike &&
+        createPortal(
+          <>
+            <Group label="Food groups">
+              <ToggleChips
+                options={FOOD_GROUPS.map((g) => ({ value: g.key, label: g.label }))}
+                selected={groups}
+                onToggle={(g) => setGroups((xs) => (xs.includes(g) ? xs.filter((x) => x !== g) : [...xs, g]))}
+              />
+            </Group>
+            <Group label="Any reaction?">
+              <ToggleChips
+                tone="warning"
+                options={REACTIONS.map((r) => ({ value: r.key, label: r.label }))}
+                selected={reactions}
+                onToggle={(r) => setReactions((xs) => (xs.includes(r) ? xs.filter((x) => x !== r) : [...xs, r]))}
+              />
+            </Group>
+            {reactions.includes(URGENT_REACTION) && (
+              <Notice tone="urgent" role="alert" title="If this is happening now, call 911." />
+            )}
+          </>,
+          ctx.detailsEl,
+        )}
     </div>
   );
 }

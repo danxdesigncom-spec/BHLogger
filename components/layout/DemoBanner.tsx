@@ -1,22 +1,32 @@
+"use client";
+
+import { useTransition } from "react";
 import { exitDemoMode } from "@/app/auth/demo/actions";
+import { clearDemoData } from "@/lib/data/demo-repo";
 
 export function DemoBanner() {
+  const [pending, startTransition] = useTransition();
+
   return (
-    <form
-      action={exitDemoMode}
+    <div
       role="status"
-      className="flex items-center justify-between gap-3 px-4 py-2 text-[13px] font-bold border-b"
-      style={{
-        background: "var(--color-warning)",
-        color: "var(--color-warning-ink)",
-        borderColor: "var(--color-warning-border)",
-        paddingTop: "max(8px, env(safe-area-inset-top, 0px))",
-      }}
+      className="flex items-center justify-between gap-3 px-5 py-2 text-label font-bold border-b bg-warning text-warning-ink border-warning-border"
+      style={{ paddingTop: "max(8px, env(safe-area-inset-top, 0px))" }}
     >
-      <span>Demo mode — nothing is saved</span>
-      <button type="submit" className="min-h-[32px] px-3 rounded-full bg-white font-extrabold">
+      <span>Demo mode: sample data, nothing leaves this browser</span>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            await clearDemoData();
+            await exitDemoMode();
+          })
+        }
+        className="min-h-[36px] px-3 rounded-full bg-card font-extrabold disabled:opacity-60"
+      >
         Exit
       </button>
-    </form>
+    </div>
   );
 }

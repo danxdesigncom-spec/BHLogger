@@ -26,11 +26,10 @@ test.describe("Quick Log shell", () => {
     await expect(peeBtn).toBeVisible();
     await peeBtn.click();
 
-    // Change the time to "30 min ago"
-    const thirtyMin = dialog.getByRole("button", { name: "30 min ago" });
-    await expect(thirtyMin).toBeVisible();
-    await thirtyMin.click();
-    await expect(thirtyMin).toHaveAttribute("aria-pressed", "true");
+    // Change the time to "30 min ago" from the footer time chip
+    await dialog.getByRole("button", { name: /^Time: now/ }).click();
+    await dialog.getByRole("menuitemradio", { name: "30 min ago" }).click();
+    await expect(dialog.getByRole("button", { name: /^Time: 30 min ago/ })).toBeVisible();
 
     // Save the entry
     const saveBtn = dialog.getByRole("button", { name: "Save" });
@@ -53,8 +52,7 @@ test.describe("Quick Log shell", () => {
     await bathroomTile.click();
 
     const dialog = page.getByRole("dialog");
-    const customBtn = dialog.getByRole("button", { name: "Custom" });
-    await customBtn.click();
+    await dialog.getByRole("button", { name: /^Time: now/ }).click();
 
     // The datetime-local input should have a max attribute set to now (or just past)
     const input = dialog.locator('input[type="datetime-local"]');
@@ -78,7 +76,7 @@ test.describe("Quick Log shell", () => {
     const firstGreeting = await heading.textContent();
 
     // Click the profile switcher pill
-    const switcherBtn = page.getByRole("button", { name: /Active profile/ });
+    const switcherBtn = page.getByRole("button", { name: /Switch profile/ });
     await switcherBtn.click();
 
     // The profile switcher sheet should open
@@ -125,7 +123,7 @@ test.describe("Quick Log shell", () => {
     await page.goto("/");
 
     // Get the active profile name from the switcher pill
-    const switcherPill = page.getByRole("button", { name: /Active profile/ });
+    const switcherPill = page.getByRole("button", { name: /Switch profile/ });
     const pillText = await switcherPill.textContent();
     // pillText is like "Leo▾" — extract the name portion
     const profileName = pillText?.replace(/[▾⌄]/g, "").trim() ?? "";

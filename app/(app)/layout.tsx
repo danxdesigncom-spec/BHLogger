@@ -2,49 +2,62 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { TabBar } from "@/components/layout/TabBar";
 import { ThemeProvider, type Theme, type ProfileColor } from "@/lib/theme-context";
-import { HouseholdProvider, type ProfileSummary, type MemberSummary } from "@/lib/context/household-provider";
+import { HouseholdProvider, type MemberSummary, type ProfileSummary } from "@/lib/context/household-provider";
+import { toProfileSummary } from "@/lib/profiles";
 import { ReactQueryProvider } from "@/lib/query-client";
+import { RepoProvider } from "@/lib/data/repo-context";
 import { createClient } from "@/lib/supabase/server";
 import { isDemoMode } from "@/app/auth/demo/actions";
 import { DemoBanner } from "@/components/layout/DemoBanner";
-import { DEMO_CURRENT_MEMBER, DEMO_HOUSEHOLD_ID, DEMO_PROFILES } from "@/lib/demo";
+import { OfflineBanner } from "@/components/layout/OfflineBanner";
+import { demoHousehold, DEMO_HOUSEHOLD_ID } from "@/lib/demo/household";
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function Shell({ demo, children }: { demo: boolean; children: React.ReactNode }) {
+  return (
+    <>
+      {demo && <DemoBanner />}
+      <OfflineBanner />
+      <main
+        className="min-h-screen lg:pl-[264px]"
+        style={{ paddingBottom: "calc(var(--spacing-tabbar-clearance) + env(safe-area-inset-bottom, 0px))" }}
+      >
+        <div className="mx-auto w-full max-w-[960px]">{children}</div>
+      </main>
+      <TabBar />
+    </>
+  );
+}
+
+function pickActive(profiles: ProfileSummary[], cookie: string | null) {
+  return cookie && profiles.some((p) => p.id === cookie) ? cookie : (profiles[0]?.id ?? null);
+}
+
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
   const theme = (cookieStore.get("bl-theme")?.value ?? "light") as Theme;
-  const profileColor = (
-    cookieStore.get("bl-profile-color")?.value ?? "violet"
-  ) as ProfileColor;
+  const profileColorCookie = (cookieStore.get("bl-profile-color")?.value ?? "violet") as ProfileColor;
   const activeProfileCookie = cookieStore.get("bl-active-profile")?.value ?? null;
 
   if (await isDemoMode()) {
-    const demoActive =
-      activeProfileCookie && DEMO_PROFILES.some((p) => p.id === activeProfileCookie)
-        ? activeProfileCookie
-        : DEMO_PROFILES[0].id;
-    const demoColor = DEMO_PROFILES.find((p) => p.id === demoActive)!.color;
+    const demo = demoHousehold();
+    const active = pickActive(demo.profiles, activeProfileCookie);
+    const color = demo.profiles.find((p) => p.id === active)?.color ?? "violet";
     return (
-      <ThemeProvider initialTheme={theme} initialProfileColor={demoColor as ProfileColor}>
+      <ThemeProvider initialTheme={theme} initialProfileColor={color as ProfileColor}>
         <HouseholdProvider
+          mode="demo"
           householdId={DEMO_HOUSEHOLD_ID}
-          profiles={DEMO_PROFILES}
-          members={[DEMO_CURRENT_MEMBER]}
-          currentMember={DEMO_CURRENT_MEMBER}
-          initialActiveProfileId={demoActive}
+          householdName={demo.name}
+          householdSettings={demo.settings}
+          profiles={demo.profiles}
+          members={demo.members}
+          currentMember={demo.currentMember}
+          initialActiveProfileId={active}
         >
           <ReactQueryProvider>
-            <DemoBanner />
-            <main
-              className="min-h-screen"
-              style={{ paddingBottom: "calc(64px + max(12px, env(safe-area-inset-bottom, 0px)))" }}
-            >
-              {children}
-            </main>
-            <TabBar />
+            <RepoProvider>
+              <Shell demo>{children}</Shell>
+            </RepoProvider>
           </ReactQueryProvider>
         </HouseholdProvider>
       </ThemeProvider>
@@ -52,63 +65,42 @@ export default async function AppLayout({
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
 
-  if (!user) {
-    redirect("/auth/login");
-  }
-
-  // Check for household membership; new users are redirected to onboarding
   const { data: member } = await supabase
     .from("household_members")
     .select("id, household_id, role, display_name, initials, access_from")
     .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
+  if (!member) redirect("/onboarding/profile");
 
-  if (!member) {
-    redirect("/onboarding/profile");
-  }
+  const [{ data: household }, { data: profileRows }, { data: memberRows }] = await Promise.all([
+    supabase.from("households").select("name, settings").eq("id", member.household_id).maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("id, name, color, care_stage, dob, toileting, feeding_methods, enabled_modules, settings, care_card")
+      .eq("household_id", member.household_id)
+      .is("archived_at", null)
+      .order("created_at"),
+    supabase.from("household_members").select("id, user_id, role, display_name, initials, access_from").eq("household_id", member.household_id),
+  ]);
 
-  // Load profiles accessible to this user
-  const { data: profileRows } = await supabase
-    .from("profiles")
-    .select("id, name, color, care_stage")
-    .eq("household_id", member.household_id)
-    .is("archived_at", null)
-    .order("created_at");
-
-  const profiles: ProfileSummary[] = (profileRows ?? []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    color: p.color as ProfileColor,
-    initials: p.name[0]?.toUpperCase() ?? "?",
-    careStage: p.care_stage as "baby" | "child" | "teen_adult",
-  }));
-
-  // Load all members (display names only) for admin views
-  const { data: memberRows } = await supabase
-    .from("household_members")
-    .select("id, user_id, role, display_name, initials, access_from")
-    .eq("household_id", member.household_id);
-
-  // Load profile access restrictions for each member
   const { data: accessRows } = await supabase
     .from("member_profile_access")
     .select("member_id, profile_id")
     .in("member_id", (memberRows ?? []).map((m) => m.id));
+
+  const profiles = (profileRows ?? []).map(toProfileSummary);
 
   const members: MemberSummary[] = (memberRows ?? []).map((m) => ({
     id: m.id,
     userId: m.user_id,
     displayName: m.display_name,
     initials: m.initials,
-    role: m.role as "admin" | "caregiver" | "viewer",
-    restrictedProfileIds: (accessRows ?? [])
-      .filter((a) => a.member_id === m.id)
-      .map((a) => a.profile_id),
+    role: m.role as MemberSummary["role"],
+    restrictedProfileIds: (accessRows ?? []).filter((a) => a.member_id === m.id).map((a) => a.profile_id),
     accessFrom: m.access_from,
   }));
 
@@ -117,37 +109,30 @@ export default async function AppLayout({
     userId: user.id,
     displayName: member.display_name,
     initials: member.initials,
-    role: member.role as "admin" | "caregiver" | "viewer",
+    role: member.role as MemberSummary["role"],
     restrictedProfileIds: [],
     accessFrom: member.access_from,
   };
 
-  // Resolve active profile: cookie value if valid, else first accessible profile
-  const activeProfileId =
-    activeProfileCookie && profiles.some((p) => p.id === activeProfileCookie)
-      ? activeProfileCookie
-      : (profiles[0]?.id ?? null);
-
-  // Use the active profile's color if it differs from the cookie
-  const resolvedColor = profiles.find((p) => p.id === activeProfileId)?.color ?? profileColor;
+  const active = pickActive(profiles, activeProfileCookie);
+  const color = profiles.find((p) => p.id === active)?.color ?? profileColorCookie;
 
   return (
-    <ThemeProvider initialTheme={theme} initialProfileColor={resolvedColor as ProfileColor}>
+    <ThemeProvider initialTheme={theme} initialProfileColor={color as ProfileColor}>
       <HouseholdProvider
+        mode="live"
         householdId={member.household_id}
+        householdName={household?.name ?? ""}
+        householdSettings={household?.settings}
         profiles={profiles}
         members={members}
         currentMember={currentMember}
-        initialActiveProfileId={activeProfileId}
+        initialActiveProfileId={active}
       >
         <ReactQueryProvider>
-          <main
-            className="min-h-screen"
-            style={{ paddingBottom: "calc(64px + max(12px, env(safe-area-inset-bottom, 0px)))" }}
-          >
-            {children}
-          </main>
-          <TabBar />
+          <RepoProvider>
+            <Shell demo={false}>{children}</Shell>
+          </RepoProvider>
         </ReactQueryProvider>
       </HouseholdProvider>
     </ThemeProvider>
