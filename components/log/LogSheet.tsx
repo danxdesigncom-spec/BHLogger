@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import { X, Flag, ChevronDown, Loader2 } from "lucide-react";
+import { X, Flag, ChevronDown, Loader2, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TimeChip } from "./TimeChip";
 import type { ToastEntry } from "./UndoToast";
@@ -10,6 +10,11 @@ import { recordLoggingSession } from "@/lib/install";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatTime } from "@/lib/prefs";
+import { useLatestEntry, useTimers } from "@/lib/data/hooks";
+import { startTimer as storeTimer, type TimerModule } from "@/lib/timers";
+import { favoriteLabel } from "@/lib/entries/summary";
+import { templateFromEntry } from "@/lib/favorites";
+import { useQuickLog } from "./useQuickLog";
 
 export type ModuleType = "bathroom" | "eating" | "activity" | "mood" | "medication";
 
@@ -26,6 +31,8 @@ export interface LogSheetProps {
   /** Appended to "for Leo", e.g. "as needed". */
   subtitle?: string;
   saveLabel?: string;
+  /** QL-10: a "Same as last time" chip at the top. Off for medications, which go through the dose sheet. */
+  repeatLast?: boolean;
   /** Runs before saving; return the data to save, or null to cancel (MED-07 duplicate-dose check). */
   confirmSave?: (draft: { data: Record<string, unknown>; occurredAt: Date }) => Promise<Record<string, unknown> | null>;
   children?: (ctx: ModuleFormContext) => ReactNode;
@@ -38,6 +45,10 @@ export interface ModuleFormContext {
   flagged: boolean;
   /** Portal target inside "Add details" for the module's optional chips. */
   detailsEl: HTMLElement | null;
+  /** QL-11: starts a timer at the chosen time and closes the sheet. Absent where timers don't apply. */
+  startTimer?: (data: Record<string, unknown>, label: string) => void;
+  /** A timer for this profile and module is already running on this device. */
+  timerRunning?: boolean;
 }
 
 export const MODULE_ICONS: Record<ModuleType, ReactNode> = {
@@ -56,8 +67,8 @@ export const MODULE_CIRCLE: Record<ModuleType, string> = {
   medication: "bg-medication text-medication-ink",
 };
 
-export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsHint, title, subtitle, saveLabel, confirmSave, children }: LogSheetProps) {
-  const { householdId, activeProfileId, profiles } = useHousehold();
+export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsHint, title, subtitle, saveLabel, repeatLast = module !== "medication", confirmSave, children }: LogSheetProps) {
+  const { householdId, activeProfileId, profiles, householdSettings } = useHousehold();
   const qc = useQueryClient();
   const repo = useRepo();
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -65,6 +76,9 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
   const tc = useTranslations("common");
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
+  const last = useLatestEntry(open && repeatLast ? activeProfileId : null, module, module === "mood" ? { scope: "moment" } : undefined);
+  const quick = useQuickLog(onSaved);
+  const timers = useTimers();
 
   const [time, setTime] = useState(() => new Date());
   const [note, setNote] = useState("");
@@ -183,6 +197,31 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
 
   if (!open) return null;
 
+  const lastTemplate = repeatLast && last.data ? templateFromEntry(last.data) : null;
+  const lastLabel = last.data && activeProfile
+    ? favoriteLabel(last.data, { careStage: activeProfile.careStage, toileting: activeProfile.toileting, volumeUnit: householdSettings.volume_unit })
+    : "";
+  const beginTimer = async (m: TimerModule, data: Record<string, unknown>, label: string) => {
+    if (!activeProfileId) return;
+    await storeTimer({ profileId: activeProfileId, module: m, startedAt: time.toISOString(), data, label });
+    await qc.invalidateQueries({ queryKey: ["timers"] });
+    reset();
+    onClose();
+  };
+
+  const repeat = async () => {
+    if (!lastTemplate || !activeProfileId) return;
+    setPending(true);
+    const result = await quick.save({ profileId: activeProfileId, type: module, data: lastTemplate.data, summary: lastLabel });
+    setPending(false);
+    if ("error" in result) {
+      setError(result.error);
+      return;
+    }
+    reset();
+    onClose();
+  };
+
   return (
     <>
       <div aria-hidden="true" className="fixed inset-0 bg-[var(--overlay)] z-40 animate-fade-in" onClick={requestClose} />
@@ -218,7 +257,26 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
         </header>
 
         <div className="flex-1 overflow-y-auto px-5 pt-3 pb-4 space-y-4">
-          {children?.({ setData: handleSetData, setFlagged, flagged, detailsEl })}
+          {lastTemplate && (
+            <button
+              type="button"
+              onClick={() => void repeat()}
+              disabled={pending}
+              className="max-w-full min-h-touch-min inline-flex items-center gap-1.5 px-4 rounded-full border-[1.5px] border-border-strong bg-card text-label font-extrabold disabled:opacity-60"
+            >
+              <RotateCcw size={16} strokeWidth={2} className="flex-none" aria-hidden="true" />
+              <span className="truncate">{t("sameAsLast", { label: lastLabel })}</span>
+            </button>
+          )}
+          {children?.({
+            setData: handleSetData, setFlagged, flagged, detailsEl,
+            ...(module === "eating" || module === "activity"
+              ? {
+                  timerRunning: !!timers.data?.some((x) => x.profileId === activeProfileId && x.module === module),
+                  startTimer: (data: Record<string, unknown>, label: string) => void beginTimer(module, data, label),
+                }
+              : {}),
+          })}
 
           <div className="rounded-lg bg-secondary">
             <button

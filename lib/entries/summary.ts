@@ -70,6 +70,13 @@ export function entryShortLabel(e: EntryLike, ctx: SummaryContext): string {
   }
 }
 
+/** The label a new quick tap gets (QL-09): "Pee", "Wet diaper", "4 oz bottle", or the medication's name. */
+export function favoriteLabel(e: { type: string; data: unknown }, ctx: SummaryContext): string {
+  const d = (e.data ?? {}) as D;
+  if (e.type === "bathroom" && ctx.toileting === "diapers") return t("summary.diaperTitle", { kind: str(d.kind) ?? "other" });
+  return entryShortLabel({ ...e, occurred_at: "" }, ctx);
+}
+
 /** Timeline title: "Dinner · ate half", "Ibuprofen · given", "Upset · meltdown". */
 export function entryTitle(e: EntryLike, ctx: SummaryContext): string {
   const d = (e.data ?? {}) as D;

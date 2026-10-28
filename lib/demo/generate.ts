@@ -12,6 +12,7 @@ export type ProfileRow = Tables["profiles"]["Row"];
 export type HouseholdRow = Tables["households"]["Row"];
 export type MemberRow = Tables["household_members"]["Row"];
 export type OptionRow = Tables["option_lists"]["Row"];
+export type FavoriteRow = Tables["favorites"]["Row"];
 
 export const SEED_IDS = {
   household:     "a1000000-0000-0000-0000-000000000001",
@@ -40,6 +41,7 @@ export interface GeneratedData {
   entries: EntryRow[];
   appointments: AppointmentRow[];
   options: OptionRow[];
+  favorites: FavoriteRow[];
 }
 
 export interface GenerateOptions {
@@ -377,7 +379,20 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
     { id: uuid(), household_id: ids.household, profile_id: ids.maya, date: apptDay(8),   provider: "Dr. Patel (Pediatrician)", notes: "Weight check", created_at: created },
   ] as AppointmentRow[];
 
-  return { household, members, profiles, medications, medicationChanges, entries, appointments, options: [] };
+  // Quick taps from the mockups (S01, S18): Pee, Water, Allergy med for Leo; Wet diaper, Dirty diaper, Bottle 4 oz for Maya.
+  const favorite = (profileId: string, label: string, type: string, data: Json, order: number): FavoriteRow => ({
+    id: uuid(), household_id: ids.household, profile_id: profileId, label, entry_template: { type, data }, sort_order: order, created_at: created,
+  });
+  const favorites: FavoriteRow[] = [
+    favorite(ids.leo, "Pee", "bathroom", { kind: "pee", location: "toilet", flags: [] }, 0),
+    favorite(ids.leo, "Water", "eating", { method: "drink", contents: "water" }, 1),
+    favorite(ids.leo, "Allergy med", "medication", { medication_id: ids.leoAllergy, dose: 5, unit: "mL", outcome: "given", scheduled_for: null, prn_reason: null, duplicate_override: false, followup: null }, 2),
+    favorite(ids.maya, "Wet diaper", "bathroom", { kind: "pee", location: "diaper", flags: [] }, 0),
+    favorite(ids.maya, "Dirty diaper", "bathroom", { kind: "bm", location: "diaper", flags: [] }, 1),
+    favorite(ids.maya, "Bottle 4 oz", "eating", { method: "bottle", contents: "formula", amount_ml: 120 }, 2),
+  ];
+
+  return { household, members, profiles, medications, medicationChanges, entries, appointments, options: [], favorites };
 }
 
 /** The mockup story's moment: Mon, Oct 26, 2026 at 7:05 PM, 25 minutes before Melatonin is due. */

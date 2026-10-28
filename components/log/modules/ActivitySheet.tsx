@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ModuleFormContext } from "../LogSheet";
 import { FaceScale, Group, OptionTiles, RadioChips } from "../controls";
+import { TimerStart } from "../TimerStart";
 import { ActivityIcon } from "../activity-icons";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries } from "@/lib/data/hooks";
@@ -139,6 +140,12 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
               onChange={(d) => setDuration(d === duration ? null : d)}
               options={ACTIVITY_DURATIONS.map((d) => ({ value: d.min, label: d.label }))}
             />
+            {ctx.startTimer && (
+              <TimerStart
+                running={!!ctx.timerRunning}
+                onStart={() => ctx.startTimer!({ activity_id: activity, enjoyment }, options.find((o) => o.key === activity)?.label ?? activityLabel(activity))}
+              />
+            )}
           </Group>
         </>
       )}

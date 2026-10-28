@@ -11,7 +11,7 @@ import type { Repo } from "./types";
 
 const RepoContext = createContext<Repo | null>(null);
 
-export const DATA_KEYS = ["entries", "latest-entry", "pending", "revisions", "medications", "med-changes", "appointments", "options", "profile-settings"];
+export const DATA_KEYS = ["entries", "latest-entry", "pending", "revisions", "medications", "med-changes", "appointments", "options", "profile-settings", "favorites"];
 
 export function RepoProvider({ children }: { children: ReactNode }) {
   const { mode, householdId, currentMember } = useHousehold();

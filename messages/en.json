@@ -1134,7 +1134,8 @@
     "saving": "Saving",
     "discardTitle": "Discard this entry?",
     "discardBody": "Nothing has been saved yet.",
-    "less": "Less"
+    "less": "Less",
+    "sameAsLast": "Same as last time · {label}"
   },
   "bathroom": {
     "whatsIn": "What's in the {absorbent}?",
@@ -1414,7 +1415,12 @@
     "emergency": "Emergency contact",
     "theirPhone": "Their phone",
     "cardSaved": "Care card saved",
-    "saveCard": "Save care card"
+    "saveCard": "Save care card",
+    "modulesHint": "Switch a module off to hide its Home tile. Arrows set the order on Home.",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "movedUp": "{name} moved up on Home",
+    "movedDown": "{name} moved down on Home"
   },
   "caregivers": {
     "manageTitle": "Manage caregiver",
@@ -1481,7 +1487,10 @@
     "enterEmail": "Please enter your email address.",
     "somethingWrong": "Something went wrong. Please try again.",
     "inviteExpired": "This invite has expired or is no longer valid.",
-    "invalidMedication": "Invalid medication."
+    "invalidMedication": "Invalid medication.",
+    "invalidFavorite": "That quick tap can’t be saved.",
+    "tooManyFavorites": "You can keep up to {max} quick taps. Remove one first.",
+    "medicationInactive": "That medication isn’t active any more."
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -1577,5 +1586,30 @@
     "continue": "Continue",
     "whatTrack": "What do you track?",
     "prechecked": "{stage, select, baby {Pre-checked for babies.} child {Pre-checked for children.} other {Pre-checked for teens and adults.}} You can change these anytime."
+  },
+  "quickTaps": {
+    "title": "Quick taps",
+    "titleNight": "One tap",
+    "add": "Add to quick taps",
+    "added": "In quick taps",
+    "full": "Quick taps are full ({max})",
+    "addedMessage": "Added to quick taps",
+    "manageTitle": "Quick taps",
+    "manageHint": "One tap on Home logs these at the current time. Save new ones from an entry in Timeline.",
+    "none": "No quick taps yet. Open an entry in Timeline and choose Add to quick taps.",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "remove": "Remove {name}"
+  },
+  "timer": {
+    "start": "Start timer",
+    "alreadyRunning": "A timer is already running for this. Stop it on Home.",
+    "running": "Running timers",
+    "stop": "Stop",
+    "discardLabel": "Discard the {name} timer",
+    "discardTitle": "Discard this timer?",
+    "discardBody": "The {name} timer stops and nothing is saved.",
+    "keepRunning": "Keep it running",
+    "discard": "Discard"
   }
 }

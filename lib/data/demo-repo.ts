@@ -8,12 +8,14 @@ import type { Json } from "@/lib/supabase/types";
 import {
   matchesData, slugify,
   type Actor, type AppointmentRow, type EntryQuery, type LocalEntry, type MedicationChangeRow, type MedicationInput,
-  type MedicationRow, type OptionRow, type Repo, type Result, type RevisionRow,
+  type FavoriteRow, type MedicationRow, type OptionRow, type Repo, type Result, type RevisionRow,
 } from "./types";
 import { t } from "@/lib/i18n";
+import { MAX_FAVORITES } from "@/lib/favorites";
+import { clearAllTimers } from "@/lib/timers";
 
 const DEMO_DB = "bl-demo";
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 
 class DemoDb extends Dexie {
   entries!: Table<LocalEntry, string>;
@@ -23,6 +25,7 @@ class DemoDb extends Dexie {
   appointments!: Table<AppointmentRow, string>;
   options!: Table<OptionRow, string>;
   profileSettings!: Table<{ profile_id: string; settings: Record<string, unknown> }, string>;
+  favorites!: Table<FavoriteRow, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
 
   constructor() {
@@ -37,6 +40,7 @@ class DemoDb extends Dexie {
       profileSettings: "profile_id",
       meta: "key",
     });
+    this.version(2).stores({ favorites: "id, profile_id" });
   }
 }
 
@@ -51,12 +55,13 @@ function openDb(): Promise<DemoDb> {
     // Sample data follows the clock: a new day regenerates the story so "today" is never empty.
     if (seeded?.value !== DATA_VERSION || seededDay?.value !== today) {
       const data = generateHouseholdData({ anchor: new Date(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
-      await db.transaction("rw", [db.entries, db.revisions, db.medications, db.medicationChanges, db.appointments, db.options, db.profileSettings, db.meta], async () => {
-        await Promise.all([db.entries.clear(), db.revisions.clear(), db.medications.clear(), db.medicationChanges.clear(), db.appointments.clear(), db.options.clear(), db.profileSettings.clear()]);
+      await db.transaction("rw", [db.entries, db.revisions, db.medications, db.medicationChanges, db.appointments, db.options, db.profileSettings, db.favorites, db.meta], async () => {
+        await Promise.all([db.entries.clear(), db.revisions.clear(), db.medications.clear(), db.medicationChanges.clear(), db.appointments.clear(), db.options.clear(), db.profileSettings.clear(), db.favorites.clear()]);
         await db.entries.bulkPut(data.entries);
         await db.medications.bulkPut(data.medications);
         await db.medicationChanges.bulkPut(data.medicationChanges);
         await db.appointments.bulkPut(data.appointments);
+        await db.favorites.bulkPut(data.favorites);
         await db.profileSettings.bulkPut(data.profiles.map((p) => ({ profile_id: p.id, settings: p.settings as Record<string, unknown> })));
         await db.meta.put({ key: "version", value: DATA_VERSION });
         await db.meta.put({ key: "day", value: today });
@@ -70,6 +75,7 @@ function openDb(): Promise<DemoDb> {
 export async function clearDemoData(): Promise<void> {
   dbPromise = null;
   await Dexie.delete(DEMO_DB);
+  await clearAllTimers();
 }
 
 export async function demoProfileSettings(): Promise<Record<string, Record<string, unknown>>> {
@@ -128,7 +134,7 @@ export function createDemoRepo(actor: Actor): Repo {
       if (await db.entries.get(e.id)) return ok;
       await db.entries.put({
         id: e.id, household_id: e.householdId, profile_id: e.profileId, type: e.type, occurred_at: e.occurredAt, tz: e.tz,
-        ended_at: null, data: valid.data as Json, note: e.note ?? null, flagged_for_doctor: e.flaggedForDoctor,
+        ended_at: e.endedAt ?? null, data: valid.data as Json, note: e.note ?? null, flagged_for_doctor: e.flaggedForDoctor,
         logged_by: actor.userId, logged_by_name: actor.name, logged_by_initials: actor.initials,
         created_at: now(), updated_at: now(), deleted_at: null, schema_version: 1, _sync: "synced",
       });
@@ -241,6 +247,37 @@ export function createDemoRepo(actor: Actor): Repo {
       const db = await openDb();
       const current = (await db.profileSettings.get(profileId))?.settings ?? {};
       await db.profileSettings.put({ profile_id: profileId, settings: { ...current, ...settings } });
+      return ok;
+    },
+
+    async listFavorites(profileId) {
+      const db = await openDb();
+      return (await db.favorites.where("profile_id").equals(profileId).toArray()).sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+    },
+
+    async addFavorite(f) {
+      const valid = validateEntryData(f.template.type, f.template.data);
+      if (!valid.success) return { error: t("errors.invalidFavorite") };
+      const db = await openDb();
+      const count = await db.favorites.where("profile_id").equals(f.profileId).count();
+      if (count >= MAX_FAVORITES) return { error: t("errors.tooManyFavorites", { max: MAX_FAVORITES }) };
+      await db.favorites.put({
+        id: crypto.randomUUID(), household_id: SEED_IDS.household, profile_id: f.profileId, label: f.label,
+        entry_template: { type: f.template.type, data: valid.data } as Json, sort_order: count, created_at: now(),
+      });
+      return ok;
+    },
+
+    async removeFavorite(id) {
+      await (await openDb()).favorites.delete(id);
+      return ok;
+    },
+
+    async reorderFavorites(_profileId, ids) {
+      const db = await openDb();
+      await db.transaction("rw", db.favorites, async () => {
+        for (const [i, id] of ids.entries()) await db.favorites.update(id, { sort_order: i });
+      });
       return ok;
     },
 

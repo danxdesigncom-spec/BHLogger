@@ -9,6 +9,8 @@ interface Props {
   icon: ReactNode;
   status: string | null;
   alertPill?: string | null;
+  /** Spans both columns (QL-12 ordering can leave a tile alone in its row). */
+  wide?: boolean;
   onClick: () => void;
 }
 
@@ -28,12 +30,12 @@ const INK: Record<ModuleType, string> = {
   medication: "text-medication-ink",
 };
 
-export function ModuleTile({ module, label, icon, status, alertPill, onClick }: Props) {
+export function ModuleTile({ module, label, icon, status, alertPill, wide, onClick }: Props) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-start justify-between gap-3 min-h-[124px] p-4 rounded-tile text-left text-foreground transition-opacity active:opacity-75 ${BG[module]}`}
+      className={`flex flex-col items-start justify-between gap-3 min-h-[124px] p-4 rounded-tile text-left text-foreground transition-opacity active:opacity-75 ${BG[module]} ${wide ? "col-span-2" : ""}`}
     >
       <span className={`w-11 h-11 rounded-full bg-card flex items-center justify-center ${INK[module]}`}>
         {icon}

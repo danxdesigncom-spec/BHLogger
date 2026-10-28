@@ -12,6 +12,7 @@ import { ActivitySheet } from "@/components/log/modules/ActivitySheet";
 import { MoodSheet } from "@/components/log/modules/MoodSheet";
 import { DoseForm } from "@/components/meds/GiveDoseSheet";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { AddToQuickTaps } from "./AddToQuickTaps";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useMedications, useRevisions } from "@/lib/data/hooks";
 import { useRepo } from "@/lib/data/repo-context";
@@ -227,6 +228,8 @@ export function EditEntrySheet({
               </label>
             </>
           )}
+
+          {currentMember.role !== "viewer" && <AddToQuickTaps entry={entry} ctx={summaryCtx} />}
 
           <section aria-labelledby="history-h" className="space-y-2">
             <h3 id="history-h" className="font-sans text-label text-muted-foreground">{te("history")}</h3>

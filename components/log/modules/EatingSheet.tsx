@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import type { ModuleFormContext } from "../LogSheet";
 import { Group, Notice, OptionTiles, RadioChips, Stepper, ToggleChips } from "../controls";
+import { TimerStart } from "../TimerStart";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useLatestEntry } from "@/lib/data/hooks";
 import {
@@ -148,6 +149,12 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
               onChange={(d) => setDuration(d === duration ? null : d)}
               options={BREAST_DURATIONS.map((d) => ({ value: d, label: t("options.durationMin", { count: d }) }))}
             />
+            {ctx.startTimer && (
+              <TimerStart
+                running={!!ctx.timerRunning}
+                onStart={() => ctx.startTimer!({ method: "breast", side: effSide }, e("breastfeedSide", { side: sideLabel(effSide) }))}
+              />
+            )}
           </Group>
         </>
       )}

@@ -7,6 +7,7 @@ import { ProfileSettingsSchema, type ProfileSettings } from "@/lib/schemas/house
 import { demoProfileSettings } from "./demo-repo";
 import { DATA_KEYS, useRepo } from "./repo-context";
 import type { EntryQuery } from "./types";
+import { listTimers } from "@/lib/timers";
 
 export function useEntries(q: EntryQuery, enabled = true) {
   const repo = useRepo();
@@ -71,6 +72,21 @@ export function useOptions(profileId: string | null, module: string) {
     enabled: !!profileId,
     staleTime: 60_000,
   });
+}
+
+export function useFavorites(profileId: string | null) {
+  const repo = useRepo();
+  return useQuery({
+    queryKey: ["favorites", profileId, repo.mode],
+    queryFn: () => repo.listFavorites(profileId!),
+    enabled: !!profileId,
+    staleTime: 60_000,
+  });
+}
+
+/** Running timers on this device (QL-11). */
+export function useTimers() {
+  return useQuery({ queryKey: ["timers"], queryFn: listTimers, staleTime: Infinity });
 }
 
 export function usePendingCount() {

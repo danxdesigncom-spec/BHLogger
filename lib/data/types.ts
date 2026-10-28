@@ -7,6 +7,7 @@ export type MedicationRow = Tables["medications"]["Row"];
 export type MedicationChangeRow = Tables["medication_changes"]["Row"];
 export type AppointmentRow = Tables["appointments"]["Row"];
 export type OptionRow = Tables["option_lists"]["Row"];
+export type FavoriteRow = Tables["favorites"]["Row"];
 
 /** An entry plus local sync state; "pending" means it's still in the outbox (TL-01). */
 export type LocalEntry = EntryRow & { _sync?: "synced" | "pending" | "failed" };
@@ -27,6 +28,8 @@ export interface NewEntry {
   profileId: string;
   type: string;
   occurredAt: string;
+  /** Set by a stopped timer (QL-11): the entry runs from occurredAt to endedAt. */
+  endedAt?: string;
   tz: string;
   data: Record<string, unknown>;
   note?: string;
@@ -91,6 +94,11 @@ export interface Repo {
   addOption(o: { profileId: string; module: string; label: string; icon: string | null }): Promise<Result>;
   archiveOption(id: string): Promise<Result>;
   updateProfileSettings(profileId: string, settings: Record<string, unknown>): Promise<Result>;
+  /** Quick taps (QL-09), in display order. */
+  listFavorites(profileId: string): Promise<FavoriteRow[]>;
+  addFavorite(f: { profileId: string; label: string; template: { type: string; data: Record<string, unknown> } }): Promise<Result>;
+  removeFavorite(id: string): Promise<Result>;
+  reorderFavorites(profileId: string, ids: string[]): Promise<Result>;
   /** Pending outbox count, for the offline banner (M8). */
   pendingCount(): Promise<number>;
 }

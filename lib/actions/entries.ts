@@ -15,6 +15,7 @@ const SaveEntrySchema = z.object({
   profileId: z.string().uuid(),
   type: z.string().min(1),
   occurredAt: z.string().datetime({ offset: true }),
+  endedAt: z.string().datetime({ offset: true }).optional(),
   tz: z.string(),
   data: z.record(z.unknown()).default({}),
   note: z.string().max(2000).optional(),
@@ -33,6 +34,9 @@ export async function saveEntry(input: SaveEntryInput): Promise<Result> {
   const parsed = SaveEntrySchema.safeParse(input);
   if (!parsed.success) return { error: t("errors.invalidEntry") };
   if (new Date(parsed.data.occurredAt).getTime() > Date.now() + 60_000) return { error: t("errors.futureEntry") };
+  if (parsed.data.endedAt && (parsed.data.endedAt < parsed.data.occurredAt || new Date(parsed.data.endedAt).getTime() > Date.now() + 60_000)) {
+    return { error: t("errors.invalidEntry") };
+  }
   const data = validateEntryData(parsed.data.type, parsed.data.data);
   if (!data.success) return { error: data.error };
   if (await isDemoMode()) return { success: true };
@@ -56,6 +60,7 @@ export async function saveEntry(input: SaveEntryInput): Promise<Result> {
       profile_id: parsed.data.profileId,
       type: parsed.data.type,
       occurred_at: parsed.data.occurredAt,
+      ended_at: parsed.data.endedAt ?? null,
       tz: parsed.data.tz,
       data: data.data as Json,
       note: parsed.data.note ?? null,

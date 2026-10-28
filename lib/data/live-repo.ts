@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import * as entryActions from "@/lib/actions/entries";
 import * as medActions from "@/lib/actions/medications";
+import * as favoriteActions from "@/lib/actions/favorites";
 import { outbox } from "./outbox";
 import { matchesData, type Actor, type EntryQuery, type LocalEntry, type Repo } from "./types";
 
@@ -112,6 +113,15 @@ export function createLiveRepo(actor: Actor, householdId: string): Repo {
     addOption: (o) => medActions.addOption(o),
     archiveOption: (id) => medActions.archiveOption(id),
     updateProfileSettings: (id, s) => medActions.updateProfileSettings(id, s),
+
+    async listFavorites(profileId) {
+      const { data } = await supabase.from("favorites").select("*").eq("profile_id", profileId).order("sort_order").order("created_at");
+      return data ?? [];
+    },
+
+    addFavorite: (f) => favoriteActions.addFavorite(f),
+    removeFavorite: (id) => favoriteActions.removeFavorite(id),
+    reorderFavorites: (profileId, ids) => favoriteActions.reorderFavorites(profileId, ids),
     pendingCount: () => outbox.pendingCount(),
   };
 }

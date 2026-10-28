@@ -15,6 +15,9 @@ import { ActivitySheet } from "@/components/log/modules/ActivitySheet";
 import { MoodSheet } from "@/components/log/modules/MoodSheet";
 import { Banners, type BannerItem } from "@/components/home/Banners";
 import { InstallPrompt } from "@/components/home/InstallPrompt";
+import { QuickTaps } from "@/components/home/QuickTaps";
+import { RunningTimers } from "@/components/home/RunningTimers";
+import { useQuickLog } from "@/components/log/useQuickLog";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useLatestEntry, useMedications, useProfileSettings } from "@/lib/data/hooks";
 import { entryShortLabel, formatAgo, formatClock, tileStatus, type SummaryContext } from "@/lib/entries/summary";
@@ -22,6 +25,7 @@ import { bathroomTileLabel, formatDose } from "@/lib/options";
 import { todaySlots } from "@/lib/meds/schedule";
 import { bmAlert } from "@/lib/home/alerts";
 import { startOfDay } from "@/lib/dates";
+import { orderTiles, wideTiles } from "@/lib/home/tiles";
 
 const LOG_PARAM: Record<string, ModuleType> = {
   bathroom: "bathroom", diaper: "bathroom", eating: "eating", feeding: "eating", activity: "activity", mood: "mood",
@@ -38,6 +42,7 @@ export function HomeClient() {
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const { showToast, toastElement } = useUndoToast();
+  const quick = useQuickLog(showToast);
   const settings = useProfileSettings(activeProfileId);
 
   const stage = activeProfile?.careStage ?? "child";
@@ -148,6 +153,10 @@ export function HomeClient() {
     medication: t("modules.medication"),
   };
 
+  const tiles = orderTiles(settings.tile_order).filter((m) => enabled.has(m));
+  const wide = wideTiles(tiles);
+  const latest = { eating, mood, activity };
+
   return (
     <>
       <header className="flex items-center justify-between gap-3 px-5 pt-[18px] pb-1">
@@ -177,6 +186,7 @@ export function HomeClient() {
       <div className="px-5 pt-3.5 pb-4 space-y-4">
         <h1 className="font-display text-display-1">{h("greeting", { name: activeProfile?.name ?? h("everyone") })}</h1>
 
+        {canLog && <RunningTimers onStop={quick.save} />}
         {canLog && <Banners items={banners} />}
         <InstallPrompt />
 
@@ -192,27 +202,22 @@ export function HomeClient() {
         )}
 
         <nav aria-label={h("logFor", { name: activeProfile?.name ?? "" })} className="grid grid-cols-2 gap-3">
-          {enabled.has("bathroom") && (
+          {tiles.map((m) => m === "bathroom" ? (
             <ModuleTile
+              key={m}
               module="bathroom"
               label={tileLabels.bathroom}
               icon={<Droplet size={22} strokeWidth={2} aria-hidden="true" />}
               status={bathroom.isFetched ? tileStatus(bathroom.data, ctx, now) : null}
               alertPill={bm.alert ? bm.label : null}
+              wide={wide.has(m)}
               onClick={() => canLog && setOpenSheet("bathroom")}
             />
-          )}
-          {enabled.has("eating") && (
-            <ModuleTile module="eating" label={tileLabels.eating} icon={MODULE_ICONS.eating} status={eating.isFetched ? tileStatus(eating.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("eating")} />
-          )}
-          {enabled.has("mood") && (
-            <ModuleTile module="mood" label={tileLabels.mood} icon={MODULE_ICONS.mood} status={mood.isFetched ? tileStatus(mood.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("mood")} />
-          )}
-          {enabled.has("activity") && (
-            <ModuleTile module="activity" label={tileLabels.activity} icon={MODULE_ICONS.activity} status={activity.isFetched ? tileStatus(activity.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("activity")} />
-          )}
-          {enabled.has("medication") && (
+          ) : m !== "medication" ? (
+            <ModuleTile key={m} module={m} label={tileLabels[m]} icon={MODULE_ICONS[m]} status={latest[m].isFetched ? tileStatus(latest[m].data, ctx, now) : null} wide={wide.has(m)} onClick={() => canLog && setOpenSheet(m)} />
+          ) : (
             <Link
+              key={m}
               href="/meds"
               className="col-span-2 flex items-center gap-3.5 min-h-20 p-4 rounded-tile bg-medication text-foreground"
             >
@@ -227,8 +232,12 @@ export function HomeClient() {
               </span>
               <ChevronRight size={22} strokeWidth={2} aria-hidden="true" />
             </Link>
-          )}
+          ))}
         </nav>
+
+        {canLog && activeProfileId && (
+          <QuickTaps profileId={activeProfileId} onTap={(tpl, label) => quick.logTemplate(activeProfileId, tpl, label)} />
+        )}
       </div>
 
       <ProfileSwitcherSheet open={switcherOpen} onClose={() => setSwitcherOpen(false)} />
@@ -246,6 +255,7 @@ export function HomeClient() {
         {(c) => <MoodSheet ctx={c} />}
       </LogSheet>
 
+      {quick.dialog}
       {toastElement}
     </>
   );

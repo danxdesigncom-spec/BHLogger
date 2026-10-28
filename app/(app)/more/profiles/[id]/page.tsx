@@ -3,19 +3,20 @@
 import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Eye, EyeOff, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Group, RadioChips } from "@/components/log/controls";
+import { QuickTapsManager } from "@/components/profile/QuickTapsManager";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useOptions, useProfileSettings } from "@/lib/data/hooks";
 import { useOptionSet } from "@/lib/data/useOptionSet";
 import { useRepo } from "@/lib/data/repo-context";
 import { updateProfile } from "@/lib/actions/settings";
 import { ACTIVITY_LIBRARY, behaviors, FEELINGS, PRN_REASONS, type Option } from "@/lib/options";
+import { moveTile, orderTiles, type TileModule } from "@/lib/home/tiles";
 
 const COLORS = ["violet", "teal", "rose", "amber", "blue"] as const;
-const MODULES = ["bathroom", "eating", "activity", "mood", "medication"] as const;
 const METHODS = ["breast", "bottle", "meal", "snack", "drink"] as const;
 const input = "w-full h-button rounded-lg border border-input bg-card px-4 text-[16px] font-bold text-foreground placeholder:font-normal placeholder:text-muted-foreground";
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
@@ -110,6 +111,9 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
   const tr = useTranslations();
   const profile = profiles.find((p) => p.id === id);
   const canEdit = currentMember.role === "admin";
+  const repo = useRepo();
+  const qc = useQueryClient();
+  const profileSettings = useProfileSettings(profile?.id ?? null);
   const [busy, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const card = (profile?.careCard ?? {}) as {
@@ -144,6 +148,15 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
     startTransition(async () => {
       const r = await updateProfile(profile.id, patch);
       setMessage("error" in r ? r.error : done);
+      router.refresh();
+    });
+
+  const tileOrder = orderTiles(profileSettings.tile_order);
+  const moveModule = (m: TileModule, by: -1 | 1, label: string) =>
+    startTransition(async () => {
+      const r = await repo.updateProfileSettings(profile.id, { tile_order: moveTile(tileOrder, m, by) });
+      setMessage("error" in r ? r.error : t(by < 0 ? "movedUp" : "movedDown", { name: label }));
+      await qc.invalidateQueries({ queryKey: ["profile-settings"] });
       router.refresh();
     });
 
@@ -218,26 +231,40 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
 
         <section aria-labelledby="modules-h" className="space-y-2">
           <h2 id="modules-h" className="font-display text-title-5">{t("modules")}</h2>
+          <p className="text-caption text-muted-foreground">{t("modulesHint")}</p>
           <div className="rounded-card bg-card shadow-card divide-y divide-divider">
-            {MODULES.map((m) => {
+            {tileOrder.map((m, i) => {
               const on = profile.enabledModules.includes(m);
               const label = m === "mood" ? t("moodAndBehaviors") : tr(`modules.${m}`);
               return (
-                <label key={m} className="min-h-[56px] flex items-center justify-between gap-3 px-4">
-                  <span className="text-body font-extrabold">{label}</span>
+                <div key={m} className="min-h-[56px] flex items-center gap-1 pl-4 pr-3">
+                  <span id={`mod-${m}`} className="flex-1 text-body font-extrabold">{label}</span>
+                  {canEdit && (
+                    <>
+                      <button type="button" disabled={busy || i === 0} aria-label={t("moveUp", { name: label })} onClick={() => moveModule(m, -1, label)} className="w-11 h-11 flex-none rounded-full flex items-center justify-center text-muted-foreground disabled:opacity-30">
+                        <ArrowUp size={18} strokeWidth={2} aria-hidden="true" />
+                      </button>
+                      <button type="button" disabled={busy || i === tileOrder.length - 1} aria-label={t("moveDown", { name: label })} onClick={() => moveModule(m, 1, label)} className="w-11 h-11 flex-none rounded-full flex items-center justify-center text-muted-foreground disabled:opacity-30">
+                        <ArrowDown size={18} strokeWidth={2} aria-hidden="true" />
+                      </button>
+                    </>
+                  )}
                   <input
                     type="checkbox"
                     role="switch"
-                    className="switch"
+                    aria-labelledby={`mod-${m}`}
+                    className="switch ml-2"
                     checked={on}
                     disabled={!canEdit || busy || (on && profile.enabledModules.length === 1)}
                     onChange={() => save({ enabled_modules: on ? profile.enabledModules.filter((x) => x !== m) : [...profile.enabledModules, m] }, on ? t("moduleHidden", { name: label }) : t("moduleShown", { name: label }))}
                   />
-                </label>
+                </div>
               );
             })}
           </div>
         </section>
+
+        <QuickTapsManager profileId={profile.id} canEdit={currentMember.role !== "viewer"} />
 
         <section aria-labelledby="options-h" className="space-y-3">
           <h2 id="options-h" className="font-display text-title-5">{t("optionLists")}</h2>

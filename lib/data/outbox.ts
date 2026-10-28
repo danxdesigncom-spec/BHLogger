@@ -3,6 +3,7 @@
 import Dexie, { type Table } from "dexie";
 import { saveEntry as saveEntryAction } from "@/lib/actions/entries";
 import type { Json } from "@/lib/supabase/types";
+import { clearAllTimers } from "@/lib/timers";
 import { matchesData, mergeEntries, type Actor, type EntryQuery, type LocalEntry, type NewEntry } from "./types";
 
 interface PendingRow {
@@ -65,7 +66,7 @@ class Outbox {
     const t = new Date().toISOString();
     const entry: LocalEntry = {
       id: e.id, household_id: e.householdId, profile_id: e.profileId, type: e.type, occurred_at: e.occurredAt, tz: e.tz,
-      ended_at: null, data: e.data as Json, note: e.note ?? null, flagged_for_doctor: e.flaggedForDoctor,
+      ended_at: e.endedAt ?? null, data: e.data as Json, note: e.note ?? null, flagged_for_doctor: e.flaggedForDoctor,
       logged_by: actor.userId, logged_by_name: actor.name, logged_by_initials: actor.initials,
       created_at: t, updated_at: t, deleted_at: null, schema_version: 1, _sync: "pending",
     };
@@ -158,6 +159,7 @@ export const outbox = new Outbox();
 export async function clearLocalData(): Promise<void> {
   outbox.close();
   await Dexie.delete("bl-outbox");
+  await clearAllTimers();
   if (typeof caches !== "undefined") {
     for (const key of await caches.keys()) await caches.delete(key);
   }

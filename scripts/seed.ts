@@ -79,6 +79,8 @@ async function seed() {
     check(`entries batch ${i}`, (await supabase.from("entries").insert(data.entries.slice(i, i + 500))).error);
   }
   check("appointments", (await supabase.from("appointments").insert(data.appointments)).error);
+  check("clear favorites", (await supabase.from("favorites").delete().eq("household_id", SEED_IDS.household)).error);
+  check("favorites", (await supabase.from("favorites").insert(data.favorites)).error);
 
   console.log("\nSeed complete.");
   console.log(`  Household: ${SEED_IDS.household}`);
