@@ -14,7 +14,7 @@
     "check-contrast": "node design/scripts/check-contrast.mjs",
     "build-theme": "node design/scripts/build-theme.mjs",
     "db:reset": "supabase db reset",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",

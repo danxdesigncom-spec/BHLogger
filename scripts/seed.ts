@@ -77,42 +77,49 @@ function isoAt(date: Date, hour: number, minute = 0): string {
 
 // ─── IDs ──────────────────────────────────────────────────────────────────────
 
-const IDS = {
-  household: randomUUID(),
-  // auth users
-  mom: randomUUID(),
-  dad: randomUUID(),
-  grandma: randomUUID(),
-  // household members
-  momMember: randomUUID(),
-  dadMember: randomUUID(),
-  grandmaMember: randomUUID(),
-  // profiles
-  leo: randomUUID(),
-  maya: randomUUID(),
-  // medications
-  leoVitamin: randomUUID(),
-  mayaVitamin: randomUUID(),
-  leoAlbuterol: randomUUID(),
+// Fixed UUIDs so the script is idempotent across re-runs.
+// mom/dad/grandma may be overwritten with their real auth IDs if they already exist.
+const IDS: Record<string, string> = {
+  household:      "a1000000-0000-0000-0000-000000000001",
+  mom:            "a1000000-0000-0000-0000-000000000002",
+  dad:            "a1000000-0000-0000-0000-000000000003",
+  grandma:        "a1000000-0000-0000-0000-000000000004",
+  momMember:      "a1000000-0000-0000-0000-000000000005",
+  dadMember:      "a1000000-0000-0000-0000-000000000006",
+  grandmaMember:  "a1000000-0000-0000-0000-000000000007",
+  leo:            "a1000000-0000-0000-0000-000000000008",
+  maya:           "a1000000-0000-0000-0000-000000000009",
+  leoVitamin:     "a1000000-0000-0000-0000-000000000010",
+  mayaVitamin:    "a1000000-0000-0000-0000-000000000011",
+  leoAlbuterol:   "a1000000-0000-0000-0000-000000000012",
 };
 
 // ─── Auth users ───────────────────────────────────────────────────────────────
 
-async function createAuthUser(
-  id: string,
+// Creates a user with the preferred ID, or returns the ID of the existing user
+// with that email if one already exists.
+async function getOrCreateAuthUser(
+  preferredId: string,
   email: string,
   name: string,
-): Promise<void> {
-  const { error } = await supabase.auth.admin.createUser({
-    id,
+): Promise<string> {
+  const { data, error } = await supabase.auth.admin.createUser({
+    id: preferredId,
     email,
     email_confirm: true,
     user_metadata: { full_name: name },
     password: "SeedPassword123!",
   });
-  if (error && !error.message.includes("already registered")) {
-    throw new Error(`createUser ${email}: ${error.message}`);
+  if (!error) return data.user.id;
+
+  const msg = error.message.toLowerCase();
+  if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("duplicate")) {
+    // Look up the existing user by email
+    const { data: list } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const existing = list?.users.find((u) => u.email === email);
+    if (existing) return existing.id;
   }
+  throw new Error(`createUser ${email}: ${error.message}`);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -120,15 +127,11 @@ async function createAuthUser(
 async function seed() {
   console.log("🌱 Seeding Rodriguez Family demo data…\n");
 
-  // 1. Auth users
+  // 1. Auth users (IDs may differ from preferred if user already existed)
   console.log("  Creating auth users…");
-  await createAuthUser(IDS.mom, "mom@rodriguez.example", "Mom Rodriguez");
-  await createAuthUser(IDS.dad, "dad@rodriguez.example", "Dad Rodriguez");
-  await createAuthUser(
-    IDS.grandma,
-    "grandma@rodriguez.example",
-    "Grandma Rodriguez",
-  );
+  IDS.mom     = await getOrCreateAuthUser(IDS.mom,     "mom@rodriguez.example",     "Mom Rodriguez");
+  IDS.dad     = await getOrCreateAuthUser(IDS.dad,     "dad@rodriguez.example",     "Dad Rodriguez");
+  IDS.grandma = await getOrCreateAuthUser(IDS.grandma, "grandma@rodriguez.example", "Grandma Rodriguez");
 
   // 2. Household
   console.log("  Creating household…");
@@ -247,6 +250,7 @@ async function seed() {
       default_dose: 2,
       dose_unit: "puffs",
       kind: "prn" as const,
+      dose_window_min: 30,
       min_interval_hours: 4,
       purpose: "asthma rescue",
       prescriber: "Dr. Chen",
