@@ -97,18 +97,20 @@ export function GiveDoseSheet({ med, open, onClose, onSaved }: Props) {
   );
 }
 
-function DoseForm({
-  ctx, med, slot, lastHint,
+export function DoseForm({
+  ctx, med, slot, lastHint, initial,
 }: {
   ctx: ModuleFormContext;
   med: MedicationRow;
   slot: Date | null;
   lastHint: { text: string; setting: string; warn: boolean } | null;
+  initial?: Record<string, unknown>;
 }) {
-  const [dose, setDose] = useState(Number(med.default_dose));
-  const [outcome, setOutcome] = useState("given");
-  const [reason, setReason] = useState<string | null>(null);
-  const step = dose >= 10 || med.dose_unit === "mg" && Number(med.default_dose) >= 10 ? 1 : 0.5;
+  const init = (initial ?? {}) as { dose?: number; outcome?: string; prn_reason?: string | null; duplicate_override?: boolean };
+  const [dose, setDose] = useState(init.dose ?? Number(med.default_dose));
+  const [outcome, setOutcome] = useState(init.outcome ?? "given");
+  const [reason, setReason] = useState<string | null>(init.prn_reason ?? null);
+  const step = Number(med.default_dose) >= 10 ? 1 : 0.5;
 
   useEffect(() => {
     ctx.setData(
@@ -116,7 +118,7 @@ function DoseForm({
         medication_id: med.id, dose, unit: med.dose_unit, outcome,
         scheduled_for: slot ? slot.toISOString() : null,
         prn_reason: med.kind === "prn" ? reason : null,
-        duplicate_override: false, followup: null,
+        duplicate_override: init.duplicate_override ?? false, followup: (initial?.followup as string | null | undefined) ?? null,
       },
       `${med.name} ${formatDose(dose, med.dose_unit)}`,
       true,

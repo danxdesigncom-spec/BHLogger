@@ -9,6 +9,8 @@ export interface ToastEntry {
   profileName: string;
   summary: string;
   time: string;
+  /** Overrides "{summary} logged for {profileName}", e.g. for deletions. */
+  message?: string;
 }
 
 interface Props {
@@ -50,7 +52,7 @@ export function UndoToast({ toast, onUndo, onDismiss }: Props) {
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-label font-extrabold truncate">
-          {toast.summary} logged for {toast.profileName}
+          {toast.message ?? `${toast.summary} logged for ${toast.profileName}`}
         </p>
         <p className="text-caption text-toast-muted">{toast.time}</p>
       </div>

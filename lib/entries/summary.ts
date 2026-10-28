@@ -33,6 +33,11 @@ export function consistencyLabel(value: unknown): string | undefined {
   return undefined;
 }
 
+/** "Pasta, carrots": sentence case for a list of option labels. */
+export function sentenceList(labels: string[]): string {
+  return labels.map((l, i) => (i === 0 ? l : l.charAt(0).toLowerCase() + l.slice(1))).join(", ");
+}
+
 /** Short label used in toasts and tile statuses: "Wet", "BM", "Dinner", "4 oz bottle". */
 export function entryShortLabel(e: EntryLike, ctx: SummaryContext): string {
   const d = (e.data ?? {}) as D;
@@ -129,9 +134,8 @@ export function entryDetail(e: EntryLike): string {
       if (m === "breast" && num(d.duration_min)) parts.push(`${d.duration_min} min`);
       if (m === "bottle" && d.contents) parts.push(labelFor(BOTTLE_CONTENTS, String(d.contents)));
       if (m === "meal" || m === "snack") {
-        const foods = arr(d.food_ids).map((f) => humanize(String(f)));
-        if (foods.length) parts.push(foods.join(", "));
-        else if (arr(d.food_groups).length) parts.push(arr(d.food_groups).map((g) => humanize(String(g))).join(", "));
+        const list = arr(d.food_ids).length ? arr(d.food_ids) : arr(d.food_groups);
+        if (list.length) parts.push(sentenceList(list.map((f) => humanize(String(f)))));
       }
       const reactions = arr(d.reactions).map((r) => labelFor(REACTIONS, String(r)));
       if (reactions.length) parts.push(reactions.join(", "));

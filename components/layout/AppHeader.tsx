@@ -1,49 +1,36 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { useHousehold } from "@/lib/context/household-provider";
+import { ProfileSwitcherSheet } from "@/components/profile/ProfileSwitcherSheet";
 
-interface AppHeaderProps {
-  title: string;
-  /** Profile name shown in the switcher pill */
-  profileName?: string;
-  /** CSS color value for the profile dot */
-  profileColor?: string;
-}
+/** Tab screen header: page title plus the profile switcher pill (DESIGN 4.2). */
+export function AppHeader({ title, children }: { title: string; children?: ReactNode }) {
+  const { activeProfile, profiles } = useHousehold();
+  const [open, setOpen] = useState(false);
 
-export function AppHeader({
-  title,
-  profileName = "Profile",
-}: AppHeaderProps) {
   return (
-    <header
-      className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-divider"
-      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-    >
-      <div className="flex items-center justify-between px-4 h-14">
-        <h1 className="text-title-3 font-display font-semibold text-foreground">
-          {title}
-        </h1>
-
-        {/* Profile switcher pill — wired up properly in M3 */}
-        <button
-          type="button"
-          aria-label={`Active profile: ${profileName}. Tap to switch.`}
-          className={[
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-            "bg-[var(--profile-tint)] text-[var(--profile-ink)]",
-            "text-body font-bold transition-opacity active:opacity-70",
-            "min-h-[44px]",
-          ].join(" ")}
-        >
-          {/* Profile color dot */}
-          <span
-            className="w-2.5 h-2.5 rounded-full bg-[var(--profile)] flex-shrink-0"
-            aria-hidden="true"
-          />
-          <span>{profileName}</span>
-          <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
-        </button>
+    <header className="px-5 pt-[18px] pb-1 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-display-2">{title}</h1>
+        {profiles.length > 0 && (
+          <button
+            type="button"
+            aria-label={`Switch profile. Current profile: ${activeProfile?.name ?? ""}`}
+            onClick={() => setOpen(true)}
+            className="min-h-touch-min flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full bg-card shadow-raised"
+          >
+            <span aria-hidden="true" className="w-8 h-8 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-body-md">
+              {activeProfile?.initials}
+            </span>
+            <span className="text-body font-extrabold">{activeProfile?.name}</span>
+            <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
+          </button>
+        )}
       </div>
+      {children}
+      <ProfileSwitcherSheet open={open} onClose={() => setOpen(false)} />
     </header>
   );
 }

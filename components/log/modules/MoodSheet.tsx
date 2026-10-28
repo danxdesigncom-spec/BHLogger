@@ -9,17 +9,22 @@ import { behaviors as behaviorOptions, FEELINGS, moodLabels, SEVERITIES } from "
 
 type Severity = "mild" | "moderate" | "severe";
 
-export function MoodSheet({ ctx, scope = "moment" }: { ctx: ModuleFormContext; scope?: "moment" | "day" }) {
+export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormContext; scope?: "moment" | "day"; initial?: Record<string, unknown> }) {
   const { activeProfile } = useHousehold();
   const stage = activeProfile?.careStage ?? "child";
   const labels = moodLabels(stage);
   const feelingOptions = FEELINGS[stage];
   const behaviorList = behaviorOptions(stage);
 
-  const [level, setLevel] = useState<number | null>(null);
-  const [feelings, setFeelings] = useState<string[]>([]);
-  const [behaviors, setBehaviors] = useState<{ key: string; severity?: Severity }[]>([]);
-  const [energy, setEnergy] = useState<"low" | "normal" | "high" | null>(null);
+  const init = (initial ?? {}) as {
+    scope?: "moment" | "day"; level?: number; feelings?: string[];
+    behaviors?: { key: string; severity?: Severity; duration_min?: number }[]; energy?: "low" | "normal" | "high";
+  };
+  const scope = scopeProp ?? init.scope ?? "moment";
+  const [level, setLevel] = useState<number | null>(init.level ?? null);
+  const [feelings, setFeelings] = useState<string[]>(init.feelings ?? []);
+  const [behaviors, setBehaviors] = useState<{ key: string; severity?: Severity; duration_min?: number }[]>(init.behaviors ?? []);
+  const [energy, setEnergy] = useState<"low" | "normal" | "high" | null>(init.energy ?? null);
 
   useEffect(() => {
     if (level === null) return;

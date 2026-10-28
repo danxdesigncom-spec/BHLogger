@@ -9,11 +9,11 @@ import { ActivityIcon } from "../activity-icons";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useOptions } from "@/lib/data/hooks";
 import { useRepo } from "@/lib/data/repo-context";
-import { ACTIVITY_DURATIONS, ACTIVITY_LIBRARY, ENJOYMENT_LABELS, type Option } from "@/lib/options";
+import { ACTIVITY_DURATIONS, ACTIVITY_LIBRARY, activityLabel, ENJOYMENT_LABELS, type Option } from "@/lib/options";
 
 const VISIBLE = 8;
 
-export function ActivitySheet({ ctx }: { ctx: ModuleFormContext }) {
+export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initial?: Record<string, unknown> }) {
   const { activeProfile } = useHousehold();
   const profileId = activeProfile?.id ?? null;
   const stage = activeProfile?.careStage ?? "child";
@@ -24,9 +24,10 @@ export function ActivitySheet({ ctx }: { ctx: ModuleFormContext }) {
   const since = useMemo(() => new Date(Date.now() - 60 * 86_400_000).toISOString(), []);
   const recent = useEntries({ profileId: profileId ?? undefined, types: ["activity"], from: since }, !!profileId);
 
-  const [activity, setActivity] = useState<string | null>(null);
-  const [enjoyment, setEnjoyment] = useState<number | null>(null);
-  const [duration, setDuration] = useState<number | null>(null);
+  const init = (initial ?? {}) as { activity_id?: string; enjoyment?: number | null; duration_min?: number };
+  const [activity, setActivity] = useState<string | null>(init.activity_id ?? null);
+  const [enjoyment, setEnjoyment] = useState<number | null>(init.enjoyment ?? null);
+  const [duration, setDuration] = useState<number | null>(init.duration_min ?? null);
   const [showAll, setShowAll] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -45,7 +46,9 @@ export function ActivitySheet({ ctx }: { ctx: ModuleFormContext }) {
   }, [custom.data, recent.data, stage]);
 
   const visible = showAll ? options : options.slice(0, VISIBLE);
-  if (activity && !visible.some((o) => o.key === activity)) visible.push(options.find((o) => o.key === activity)!);
+  if (activity && !visible.some((o) => o.key === activity)) {
+    visible.push(options.find((o) => o.key === activity) ?? { key: activity, label: activityLabel(activity) });
+  }
 
   useEffect(() => {
     if (!activity) return;

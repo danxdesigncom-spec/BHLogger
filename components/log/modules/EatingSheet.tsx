@@ -37,12 +37,14 @@ const CUPS = [
 
 type D = Record<string, unknown>;
 
-export function EatingSheet({ ctx }: { ctx: ModuleFormContext }) {
+export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?: Record<string, unknown> }) {
   const { activeProfile, householdSettings } = useHousehold();
   const profileId = activeProfile?.id ?? null;
   const stage = activeProfile?.careStage ?? "child";
   const unit = householdSettings.volume_unit;
-  const methods = eatingMethods(stage, activeProfile?.feedingMethods ?? [], ageInMonths(activeProfile?.dob ?? null));
+  const profileMethods = eatingMethods(stage, activeProfile?.feedingMethods ?? [], ageInMonths(activeProfile?.dob ?? null));
+  const initMethod = (initial as { method?: EatingMethod } | undefined)?.method;
+  const methods = initMethod && !profileMethods.includes(initMethod) ? [...profileMethods, initMethod] : profileMethods;
 
   const last = useLatestEntry(profileId, "eating");
   const lastBottle = useLatestEntry(profileId, "eating", { method: "bottle" });
@@ -54,19 +56,24 @@ export function EatingSheet({ ctx }: { ctx: ModuleFormContext }) {
   const lastBottleData = lastBottle.data?.data as D | undefined;
   const lastAmountMl = typeof lastBottleData?.amount_ml === "number" ? lastBottleData.amount_ml : null;
 
-  const [method, setMethod] = useState<EatingMethod>(methods[0]);
-  const [touchedMethod, setTouchedMethod] = useState(false);
-  const [side, setSide] = useState<string>("left");
-  const [touchedSide, setTouchedSide] = useState(false);
-  const [duration, setDuration] = useState<number | null>(null);
-  const [contents, setContents] = useState<string | null>(null);
-  const [amountMl, setAmountMl] = useState<number | null>(null);
-  const [mealType, setMealType] = useState(mealTypeForHour(new Date().getHours()));
-  const [portion, setPortion] = useState<number | null>(null);
-  const [drink, setDrink] = useState("water");
-  const [drinkMl, setDrinkMl] = useState<number | null>(null);
-  const [groups, setGroups] = useState<string[]>([]);
-  const [reactions, setReactions] = useState<string[]>([]);
+  const init = (initial ?? {}) as {
+    method?: EatingMethod; side?: string; duration_min?: number; contents?: string; amount_ml?: number;
+    meal_type?: "breakfast" | "lunch" | "dinner"; portion_pct?: number; food_groups?: string[]; reactions?: string[];
+  };
+  const editing = !!initial;
+  const [method, setMethod] = useState<EatingMethod>(init.method ?? methods[0]);
+  const [touchedMethod, setTouchedMethod] = useState(editing);
+  const [side, setSide] = useState<string>(init.side ?? "left");
+  const [touchedSide, setTouchedSide] = useState(editing);
+  const [duration, setDuration] = useState<number | null>(init.duration_min ?? null);
+  const [contents, setContents] = useState<string | null>(init.method === "bottle" ? init.contents ?? null : null);
+  const [amountMl, setAmountMl] = useState<number | null>(init.method === "bottle" ? init.amount_ml ?? null : null);
+  const [mealType, setMealType] = useState(init.meal_type ?? mealTypeForHour(new Date().getHours()));
+  const [portion, setPortion] = useState<number | null>(init.portion_pct ?? null);
+  const [drink, setDrink] = useState(init.method === "drink" ? init.contents ?? "water" : "water");
+  const [drinkMl, setDrinkMl] = useState<number | null>(init.method === "drink" ? init.amount_ml ?? null : null);
+  const [groups, setGroups] = useState<string[]>(init.food_groups ?? []);
+  const [reactions, setReactions] = useState<string[]>(init.reactions ?? []);
 
   // QL-06: preselect last-used method, breast start side and bottle amount once they load.
   const effMethod = touchedMethod ? method : lastMethod && methods.includes(lastMethod) ? lastMethod : method;

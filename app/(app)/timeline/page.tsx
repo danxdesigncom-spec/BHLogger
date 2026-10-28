@@ -1,15 +1,12 @@
-import type { Metadata } from "next";
-import { AppHeader } from "@/components/layout/AppHeader";
+import { Suspense } from "react";
+import { TimelineClient } from "./TimelineClient";
 
-export const metadata: Metadata = { title: "Timeline" };
+export const metadata = { title: "Timeline" };
 
 export default function TimelinePage() {
   return (
-    <>
-      <AppHeader title="Timeline" />
-      <div className="px-4 py-6">
-        <p className="text-muted-foreground text-body">Timeline — coming in M7.</p>
-      </div>
-    </>
+    <Suspense>
+      <TimelineClient />
+    </Suspense>
   );
 }

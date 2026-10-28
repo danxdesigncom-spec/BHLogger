@@ -42,19 +42,23 @@ const SWATCH: Record<string, string> = {
 
 type Consistency = number | string;
 
-export function BathroomSheet({ ctx }: { ctx: ModuleFormContext }) {
+export function BathroomSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?: Record<string, unknown> }) {
   const { activeProfile } = useHousehold();
   const stage = activeProfile?.careStage ?? "child";
   const toileting = activeProfile?.toileting ?? "toilet";
   const ageDays = ageInDays(activeProfile?.dob ?? null);
 
-  const [kind, setKind] = useState<BathroomKind | null>(null);
-  const [location, setLocation] = useState<"diaper" | "toilet" | "accident">(toileting === "diapers" ? "diaper" : "toilet");
-  const [scale, setScale] = useState<"aiss" | "bristol">(defaultStoolScale(stage, toileting));
-  const [consistency, setConsistency] = useState<Consistency | null>(null);
-  const [color, setColor] = useState<string | null>(null);
-  const [size, setSize] = useState<string | null>(null);
-  const [flags, setFlags] = useState<string[]>([]);
+  const init = (initial ?? {}) as {
+    kind?: BathroomKind; location?: "diaper" | "toilet" | "accident"; scale?: "aiss" | "bristol";
+    consistency?: Consistency; color?: string; size?: string; flags?: string[];
+  };
+  const [kind, setKind] = useState<BathroomKind | null>(init.kind ?? null);
+  const [location, setLocation] = useState<"diaper" | "toilet" | "accident">(init.location ?? (toileting === "diapers" ? "diaper" : "toilet"));
+  const [scale, setScale] = useState<"aiss" | "bristol">(init.scale ?? (typeof init.consistency === "number" ? "bristol" : typeof init.consistency === "string" ? "aiss" : defaultStoolScale(stage, toileting)));
+  const [consistency, setConsistency] = useState<Consistency | null>(init.consistency ?? null);
+  const [color, setColor] = useState<string | null>(init.color ?? null);
+  const [size, setSize] = useState<string | null>(init.size ?? null);
+  const [flags, setFlags] = useState<string[]>(init.flags ?? []);
 
   const hasStool = kind === "bm" || kind === "both";
 
