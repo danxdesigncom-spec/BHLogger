@@ -5,6 +5,9 @@ import { ThemeProvider, type Theme, type ProfileColor } from "@/lib/theme-contex
 import { HouseholdProvider, type ProfileSummary, type MemberSummary } from "@/lib/context/household-provider";
 import { ReactQueryProvider } from "@/lib/query-client";
 import { createClient } from "@/lib/supabase/server";
+import { isDemoMode } from "@/app/auth/demo/actions";
+import { DemoBanner } from "@/components/layout/DemoBanner";
+import { DEMO_CURRENT_MEMBER, DEMO_HOUSEHOLD_ID, DEMO_PROFILES } from "@/lib/demo";
 
 export default async function AppLayout({
   children,
@@ -17,6 +20,36 @@ export default async function AppLayout({
     cookieStore.get("bl-profile-color")?.value ?? "violet"
   ) as ProfileColor;
   const activeProfileCookie = cookieStore.get("bl-active-profile")?.value ?? null;
+
+  if (await isDemoMode()) {
+    const demoActive =
+      activeProfileCookie && DEMO_PROFILES.some((p) => p.id === activeProfileCookie)
+        ? activeProfileCookie
+        : DEMO_PROFILES[0].id;
+    const demoColor = DEMO_PROFILES.find((p) => p.id === demoActive)!.color;
+    return (
+      <ThemeProvider initialTheme={theme} initialProfileColor={demoColor as ProfileColor}>
+        <HouseholdProvider
+          householdId={DEMO_HOUSEHOLD_ID}
+          profiles={DEMO_PROFILES}
+          members={[DEMO_CURRENT_MEMBER]}
+          currentMember={DEMO_CURRENT_MEMBER}
+          initialActiveProfileId={demoActive}
+        >
+          <ReactQueryProvider>
+            <DemoBanner />
+            <main
+              className="min-h-screen"
+              style={{ paddingBottom: "calc(64px + max(12px, env(safe-area-inset-bottom, 0px)))" }}
+            >
+              {children}
+            </main>
+            <TabBar />
+          </ReactQueryProvider>
+        </HouseholdProvider>
+      </ThemeProvider>
+    );
+  }
 
   const supabase = await createClient();
   const {

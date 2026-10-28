@@ -4,11 +4,11 @@ import { Check } from "lucide-react";
 import { useHousehold } from "@/lib/context/household-provider";
 
 const COLOR_BG: Record<string, string> = {
-  violet: "bg-[var(--color-profile-violet)]",
-  teal:   "bg-[var(--color-profile-teal)]",
-  rose:   "bg-[var(--color-profile-rose)]",
-  amber:  "bg-[var(--color-profile-amber)]",
-  blue:   "bg-[var(--color-profile-blue)]",
+  violet: "bg-profile",
+  teal:   "bg-profile",
+  rose:   "bg-profile",
+  amber:  "bg-profile",
+  blue:   "bg-profile",
 };
 
 interface Props {
@@ -32,7 +32,7 @@ export function ProfileSwitcherSheet({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Switch profile"
-        className="fixed left-0 right-0 bottom-0 z-50 rounded-t-[28px] bg-[var(--color-surface)] pb-[max(24px,env(safe-area-inset-bottom,0px))]"
+        className="fixed left-0 right-0 bottom-0 z-50 rounded-t-[28px] bg-[var(--color-card)] pb-[max(24px,env(safe-area-inset-bottom,0px))]"
       >
         <div aria-hidden="true" className="w-10 h-[5px] mx-auto mt-3 rounded-full bg-[var(--color-border)]" />
         <h2 className="font-display text-[22px] font-semibold px-5 pt-4 pb-2">
@@ -52,13 +52,13 @@ export function ProfileSwitcherSheet({ open, onClose }: Props) {
                   className={[
                     "w-full flex items-center gap-4 px-4 min-h-[64px] rounded-[20px] transition-colors",
                     active
-                      ? "bg-[var(--color-profile-bg)] border-2 border-[var(--color-profile)]"
+                      ? "bg-[var(--color-profile-tint)] border-2 border-[var(--color-profile)]"
                       : "bg-white border-2 border-transparent",
                   ].join(" ")}
                 >
                   <span
                     aria-hidden="true"
-                    className={`w-10 h-10 flex-none rounded-full flex items-center justify-center font-display text-[18px] font-semibold text-white ${COLOR_BG[p.color] ?? "bg-gray-400"}`}
+                    data-profile-color={p.color} className={`w-10 h-10 flex-none rounded-full flex items-center justify-center font-display text-[18px] font-semibold text-white ${COLOR_BG[p.color] ?? "bg-gray-400"}`}
                   >
                     {p.initials}
                   </span>

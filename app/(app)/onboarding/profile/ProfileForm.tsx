@@ -6,11 +6,11 @@ import { submitProfileStep } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
 
 const COLORS: { value: ProfileColor; label: string; bg: string }[] = [
-  { value: "violet", label: "Violet", bg: "bg-[var(--color-profile-violet)]" },
-  { value: "teal",   label: "Teal",   bg: "bg-[var(--color-profile-teal)]" },
-  { value: "rose",   label: "Rose",   bg: "bg-[var(--color-profile-rose)]" },
-  { value: "amber",  label: "Amber",  bg: "bg-[var(--color-profile-amber)]" },
-  { value: "blue",   label: "Blue",   bg: "bg-[var(--color-profile-blue)]" },
+  { value: "violet", label: "Violet", bg: "bg-profile" },
+  { value: "teal",   label: "Teal",   bg: "bg-profile" },
+  { value: "rose",   label: "Rose",   bg: "bg-profile" },
+  { value: "amber",  label: "Amber",  bg: "bg-profile" },
+  { value: "blue",   label: "Blue",   bg: "bg-profile" },
 ];
 
 type Stage = "baby" | "child" | "teen_adult";
@@ -117,7 +117,7 @@ export function ProfileForm({
                 key={value}
                 className={`min-h-[64px] flex items-center gap-3 px-4 rounded-[20px] border-[1.5px] cursor-pointer ${
                   stage === value
-                    ? "border-[var(--color-profile)] bg-[var(--color-profile-bg)]"
+                    ? "border-[var(--color-profile)] bg-[var(--color-profile-tint)]"
                     : "border-[var(--color-border)] bg-white"
                 }`}
               >
@@ -202,9 +202,10 @@ export function ProfileForm({
                 aria-pressed={color === value}
                 aria-label={label}
                 onClick={() => setColor(value)}
+                data-profile-color={value}
                 className={`w-11 h-11 rounded-full ${bg} flex items-center justify-center transition-shadow ${
                   color === value
-                    ? "ring-2 ring-offset-2 ring-offset-[var(--color-surface)] ring-foreground"
+                    ? "ring-2 ring-offset-2 ring-offset-[var(--color-card)] ring-foreground"
                     : ""
                 }`}
               >

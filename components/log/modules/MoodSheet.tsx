@@ -29,7 +29,7 @@ const INTENSITIES: { val: MeltdownIntensity; label: string }[] = [
 ];
 
 const PILL_SEL = "bg-[var(--color-profile)] border-[var(--color-profile)] text-white";
-const PILL_OFF = "bg-[var(--color-surface-2)] border-[var(--color-border)] text-foreground";
+const PILL_OFF = "bg-[var(--color-secondary)] border-[var(--color-border)] text-foreground";
 
 interface Props { ctx: ModuleFormContext }
 
@@ -102,7 +102,7 @@ export function MoodSheet({ ctx }: Props) {
                   className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all ${
                     sel
                       ? "bg-[var(--color-profile)] ring-2 ring-offset-2 ring-[var(--color-profile)]"
-                      : "bg-[var(--color-surface-2)]"
+                      : "bg-[var(--color-secondary)]"
                   }`}
                 >
                   <svg
@@ -195,7 +195,7 @@ export function MoodSheet({ ctx }: Props) {
 
           {/* Meltdown intensity sub-group */}
           {showMeltdownIntensity && (
-            <div className="mt-3 p-3 rounded-[18px] bg-[var(--color-surface-2)]">
+            <div className="mt-3 p-3 rounded-[18px] bg-[var(--color-secondary)]">
               <h3 className="text-[13px] font-extrabold text-muted-foreground mb-2">Meltdown intensity</h3>
               <div className="flex gap-1.5">
                 {INTENSITIES.map(({ val, label }) => {
@@ -206,7 +206,7 @@ export function MoodSheet({ ctx }: Props) {
                       type="button"
                       aria-pressed={sel}
                       onClick={() => { setIntensity(val); push({ intensity: val }); }}
-                      className={`flex-1 min-h-[44px] flex items-center justify-center rounded-full border font-extrabold text-[14px] cursor-pointer transition-colors ${sel ? PILL_SEL : "bg-[var(--color-surface)] border-[var(--color-border)] text-foreground"}`}
+                      className={`flex-1 min-h-[44px] flex items-center justify-center rounded-full border font-extrabold text-[14px] cursor-pointer transition-colors ${sel ? PILL_SEL : "bg-[var(--color-card)] border-[var(--color-border)] text-foreground"}`}
                     >
                       {label}
                     </button>

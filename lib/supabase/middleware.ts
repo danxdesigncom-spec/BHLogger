@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/types";
+import { DEMO_COOKIE, DEMO_COOKIE_VALUE, DEMO_ENABLED } from "@/lib/demo";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -43,7 +44,10 @@ export async function updateSession(request: NextRequest) {
     pathname === "/manifest.webmanifest" ||
     pathname === "/sw.js";
 
-  if (!user && !isPublic) {
+  const isDemo =
+    DEMO_ENABLED && request.cookies.get(DEMO_COOKIE)?.value === DEMO_COOKIE_VALUE;
+
+  if (!user && !isPublic && !isDemo) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);

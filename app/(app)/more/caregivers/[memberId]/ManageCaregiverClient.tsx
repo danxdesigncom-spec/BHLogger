@@ -7,11 +7,11 @@ import { saveMember, removeMemberAction } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
 
 const COLOR_CLASSES: Record<ProfileColor, string> = {
-  violet: "bg-[var(--color-profile-violet)] text-white",
-  teal:   "bg-[var(--color-profile-teal)] text-white",
-  rose:   "bg-[var(--color-profile-rose)] text-white",
-  amber:  "bg-[var(--color-profile-amber)] text-white",
-  blue:   "bg-[var(--color-profile-blue)] text-white",
+  violet: "bg-profile text-white",
+  teal:   "bg-profile text-white",
+  rose:   "bg-profile text-white",
+  amber:  "bg-profile text-white",
+  blue:   "bg-profile text-white",
 };
 
 type Role = "admin" | "caregiver" | "viewer";
@@ -106,7 +106,7 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
       <div className="flex items-center gap-4 px-5 pt-4 pb-0">
         <span
           aria-hidden="true"
-          className="w-[72px] h-[72px] flex-none rounded-full bg-[var(--color-surface-2)] text-foreground flex items-center justify-center font-display text-[30px] font-semibold"
+          className="w-[72px] h-[72px] flex-none rounded-full bg-[var(--color-secondary)] text-foreground flex items-center justify-center font-display text-[30px] font-semibold"
         >
           {member.initials}
         </span>
@@ -180,7 +180,7 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
                   onChange={() => toggleProfile(p.id)}
                   className="w-[22px] h-[22px] flex-none accent-[var(--color-profile)]"
                 />
-                <span className={`w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-[15px] font-semibold ${COLOR_CLASSES[p.color]}`}>
+                <span data-profile-color={p.color} className={`w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-[15px] font-semibold ${COLOR_CLASSES[p.color]}`}>
                   {p.name[0].toUpperCase()}
                 </span>
                 <span className="text-base font-extrabold">{p.name}</span>

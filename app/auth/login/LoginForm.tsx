@@ -3,6 +3,8 @@
 import { useActionState, use } from "react";
 import { sendMagicLink } from "./actions";
 import { Mail, Loader2 } from "lucide-react";
+import { enterDemoMode } from "../demo/actions";
+import { DEMO_ENABLED } from "@/lib/demo";
 
 interface Props {
   searchParams: Promise<{ error?: string; next?: string }>;
@@ -18,8 +20,8 @@ export function LoginForm({ searchParams }: Props) {
   if (state?.sent) {
     return (
       <div className="rounded-3xl bg-white p-6 shadow-sm space-y-3 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-profile-violet-bg)]">
-          <Mail className="text-[var(--color-profile-violet)]" size={24} strokeWidth={2} />
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-profile-tint">
+          <Mail className="text-profile" size={24} strokeWidth={2} />
         </div>
         <h2 className="font-display text-2xl font-semibold">Check your email</h2>
         <p className="text-muted-foreground text-sm leading-relaxed">
@@ -70,6 +72,17 @@ export function LoginForm({ searchParams }: Props) {
           "Send magic link"
         )}
       </button>
+
+      {DEMO_ENABLED && (
+        <button
+          type="submit"
+          formAction={enterDemoMode}
+          formNoValidate
+          className="w-full min-h-[52px] flex items-center justify-center rounded-full border-[1.5px] border-[var(--color-border)] bg-white text-foreground text-[17px] font-extrabold"
+        >
+          Continue without saving
+        </button>
+      )}
     </form>
   );
 }

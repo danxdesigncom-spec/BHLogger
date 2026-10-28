@@ -123,7 +123,7 @@ function InviteErrorPage({
   showSignIn?: boolean;
 }) {
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-center px-5 bg-[var(--color-surface)]">
+    <main className="min-h-dvh flex flex-col items-center justify-center px-5 bg-[var(--color-card)]">
       <div className="w-full max-w-sm space-y-4 text-center">
         <h1 className="font-display text-[28px] font-semibold leading-tight">{title}</h1>
         <p className="text-muted-foreground text-sm">{body}</p>

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { isDemoMode } from "@/app/auth/demo/actions";
 
 const SaveEntrySchema = z.object({
   id: z.string().uuid(),
@@ -20,6 +21,7 @@ export type SaveEntryInput = z.infer<typeof SaveEntrySchema>;
 export async function saveEntry(input: SaveEntryInput) {
   const parsed = SaveEntrySchema.safeParse(input);
   if (!parsed.success) return { error: "Invalid entry data." };
+  if (await isDemoMode()) return { success: true as const, entryId: parsed.data.id };
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -55,6 +57,7 @@ export async function saveEntry(input: SaveEntryInput) {
 
 export async function undoEntry(entryId: string, householdId: string) {
   if (!z.string().uuid().safeParse(entryId).success) return { error: "Invalid entry ID." };
+  if (await isDemoMode()) return { success: true as const };
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

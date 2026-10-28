@@ -7,11 +7,11 @@ import { sendInvite, copyInviteLink } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
 
 const COLOR_CLASSES: Record<ProfileColor, string> = {
-  violet: "bg-[var(--color-profile-violet)] text-white",
-  teal:   "bg-[var(--color-profile-teal)] text-white",
-  rose:   "bg-[var(--color-profile-rose)] text-white",
-  amber:  "bg-[var(--color-profile-amber)] text-white",
-  blue:   "bg-[var(--color-profile-blue)] text-white",
+  violet: "bg-profile text-white",
+  teal:   "bg-profile text-white",
+  rose:   "bg-profile text-white",
+  amber:  "bg-profile text-white",
+  blue:   "bg-profile text-white",
 };
 
 interface Profile {
@@ -88,7 +88,7 @@ export function InviteSheet({ householdId, profiles }: Props) {
 
         <header className="flex items-center justify-between gap-3 px-5 pt-3 pb-1">
           <div className="flex items-center gap-3">
-            <span className="w-12 h-12 flex-none rounded-full bg-[var(--color-profile-bg)] text-[var(--color-profile)] flex items-center justify-center">
+            <span className="w-12 h-12 flex-none rounded-full bg-[var(--color-profile-tint)] text-[var(--color-profile)] flex items-center justify-center">
               <UserPlus size={24} strokeWidth={2} />
             </span>
             <div>
@@ -102,7 +102,7 @@ export function InviteSheet({ householdId, profiles }: Props) {
             type="button"
             aria-label="Close"
             onClick={() => router.back()}
-            className="w-11 h-11 rounded-full bg-[var(--color-surface)] flex items-center justify-center"
+            className="w-11 h-11 rounded-full bg-[var(--color-card)] flex items-center justify-center"
           >
             <X size={20} strokeWidth={2} />
           </button>
@@ -147,7 +147,7 @@ export function InviteSheet({ householdId, profiles }: Props) {
                   key={value}
                   className={`min-h-[64px] flex items-center gap-3 px-4 py-2 rounded-[20px] border-[1.5px] cursor-pointer ${
                     role === value
-                      ? "border-[var(--color-profile)] bg-[var(--color-profile-bg)]"
+                      ? "border-[var(--color-profile)] bg-[var(--color-profile-tint)]"
                       : "border-[var(--color-border)] bg-white"
                   }`}
                 >
@@ -183,7 +183,7 @@ export function InviteSheet({ householdId, profiles }: Props) {
                     onChange={() => toggleProfile(p.id)}
                     className="w-[22px] h-[22px] flex-none accent-[var(--color-profile)]"
                   />
-                  <span className={`w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-[15px] font-semibold ${COLOR_CLASSES[p.color]}`}>
+                  <span data-profile-color={p.color} className={`w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-[15px] font-semibold ${COLOR_CLASSES[p.color]}`}>
                     {p.name[0].toUpperCase()}
                   </span>
                   <span className="text-base font-extrabold">{p.name}</span>

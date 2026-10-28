@@ -47,7 +47,7 @@ export default async function OnboardingDonePage({
       </div>
 
       <div className="flex flex-col items-center text-center gap-4 mb-10">
-        <div className="w-16 h-16 rounded-full bg-[var(--color-profile-bg)] flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-[var(--color-profile-tint)] flex items-center justify-center">
           <Sparkles size={28} strokeWidth={2} className="text-[var(--color-profile)]" />
         </div>
         <h1 className="font-display text-[30px] font-semibold leading-tight">

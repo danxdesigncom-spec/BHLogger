@@ -19,11 +19,11 @@ import { useQueryClient } from "@tanstack/react-query";
 // ─── Profile color map ────────────────────────────────────────────────────────
 
 const COLOR_BG: Record<string, string> = {
-  violet: "bg-[var(--color-profile-violet)]",
-  teal:   "bg-[var(--color-profile-teal)]",
-  rose:   "bg-[var(--color-profile-rose)]",
-  amber:  "bg-[var(--color-profile-amber)]",
-  blue:   "bg-[var(--color-profile-blue)]",
+  violet: "bg-profile",
+  teal:   "bg-profile",
+  rose:   "bg-profile",
+  amber:  "bg-profile",
+  blue:   "bg-profile",
 };
 
 // ─── Module icon SVGs ─────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export function HomeClient() {
   return (
     <>
       {/* ── Header ── */}
-      <header className="sticky top-0 z-30 bg-[var(--color-surface)]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-30 bg-[var(--color-card)]/95 backdrop-blur-sm">
         <div
           className="flex items-center justify-between px-4 h-14"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
@@ -143,11 +143,11 @@ export function HomeClient() {
             type="button"
             aria-label={`Active profile: ${activeProfile?.name ?? "Profile"}. Tap to switch.`}
             onClick={() => setSwitcherOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 min-h-[44px] rounded-full bg-[var(--color-profile-bg)] text-[var(--color-profile)] font-extrabold text-[15px]"
+            className="flex items-center gap-2 px-3 py-1.5 min-h-[44px] rounded-full bg-[var(--color-profile-tint)] text-[var(--color-profile)] font-extrabold text-[15px]"
           >
             <span
               aria-hidden="true"
-              className={`w-7 h-7 rounded-full flex items-center justify-center font-display text-[13px] font-semibold text-white ${COLOR_BG[activeProfile?.color ?? "violet"] ?? ""}`}
+              data-profile-color={activeProfile?.color ?? "violet"} className={`w-7 h-7 rounded-full flex items-center justify-center font-display text-[13px] font-semibold text-white ${COLOR_BG[activeProfile?.color ?? "violet"] ?? ""}`}
             >
               {activeProfile?.initials ?? "?"}
             </span>
@@ -161,7 +161,7 @@ export function HomeClient() {
               type="button"
               aria-label={`Switch to ${otherProfiles[0].name}`}
               onClick={() => setActiveProfile(otherProfiles[0].id)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-display text-[15px] font-semibold text-white ${COLOR_BG[otherProfiles[0].color] ?? ""}`}
+              data-profile-color={otherProfiles[0].color} className={`w-10 h-10 rounded-full flex items-center justify-center font-display text-[15px] font-semibold text-white ${COLOR_BG[otherProfiles[0].color] ?? ""}`}
             >
               {otherProfiles[0].initials}
             </button>

@@ -40,9 +40,9 @@ function autoMeal(): WhichMeal {
 }
 
 const PILL_SEL = "bg-[var(--color-profile)] border-[var(--color-profile)] text-white";
-const PILL_OFF = "bg-[var(--color-surface-2)] border-[var(--color-border)] text-foreground";
-const TILE_SEL = "relative bg-[var(--color-profile-bg)] border-2 border-[var(--color-profile)] text-foreground";
-const TILE_OFF = "bg-[var(--color-surface-2)] border-[1.5px] border-[var(--color-border)] text-foreground";
+const PILL_OFF = "bg-[var(--color-secondary)] border-[var(--color-border)] text-foreground";
+const TILE_SEL = "relative bg-[var(--color-profile-tint)] border-2 border-[var(--color-profile)] text-foreground";
+const TILE_OFF = "bg-[var(--color-secondary)] border-[1.5px] border-[var(--color-border)] text-foreground";
 
 interface Props { ctx: ModuleFormContext }
 

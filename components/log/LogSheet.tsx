@@ -125,7 +125,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children
         role="dialog"
         aria-modal="true"
         aria-labelledby="sheet-title"
-        className="fixed left-0 right-0 bottom-0 z-50 flex flex-col rounded-t-[28px] bg-[var(--color-surface)] max-h-[90dvh]"
+        className="fixed left-0 right-0 bottom-0 z-50 flex flex-col rounded-t-[28px] bg-[var(--color-card)] max-h-[90dvh]"
         style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom, 0px))" }}
       >
         <div aria-hidden="true" className="w-10 h-[5px] mx-auto mt-3 flex-none rounded-full bg-[var(--color-border)]" />
@@ -147,7 +147,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, children
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="w-10 h-10 flex-none rounded-full bg-[var(--color-surface-2)] flex items-center justify-center"
+            className="w-10 h-10 flex-none rounded-full bg-[var(--color-secondary)] flex items-center justify-center"
           >
             <X size={18} strokeWidth={2} />
           </button>

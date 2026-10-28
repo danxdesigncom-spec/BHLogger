@@ -18,7 +18,7 @@ const MAX_OZ = 16;
 const STEP_OZ = 0.5;
 
 const PILL_SEL = "bg-[var(--color-profile)] border-[var(--color-profile)] text-white";
-const PILL_OFF = "bg-[var(--color-surface-2)] border-[var(--color-border)] text-foreground";
+const PILL_OFF = "bg-[var(--color-secondary)] border-[var(--color-border)] text-foreground";
 
 interface Props { ctx: ModuleFormContext }
 
@@ -128,13 +128,13 @@ export function FeedingSheet({ ctx }: Props) {
           <div>
             <h2 className="text-[14px] font-extrabold text-muted-foreground mb-2">How much?</h2>
             {/* Stepper */}
-            <div className="grid grid-cols-[56px_1fr_56px] items-center gap-3 p-3 rounded-[24px] bg-[var(--color-surface-2)]">
+            <div className="grid grid-cols-[56px_1fr_56px] items-center gap-3 p-3 rounded-[24px] bg-[var(--color-secondary)]">
               <button
                 type="button"
                 aria-label="Less"
                 onClick={() => stepAmount(-STEP_OZ)}
                 disabled={amountOz <= MIN_OZ}
-                className="w-14 h-14 border-none rounded-full bg-[var(--color-surface)] shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-40"
+                className="w-14 h-14 border-none rounded-full bg-[var(--color-card)] shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-40"
               >
                 <Minus size={22} strokeWidth={2} />
               </button>
@@ -149,7 +149,7 @@ export function FeedingSheet({ ctx }: Props) {
                 aria-label="More"
                 onClick={() => stepAmount(STEP_OZ)}
                 disabled={amountOz >= MAX_OZ}
-                className="w-14 h-14 border-none rounded-full bg-[var(--color-surface)] shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-40"
+                className="w-14 h-14 border-none rounded-full bg-[var(--color-card)] shadow-sm flex items-center justify-center cursor-pointer disabled:opacity-40"
               >
                 <Plus size={22} strokeWidth={2} />
               </button>

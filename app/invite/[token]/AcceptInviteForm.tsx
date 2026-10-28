@@ -51,7 +51,7 @@ export function AcceptInviteForm({
   }
 
   return (
-    <main className="min-h-dvh flex flex-col items-start justify-start px-5 pt-12 pb-8 bg-[var(--color-surface)] max-w-sm mx-auto">
+    <main className="min-h-dvh flex flex-col items-start justify-start px-5 pt-12 pb-8 bg-[var(--color-card)] max-w-sm mx-auto">
       {/* Brand */}
       <p className="text-sm font-extrabold text-muted-foreground mb-8">Behavior Logger</p>
 
@@ -60,7 +60,7 @@ export function AcceptInviteForm({
         {profiles.slice(0, 3).map((p, i) => (
           <span
             key={p.id}
-            className="w-14 h-14 rounded-full flex items-center justify-center font-display text-[22px] font-semibold text-white border-2 border-[var(--color-surface)]"
+            className="w-14 h-14 rounded-full flex items-center justify-center font-display text-[22px] font-semibold text-white border-2 border-[var(--color-card)]"
             style={{
               backgroundColor: AVATAR_COLORS[p.color] ?? "#5B3BE6",
               marginLeft: i === 0 ? 0 : -10,

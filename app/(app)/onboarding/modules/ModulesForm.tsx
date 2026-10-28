@@ -93,7 +93,7 @@ export function ModulesForm({
               key={id}
               className={`min-h-[60px] flex items-center gap-3 px-4 rounded-[20px] border-[1.5px] cursor-pointer transition-colors ${
                 checked
-                  ? "border-[var(--color-profile)] bg-[var(--color-profile-bg)]"
+                  ? "border-[var(--color-profile)] bg-[var(--color-profile-tint)]"
                   : "border-[var(--color-border)] bg-white"
               }`}
             >

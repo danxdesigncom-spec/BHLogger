@@ -30,11 +30,11 @@ interface Props {
 }
 
 const COLOR_CLASSES: Record<ProfileColor, string> = {
-  violet: "bg-[var(--color-profile-violet)] text-white",
-  teal:   "bg-[var(--color-profile-teal)] text-white",
-  rose:   "bg-[var(--color-profile-rose)] text-white",
-  amber:  "bg-[var(--color-profile-amber)] text-white",
-  blue:   "bg-[var(--color-profile-blue)] text-white",
+  violet: "bg-profile text-white",
+  teal:   "bg-profile text-white",
+  rose:   "bg-profile text-white",
+  amber:  "bg-profile text-white",
+  blue:   "bg-profile text-white",
 };
 
 function stageDesc(m: Profile) {
@@ -75,7 +75,7 @@ export function MorePageClient({
               className="min-h-[60px] flex items-center gap-3 px-4 text-foreground no-underline"
             >
               <span
-                className={`w-9 h-9 flex-none rounded-full flex items-center justify-center font-display text-[17px] font-semibold ${COLOR_CLASSES[p.color]}`}
+                data-profile-color={p.color} className={`w-9 h-9 flex-none rounded-full flex items-center justify-center font-display text-[17px] font-semibold ${COLOR_CLASSES[p.color]}`}
               >
                 {p.name[0].toUpperCase()}
               </span>
@@ -120,7 +120,7 @@ export function MorePageClient({
                 className="min-h-[60px] flex items-center gap-3 px-4 text-foreground no-underline"
                 aria-disabled={!isAdmin}
               >
-                <span className="w-9 h-9 flex-none rounded-full bg-[var(--color-surface-2)] text-foreground flex items-center justify-center text-[15px] font-extrabold">
+                <span className="w-9 h-9 flex-none rounded-full bg-[var(--color-secondary)] text-foreground flex items-center justify-center text-[15px] font-extrabold">
                   {m.initials}
                 </span>
                 <span className="flex-1 flex flex-col gap-[2px]">
