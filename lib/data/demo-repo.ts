@@ -12,7 +12,7 @@ import {
 } from "./types";
 
 const DEMO_DB = "bl-demo";
-const DATA_VERSION = 3;
+const DATA_VERSION = 5;
 
 class DemoDb extends Dexie {
   entries!: Table<LocalEntry, string>;

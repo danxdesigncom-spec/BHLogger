@@ -237,9 +237,10 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
     const afterChange = day.getTime() >= melatoninChange.getTime();
 
     // ── Leo ──
-    const hasBm = ago > 3 && !chance(0.18);
+    // AT-10 story: the last BM is 3 calendar days back (before 7 PM), so Leo is "3 days since BM" at story time.
+    const hasBm = ago === 3 || (ago > 3 && !chance(0.18));
     if (hasBm) {
-      push(ids.leo, at(day, between(7, 19), between(0, 59)), "bathroom", {
+      push(ids.leo, at(day, between(7, 18), between(0, 59)), "bathroom", {
         kind: chance(0.25) ? "both" : "bm", location: "toilet", scale: "bristol",
         consistency: pick([2, 3, 4, 4, 4, 5]), size: pick(["small", "medium", "medium", "large"]),
         color: pick(["brown", "brown", "brown", "green"]), flags: chance(0.06) ? ["straining_pain"] : [],
@@ -272,16 +273,19 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
       }
     }
 
+    // Story: mood lifts after the Melatonin change (S13/S14: about 2.8 before, 3.4 after),
+    // 4 to 7 PM is the hardest block (PAT-01), and days without a BM run lower (PAT-02).
     const bmPenalty = hasBm ? 0 : 0.8;
+    const lift = afterChange ? 0.6 : 0;
     push(ids.leo, at(day, between(8, 10), between(0, 59)), "mood", {
-      scope: "moment", level: clamp(4.3 - bmPenalty + (rand() - 0.5)), feelings: pick([["happy"], ["calm"], ["excited"], ["tired"], []]), behaviors: [],
+      scope: "moment", level: clamp(3.5 + lift - bmPenalty + (rand() - 0.5)), feelings: pick([["happy"], ["calm"], ["excited"], ["tired"], []]), behaviors: [],
     });
     if (chance(0.7)) {
       push(ids.leo, at(day, between(12, 14), between(0, 59)), "mood", {
-        scope: "moment", level: clamp(3.8 - bmPenalty + (rand() - 0.5)), feelings: pick([["calm"], ["happy"], ["tired"], []]), behaviors: [],
+        scope: "moment", level: clamp(3.2 + lift - bmPenalty + (rand() - 0.5)), feelings: pick([["calm"], ["happy"], ["tired"], []]), behaviors: [],
       });
     }
-    const evening = (afterChange ? 3.2 : 2.6) - bmPenalty + (rand() - 0.5) * 1.2;
+    const evening = 2.3 + lift - bmPenalty + (rand() - 0.5) * 1.2;
     const behavior = evening < 2.4 && chance(0.7)
       ? [{ key: pick(["meltdown", "meltdown", "tantrum", "transitions"]), severity: pick(["mild", "moderate", "moderate", "severe"]) }]
       : [];
