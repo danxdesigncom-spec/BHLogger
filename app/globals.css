@@ -49,3 +49,41 @@
   .switch:checked { background: var(--profile); }
   .switch:checked::after { transform: translateX(24px); }
 }
+
+/* ── Doctor report (DESIGN 7): Letter page, ink and grays, never split a section ── */
+.report-doc {
+  /* Grayscale-safe chart palette for print: dashed vs solid and direct labels carry meaning. */
+  --chart-mood: var(--foreground);
+  --chart-1: var(--foreground-2);
+  --chart-marker: var(--foreground-2);
+  --chart-band: var(--muted);
+  --chart-band-ink: var(--foreground);
+  --chart-highlight: var(--foreground);
+  --chart-neutral: var(--input);
+  --chart-grid: var(--divider);
+  max-width: 816px;
+  padding: 24px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: var(--shadow-card);
+}
+@media (min-width: 768px) {
+  .report-doc { padding: 56px 72px; border-radius: 4px; }
+}
+.report-section { break-inside: avoid; page-break-inside: avoid; }
+.report-doc thead { display: table-header-group; }
+.report-doc tr { break-inside: avoid; }
+
+@page {
+  size: letter;
+  margin: 0.6in 0.75in;
+  @bottom-left { content: "Made with Behavior Logger from caregiver entries. Not a medical record or diagnosis."; font: 10px var(--font-sans); color: #5B5470; }
+  @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 10px var(--font-sans); color: #5B5470; }
+}
+
+@media print {
+  html, body { background: #FFFFFF !important; }
+  main { padding: 0 !important; }
+  .report-doc { max-width: none; padding: 0; box-shadow: none; }
+}

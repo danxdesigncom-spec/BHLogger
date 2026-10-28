@@ -18,7 +18,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Main"
-      className="fixed left-4 right-4 z-40 h-tabbar p-1.5 grid grid-cols-5 gap-0.5 rounded-[34px] bg-card shadow-float lg:right-auto lg:top-4 lg:!bottom-4 lg:w-[240px] lg:h-auto lg:grid-cols-1 lg:auto-rows-[52px] lg:content-start lg:gap-1 lg:p-3 lg:rounded-tile"
+      className="print:hidden fixed left-4 right-4 z-40 h-tabbar p-1.5 grid grid-cols-5 gap-0.5 rounded-[34px] bg-card shadow-float lg:right-auto lg:top-4 lg:!bottom-4 lg:w-[240px] lg:h-auto lg:grid-cols-1 lg:auto-rows-[52px] lg:content-start lg:gap-1 lg:p-3 lg:rounded-tile"
       style={{ bottom: "calc(18px + env(safe-area-inset-bottom, 0px))" }}
     >
       {TABS.map(({ href, label, icon: Icon }) => {

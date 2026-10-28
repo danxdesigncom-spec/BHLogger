@@ -10,7 +10,7 @@ export function DemoBanner() {
   return (
     <div
       role="status"
-      className="flex items-center justify-between gap-3 px-5 py-2 text-label font-bold border-b bg-warning text-warning-ink border-warning-border"
+      className="print:hidden flex items-center justify-between gap-3 px-5 py-2 text-label font-bold border-b bg-warning text-warning-ink border-warning-border"
       style={{ paddingTop: "max(8px, env(safe-area-inset-top, 0px))" }}
     >
       <span>Demo mode: sample data, nothing leaves this browser</span>

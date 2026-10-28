@@ -18,7 +18,7 @@ function Shell({ demo, children }: { demo: boolean; children: React.ReactNode })
       {demo && <DemoBanner />}
       <OfflineBanner />
       <main
-        className="min-h-screen lg:pl-[264px]"
+        className="min-h-screen lg:pl-[264px] print:pl-0"
         style={{ paddingBottom: "calc(var(--spacing-tabbar-clearance) + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="mx-auto w-full max-w-[960px]">{children}</div>

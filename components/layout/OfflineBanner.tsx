@@ -28,7 +28,7 @@ export function OfflineBanner() {
   return (
     <div
       role="status"
-      className="flex items-center gap-2 px-5 py-2 text-label font-bold bg-info text-info-ink border-b border-info-border"
+      className="print:hidden flex items-center gap-2 px-5 py-2 text-label font-bold bg-info text-info-ink border-b border-info-border"
     >
       {online ? <RefreshCw size={16} strokeWidth={2} aria-hidden="true" /> : <CloudOff size={16} strokeWidth={2} aria-hidden="true" />}
       {online
