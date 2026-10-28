@@ -103,3 +103,18 @@ export function matchesData(data: Json, match?: Record<string, string>): boolean
 export function slugify(label: string): string {
   return label.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40) || "custom";
 }
+
+/** Pending (outbox) entries plus server rows: pending first when newer, never duplicated once synced (AT-08). */
+export function mergeEntries(pending: LocalEntry[], rows: LocalEntry[], q: EntryQuery): LocalEntry[] {
+  if (q.deleted === "only") return rows;
+  const seen = new Set(rows.map((r) => r.id));
+  const extra = pending.filter(
+    (e) =>
+      !seen.has(e.id) &&
+      (!q.profileId || e.profile_id === q.profileId) &&
+      (!q.types || q.types.includes(e.type)) &&
+      (!q.from || e.occurred_at >= q.from) &&
+      (!q.to || e.occurred_at <= q.to),
+  );
+  return [...extra, ...rows].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at));
+}

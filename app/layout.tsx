@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   },
   description: "Log bathroom, eating, activities, mood and medications in three taps or fewer.",
   manifest: "/manifest.webmanifest",
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

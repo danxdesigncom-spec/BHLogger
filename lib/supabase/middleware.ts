@@ -42,6 +42,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
     pathname === "/manifest.webmanifest" ||
+    pathname === "/offline" ||
+    pathname.startsWith("/icons/") ||
     pathname === "/sw.js";
 
   const isDemo =

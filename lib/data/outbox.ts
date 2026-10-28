@@ -3,7 +3,7 @@
 import Dexie, { type Table } from "dexie";
 import { saveEntry as saveEntryAction } from "@/lib/actions/entries";
 import type { Json } from "@/lib/supabase/types";
-import { matchesData, type Actor, type EntryQuery, type LocalEntry, type NewEntry } from "./types";
+import { matchesData, mergeEntries, type Actor, type EntryQuery, type LocalEntry, type NewEntry } from "./types";
 
 interface PendingRow {
   id: string;
@@ -87,17 +87,7 @@ class Outbox {
   }
 
   async mergePending(rows: LocalEntry[], q: EntryQuery): Promise<LocalEntry[]> {
-    if (q.deleted === "only") return rows;
-    const seen = new Set(rows.map((r) => r.id));
-    const pending = (await this.pendingEntries()).filter(
-      (e) =>
-        !seen.has(e.id) &&
-        (!q.profileId || e.profile_id === q.profileId) &&
-        (!q.types || q.types.includes(e.type)) &&
-        (!q.from || e.occurred_at >= q.from) &&
-        (!q.to || e.occurred_at <= q.to),
-    );
-    return [...pending, ...rows].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at));
+    return mergeEntries(await this.pendingEntries(), rows, q);
   }
 
   async cacheEntries(rows: LocalEntry[]): Promise<void> {

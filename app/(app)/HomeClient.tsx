@@ -13,6 +13,7 @@ import { EatingSheet } from "@/components/log/modules/EatingSheet";
 import { ActivitySheet } from "@/components/log/modules/ActivitySheet";
 import { MoodSheet } from "@/components/log/modules/MoodSheet";
 import { Banners, type BannerItem } from "@/components/home/Banners";
+import { InstallPrompt } from "@/components/home/InstallPrompt";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useLatestEntry, useMedications, useProfileSettings } from "@/lib/data/hooks";
 import { entryShortLabel, formatAgo, formatClock, tileStatus, type SummaryContext } from "@/lib/entries/summary";
@@ -154,6 +155,7 @@ export function HomeClient() {
         <h1 className="font-display text-display-1">How&rsquo;s {activeProfile?.name ?? "everyone"} doing?</h1>
 
         {canLog && <Banners items={banners} />}
+        <InstallPrompt />
 
         {nothingYet && (
           <div className="rounded-card bg-card p-4 shadow-card space-y-1.5">

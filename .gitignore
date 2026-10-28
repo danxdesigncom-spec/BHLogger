@@ -46,3 +46,8 @@ next-env.d.ts
 # original kit archive (not part of the app source)
 behavior-logger-claude-code-kit.zip
 behavior-logger-claude-code-kit/
+
+# Serwist build output
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js

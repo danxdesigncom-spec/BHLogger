@@ -5,6 +5,7 @@ import { X, Flag, ChevronDown, Loader2 } from "lucide-react";
 import { TimeChip } from "./TimeChip";
 import type { ToastEntry } from "./UndoToast";
 import { useRepo } from "@/lib/data/repo-context";
+import { recordLoggingSession } from "@/lib/install";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -161,6 +162,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
     }
 
     try { navigator.vibrate?.(10); } catch { /* unsupported */ }
+    recordLoggingSession();
     for (const key of ["latest-entry", "entries", "pending"]) qc.invalidateQueries({ queryKey: [key] });
 
     onSaved({
