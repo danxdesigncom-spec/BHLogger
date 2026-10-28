@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Role } from "@/lib/supabase/types";
+import { t } from "@/lib/i18n";
 
 export interface CreateInviteInput {
   householdId: string;
@@ -20,7 +21,7 @@ export async function createInvite(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  if (!user) return { error: t("errors.notAuthenticated") };
 
   const { data: member, error: memberError } = await supabase
     .from("household_members")
@@ -29,7 +30,7 @@ export async function createInvite(
     .eq("user_id", user.id)
     .single();
 
-  if (memberError || !member) return { error: "Member record not found" };
+  if (memberError || !member) return { error: t("errors.memberNotFound") };
 
   const { data, error } = await supabase
     .from("invites")

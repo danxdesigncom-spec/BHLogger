@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Flag, Lock, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { MODULE_CIRCLE, MODULE_ICONS, type ModuleFormContext, type ModuleType } from "@/components/log/LogSheet";
 import { Group, RadioChips } from "@/components/log/controls";
 import { BathroomSheet } from "@/components/log/modules/BathroomSheet";
@@ -72,6 +73,8 @@ export function EditEntrySheet({
   const handleSetData = useCallback((d: Record<string, unknown>) => setData(d), []);
   const ctx: ModuleFormContext = { setData: handleSetData, setFlagged, flagged, detailsEl };
 
+  const t = useTranslations();
+  const te = (k: string, v?: Record<string, string | number>) => t(`editEntry.${k}`, v);
   const stage = profile?.careStage ?? "child";
   const toileting = profile?.toileting ?? "toilet";
   const summaryCtx: SummaryContext = {
@@ -80,15 +83,15 @@ export function EditEntrySheet({
   };
   const med = entry.type === "medication" ? meds.data?.find((m) => m.id === (entry.data as { medication_id?: string }).medication_id) : undefined;
   const heading =
-    entry.type === "medication" ? `${med?.name ?? "Medication"} dose`
-    : entry.type === "bathroom" ? `${bathroomTileLabel(stage, toileting)} entry`
-    : entry.type === "eating" && stage === "baby" ? "Feeding entry"
-    : `${humanize(entry.type)} entry`;
-  const userName = (id: string) => members.find((m) => m.userId === id)?.displayName ?? "Someone";
+    entry.type === "medication" ? te("medDose", { name: med?.name ?? t("modules.medication") })
+    : entry.type === "bathroom" ? te("entry", { name: bathroomTileLabel(stage, toileting) })
+    : entry.type === "eating" && stage === "baby" ? te("entry", { name: t("modules.feeding") })
+    : te("entry", { name: t.has(`modules.${entry.type}`) ? t(`modules.${entry.type}`) : humanize(entry.type) });
+  const userName = (id: string) => members.find((m) => m.userId === id)?.displayName ?? te("someone");
 
   const save = async () => {
     const occurredAt = new Date(when);
-    if (occurredAt.getTime() > Date.now() + 60_000) return setError("The time can't be in the future.");
+    if (occurredAt.getTime() > Date.now() + 60_000) return setError(te("futureTime"));
     setSaving(true);
     setError(null);
     const patch = {
@@ -134,10 +137,10 @@ export function EditEntrySheet({
           <div className="flex-1 min-w-0">
             <h2 id="edit-title" ref={titleRef} tabIndex={-1} className="font-display text-title-1 outline-none">{heading}</h2>
             <p className="text-label font-bold text-muted-foreground">
-              Logged by {entry.logged_by_name} at {formatClock(entry.created_at)}
+              {te("loggedBy", { name: entry.logged_by_name, time: formatClock(entry.created_at) })}
             </p>
           </div>
-          <button type="button" aria-label="Close" onClick={onClose} className="w-11 h-11 flex-none rounded-full bg-secondary flex items-center justify-center">
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className="w-11 h-11 flex-none rounded-full bg-secondary flex items-center justify-center">
             <X size={20} strokeWidth={2} aria-hidden="true" />
           </button>
         </header>
@@ -149,18 +152,18 @@ export function EditEntrySheet({
                 <Lock size={18} strokeWidth={2} className="flex-none mt-0.5" aria-hidden="true" />
                 <span className="text-label font-normal">
                   {currentMember.role === "viewer"
-                    ? "Viewers can read entries but not change them."
-                    : `Only ${entry.logged_by_name} or an admin can change this entry.`}
+                    ? te("viewerNote")
+                    : te("ownerNote", { name: entry.logged_by_name })}
                 </span>
               </div>
               <dl className="rounded-card bg-secondary divide-y divide-divider">
                 {[
-                  ["Person", profile?.name ?? ""],
-                  ["When", formatDateTime(entry.occurred_at)],
-                  ["What", entryTitle(entry, summaryCtx)],
-                  ["Details", entryDetail(entry) || "—"],
-                  ["Note", entry.note || "—"],
-                  ["For doctor", entry.flagged_for_doctor ? "Yes" : "No"],
+                  [te("person"), profile?.name ?? ""],
+                  [te("when"), formatDateTime(entry.occurred_at)],
+                  [te("what"), entryTitle(entry, summaryCtx)],
+                  [te("details"), entryDetail(entry) || "—"],
+                  [te("note"), entry.note || "—"],
+                  [te("forDoctor"), entry.flagged_for_doctor ? t("common.yes") : t("common.no")],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-4 px-4 py-3">
                     <dt className="text-label text-muted-foreground">{k}</dt>
@@ -172,12 +175,12 @@ export function EditEntrySheet({
           ) : (
             <>
               {profiles.length > 1 && (
-                <Group label="Person">
-                  <RadioChips label="Person" value={profileId} onChange={setProfileId} options={profiles.map((p) => ({ value: p.id, label: p.name }))} />
+                <Group label={te("person")}>
+                  <RadioChips label={te("person")} value={profileId} onChange={setProfileId} options={profiles.map((p) => ({ value: p.id, label: p.name }))} />
                 </Group>
               )}
               <label className="flex flex-col gap-2">
-                <span className="text-label text-muted-foreground">When</span>
+                <span className="text-label text-muted-foreground">{te("when")}</span>
                 <input
                   type="datetime-local"
                   value={when}
@@ -203,22 +206,22 @@ export function EditEntrySheet({
               <div ref={setDetailsEl} className="space-y-4 empty:hidden" />
 
               <label className="flex flex-col gap-2">
-                <span className="text-label text-muted-foreground">Note</span>
+                <span className="text-label text-muted-foreground">{te("note")}</span>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={3}
                   maxLength={2000}
-                  placeholder="Optional"
+                  placeholder={t("common.optional")}
                   className="rounded-lg border border-input bg-card px-4 py-3 text-[16px] font-bold resize-none"
                 />
               </label>
               <label className="flex items-center justify-between gap-3 min-h-touch-min">
                 <span className="flex flex-col">
                   <span className="flex items-center gap-1.5 text-body font-extrabold">
-                    <Flag size={16} strokeWidth={2} aria-hidden="true" /> Flag for doctor
+                    <Flag size={16} strokeWidth={2} aria-hidden="true" /> {t("log.flagForDoctor")}
                   </span>
-                  <span className="text-caption text-muted-foreground">Shows up in the next doctor report</span>
+                  <span className="text-caption text-muted-foreground">{t("log.flagHint")}</span>
                 </span>
                 <input type="checkbox" role="switch" checked={flagged} onChange={(e) => setFlagged(e.target.checked)} className="switch" />
               </label>
@@ -226,18 +229,18 @@ export function EditEntrySheet({
           )}
 
           <section aria-labelledby="history-h" className="space-y-2">
-            <h3 id="history-h" className="font-sans text-label text-muted-foreground">Edit history</h3>
+            <h3 id="history-h" className="font-sans text-label text-muted-foreground">{te("history")}</h3>
             <ol className="space-y-1.5 text-caption text-foreground-2">
               {(revisions.data ?? []).map((r) => {
-                const changes = describeRevision(r.before as Record<string, unknown>, r.after as Record<string, unknown>, stage, (id) => profiles.find((p) => p.id === id)?.name ?? "another person");
+                const changes = describeRevision(r.before as Record<string, unknown>, r.after as Record<string, unknown>, stage, (id) => profiles.find((p) => p.id === id)?.name ?? t("timeline.revision.anotherPerson"));
                 return (
                   <li key={r.id}>
-                    <span className="font-extrabold">{formatClock(r.changed_at)}</span> · {userName(r.changed_by)} {changes.join(", ") || "edited this"}
+                    <span className="font-extrabold">{formatClock(r.changed_at)}</span> · {te("revision", { who: userName(r.changed_by), changes: changes.join(", ") || t("timeline.revision.edited") })}
                   </li>
                 );
               })}
               <li>
-                <span className="font-extrabold">{formatClock(entry.created_at)}</span> · {entry.logged_by_name} logged this
+                <span className="font-extrabold">{formatClock(entry.created_at)}</span> · {te("loggedThis", { name: entry.logged_by_name })}
               </li>
             </ol>
           </section>
@@ -248,10 +251,10 @@ export function EditEntrySheet({
         {canEdit && (
           <footer className="flex-none flex items-center gap-2.5 px-5 pt-3 border-t border-divider" style={{ paddingBottom: "calc(28px + env(safe-area-inset-bottom, 0px))" }}>
             <button type="button" onClick={() => setConfirmDelete(true)} className="h-button px-5 rounded-full border-[1.5px] border-border-strong bg-card text-body-md text-destructive">
-              Delete
+              {t("common.delete")}
             </button>
             <button type="button" onClick={() => void save()} disabled={saving} className="flex-1 h-button rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60">
-              {saving ? "Saving…" : "Save changes"}
+              {saving ? te("saving") : te("saveChanges")}
             </button>
           </footer>
         )}
@@ -259,10 +262,10 @@ export function EditEntrySheet({
 
       {confirmDelete && (
         <ConfirmDialog
-          title="Delete this entry?"
-          body="It moves to Recently deleted for 30 days, and comes off every caregiver's timeline."
-          cancelLabel="Keep it"
-          confirmLabel="Delete"
+          title={te("deleteTitle")}
+          body={te("deleteBody")}
+          cancelLabel={te("keepIt")}
+          confirmLabel={t("common.delete")}
           destructive
           onCancel={() => setConfirmDelete(false)}
           onConfirm={() => void remove()}

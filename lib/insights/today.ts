@@ -1,6 +1,7 @@
 // DSH-01 Today cards.
 import type { CareStage } from "@/lib/supabase/types";
-import { activityLabel, behaviorLabel, ENJOYMENT_LABELS, formatVolume, humanize, MEAL_TYPES, portionLabel } from "@/lib/options";
+import { activityLabel, behaviorLabel, enjoymentLabel, formatVolume, labelFor, MEAL_TYPES, portionLabel, SEVERITIES } from "@/lib/options";
+import { t } from "@/lib/i18n";
 import { slotsForDay, slotStatus, type MedLike } from "@/lib/meds/schedule";
 import { dataOf, isBm, isWet, localParts, mean, round1, ymdLocal, type InsightEntry } from "./core";
 import { formatTime } from "@/lib/prefs";
@@ -32,6 +33,7 @@ export function todayCards(opts: {
   const live = entries.filter((e) => !e.deleted_at);
   const todays = live.filter((e) => localParts(e).day === today);
   const cards: TodayCard[] = [];
+  const L = (k: string, v?: Record<string, string | number>) => t(`insights.today.${k}`, v);
 
   if (enabled.includes("bathroom")) {
     const lastBm = live.filter(isBm).sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))[0];
@@ -40,16 +42,16 @@ export function todayCards(opts: {
     if (stage === "baby") {
       const wet = todays.filter(isWet).length;
       cards.push({
-        module: "bathroom", label: opts.bathroomLabel, value: `${wet} wet`, caption: `${bmsToday} dirty today`,
-        footnote: lastBm ? `Last dirty ${clock(lastBm.occurred_at)}${days ? `, ${days} d ago` : ""}` : "No dirty diapers logged",
+        module: "bathroom", label: opts.bathroomLabel, value: L("wet", { count: wet }), caption: L("dirtyToday", { count: bmsToday }),
+        footnote: lastBm ? (days ? L("lastDirtyAgo", { time: clock(lastBm.occurred_at), days }) : L("lastDirty", { time: clock(lastBm.occurred_at) })) : L("noDirty"),
       });
     } else {
       const alert = bmAlertDays !== null && days !== null && days >= bmAlertDays;
       cards.push({
         module: "bathroom", label: opts.bathroomLabel,
-        value: days === null ? "—" : days === 0 ? `${bmsToday} BM${bmsToday === 1 ? "" : "s"}` : `${days} day${days === 1 ? "" : "s"}`,
-        caption: days === null ? "No BMs logged yet" : days === 0 ? "today" : "since last BM",
-        footnote: alert ? `At your ${bmAlertDays}-day alert` : bmAlertDays ? `Alert at ${bmAlertDays} days` : undefined,
+        value: days === null ? "—" : days === 0 ? L("bmsToday", { count: bmsToday }) : L("days", { count: days }),
+        caption: days === null ? L("noBms") : days === 0 ? L("today") : L("sinceLastBm"),
+        footnote: alert ? L("atAlert", { days: bmAlertDays! }) : bmAlertDays ? L("alertAt", { days: bmAlertDays }) : undefined,
         alert,
       });
     }
@@ -62,18 +64,19 @@ export function todayCards(opts: {
       const ml = feeds.reduce((s, e) => s + (Number(dataOf(e).amount_ml) || 0), 0);
       const last = feeds.sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))[0];
       cards.push({
-        module: "eating", label: "Feeding", value: `${feeds.length} feeds`,
-        caption: ml ? `${formatVolume(ml, volumeUnit)} from bottles` : "Breastfed",
-        footnote: `Last ${clock(last.occurred_at)}`,
+        module: "eating", label: t("modules.feeding"), value: L("feeds", { count: feeds.length }),
+        caption: ml ? L("fromBottles", { amount: formatVolume(ml, volumeUnit) }) : L("breastfed"),
+        footnote: L("lastAt", { time: clock(last.occurred_at) }),
       });
     } else {
       const meals = eat.filter((e) => dataOf(e).method === "meal");
       const parts = MEAL_TYPES.map((m) => meals.find((e) => dataOf(e).meal_type === m.key))
         .filter((e): e is InsightEntry => !!e && dataOf(e).portion_pct !== undefined)
-        .map((e) => `${portionLabel(Number(dataOf(e).portion_pct)).toLowerCase()} at ${String(dataOf(e).meal_type)}`);
+        .map((e) => L("portionAt", { portion: portionLabel(Number(dataOf(e).portion_pct)).toLowerCase(), meal: labelFor(MEAL_TYPES, String(dataOf(e).meal_type)).toLowerCase() }));
+      const caption = parts.length ? parts.join(", ") : eat.length ? L("logged", { count: eat.length }) : L("nothingYet");
       cards.push({
-        module: "eating", label: stage === "baby" ? "Feeding" : "Eating", value: `${meals.length} meal${meals.length === 1 ? "" : "s"}`,
-        caption: parts.length ? humanize(parts.join(", ")) : eat.length ? `${eat.length} logged` : "Nothing logged yet",
+        module: "eating", label: t(stage === "baby" ? "modules.feeding" : "modules.eating"), value: L("meals", { count: meals.length }),
+        caption: caption.charAt(0).toUpperCase() + caption.slice(1),
       });
     }
   }
@@ -83,8 +86,8 @@ export function todayCards(opts: {
     const levels = moods.map((e) => Number(dataOf(e).level));
     const lowest = moods.reduce<InsightEntry | null>((lo, e) => (!lo || Number(dataOf(e).level) < Number(dataOf(lo).level) ? e : lo), null);
     cards.push({
-      module: "mood", label: "Mood", value: levels.length ? `${round1(mean(levels))!.toFixed(1)} avg` : "—",
-      caption: lowest && levels.length > 1 ? `Lowest at ${clock(lowest.occurred_at)}` : levels.length ? `${levels.length} log` : "No mood logged today",
+      module: "mood", label: t("modules.mood"), value: levels.length ? L("moodAvg", { avg: round1(mean(levels))!.toFixed(1) }) : "—",
+      caption: lowest && levels.length > 1 ? L("lowestAt", { time: clock(lowest.occurred_at) }) : levels.length ? L("moodLogs", { count: levels.length }) : L("noMoodToday"),
       sparkline: levels,
     });
   }
@@ -96,13 +99,13 @@ export function todayCards(opts: {
     const next = slots.filter((s) => s.state === "due" || s.state === "upcoming").sort((a, b) => a.slot.getTime() - b.slot.getTime())[0];
     const notLogged = slots.filter((s) => s.state === "not_logged");
     cards.push({
-      module: "medication", label: "Medication", value: slots.length ? `${given} of ${slots.length}` : "As needed",
+      module: "medication", label: t("modules.medication"), value: slots.length ? L("dosesOf", { given, total: slots.length }) : L("asNeededOnly"),
       caption: next
-        ? `Next: ${next.med.name.toLowerCase()} at ${clock(next.slot.toISOString())}`
+        ? L("next", { name: next.med.name.toLowerCase(), time: clock(next.slot.toISOString()) })
         : notLogged.length
-          ? `${notLogged.map((s) => s.med.name).join(", ")} not logged`
-          : slots.length ? "All scheduled doses given" : "No scheduled doses",
-      footnote: next && notLogged.length ? `${notLogged.length} not logged` : undefined,
+          ? L("notLogged", { names: notLogged.map((s) => s.med.name).join(", ") })
+          : slots.length ? L("allGiven") : L("noScheduled"),
+      footnote: next && notLogged.length ? L("notLoggedCount", { count: notLogged.length }) : undefined,
       alert: notLogged.length > 0,
     });
   }
@@ -111,11 +114,12 @@ export function todayCards(opts: {
     const acts = todays.filter((e) => e.type === "activity");
     const minutes = acts.reduce((s, e) => s + (Number(dataOf(e).duration_min) || 0), 0);
     const top = [...acts].sort((a, b) => Number(dataOf(b).enjoyment ?? 0) - Number(dataOf(a).enjoyment ?? 0))[0];
+    const name = top ? activityLabel(String(dataOf(top).activity_id)) : "";
     cards.push({
-      module: "activity", label: "Activity", value: minutes ? `${minutes} min` : `${acts.length}`,
+      module: "activity", label: t("modules.activity"), value: minutes ? L("minutes", { count: minutes }) : `${acts.length}`,
       caption: top
-        ? `${activityLabel(String(dataOf(top).activity_id))}${dataOf(top).enjoyment ? `, ${ENJOYMENT_LABELS[Number(dataOf(top).enjoyment) - 1].toLowerCase()}` : ""}`
-        : "Nothing logged today",
+        ? dataOf(top).enjoyment ? L("withEnjoyment", { name, enjoyment: enjoymentLabel(Number(dataOf(top).enjoyment)).toLowerCase() }) : name
+        : L("nothingToday"),
     });
   }
 
@@ -123,9 +127,9 @@ export function todayCards(opts: {
     const events = todays.flatMap((e) => ((dataOf(e).behaviors as { key: string; severity?: string }[] | undefined) ?? []).map((b) => ({ ...b, at: e.occurred_at })));
     const first = events[0];
     cards.push({
-      module: "behaviors", label: "Behaviors",
-      value: events.length ? `${events.length} ${events.length === 1 ? behaviorLabel(first.key).toLowerCase() : "behaviors"}` : "None",
-      caption: first ? `${first.severity ? humanize(first.severity) + " · " : ""}${clock(first.at)}` : "No notable behaviors today",
+      module: "behaviors", label: L("behaviors"),
+      value: events.length ? (events.length === 1 ? L("behaviorCount", { count: 1, name: behaviorLabel(first.key).toLowerCase() }) : L("behaviorsCount", { count: events.length })) : L("none"),
+      caption: first ? (first.severity ? L("severityAt", { severity: labelFor(SEVERITIES, first.severity), time: clock(first.at) }) : clock(first.at)) : L("noBehaviors"),
     });
   }
 

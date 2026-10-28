@@ -4,6 +4,7 @@ import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, Eye, EyeOff, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Group, RadioChips } from "@/components/log/controls";
 import { useHousehold } from "@/lib/context/household-provider";
@@ -14,20 +15,8 @@ import { updateProfile } from "@/lib/actions/settings";
 import { ACTIVITY_LIBRARY, behaviors, FEELINGS, PRN_REASONS, type Option } from "@/lib/options";
 
 const COLORS = ["violet", "teal", "rose", "amber", "blue"] as const;
-const MODULES = [
-  { key: "bathroom", label: "Bathroom" },
-  { key: "eating", label: "Eating" },
-  { key: "activity", label: "Activity" },
-  { key: "mood", label: "Mood and behaviors" },
-  { key: "medication", label: "Medication" },
-];
-const METHODS = [
-  { key: "breast", label: "Breast" },
-  { key: "bottle", label: "Bottle" },
-  { key: "meal", label: "Meals" },
-  { key: "snack", label: "Snacks" },
-  { key: "drink", label: "Drinks" },
-];
+const MODULES = ["bathroom", "eating", "activity", "mood", "medication"] as const;
+const METHODS = ["breast", "bottle", "meal", "snack", "drink"] as const;
 const input = "w-full h-button rounded-lg border border-input bg-card px-4 text-[16px] font-bold text-foreground placeholder:font-normal placeholder:text-muted-foreground";
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
@@ -42,6 +31,7 @@ function OptionsEditor({ profileId, module, builtIn, canEdit }: { profileId: str
   const customRows = useOptions(profileId, module).data ?? [];
   const [draft, setDraft] = useState("");
   const [busy, startTransition] = useTransition();
+  const t = useTranslations("profileSettings");
 
   const toggleHidden = (key: string) =>
     startTransition(async () => {
@@ -61,9 +51,9 @@ function OptionsEditor({ profileId, module, builtIn, canEdit }: { profileId: str
             <li key={o.key} className="min-h-[52px] flex items-center gap-3 px-3.5">
               <span className={`flex-1 text-body ${off ? "text-muted-foreground line-through" : "font-extrabold"}`}>{o.label}</span>
               {canEdit && (
-                <button type="button" disabled={busy} aria-pressed={!off} aria-label={`${off ? "Show" : "Hide"} ${o.label}`} onClick={() => toggleHidden(o.key)} className="min-h-touch-min flex items-center gap-1.5 px-3 text-label font-extrabold text-profile-ink">
+                <button type="button" disabled={busy} aria-pressed={!off} aria-label={off ? t("show", { name: o.label }) : t("hide", { name: o.label })} onClick={() => toggleHidden(o.key)} className="min-h-touch-min flex items-center gap-1.5 px-3 text-label font-extrabold text-profile-ink">
                   {off ? <EyeOff size={16} strokeWidth={2} aria-hidden="true" /> : <Eye size={16} strokeWidth={2} aria-hidden="true" />}
-                  {off ? "Hidden" : "Shown"}
+                  {off ? t("hidden") : t("shown")}
                 </button>
               )}
             </li>
@@ -71,11 +61,11 @@ function OptionsEditor({ profileId, module, builtIn, canEdit }: { profileId: str
         })}
         {customRows.map((o) => (
           <li key={o.id} className="min-h-[52px] flex items-center gap-3 px-3.5">
-            <span className="flex-1 text-body font-extrabold">{o.label} <span className="text-caption font-bold text-muted-foreground">· custom</span></span>
+            <span className="flex-1 text-body font-extrabold">{o.label} <span className="text-caption font-bold text-muted-foreground">{t("custom")}</span></span>
             {canEdit && (
               <button
                 type="button"
-                aria-label={`Archive ${o.label}`}
+                aria-label={t("archiveOption", { name: o.label })}
                 onClick={() => startTransition(async () => { await repo.archiveOption(o.id); await qc.invalidateQueries({ queryKey: ["options"] }); })}
                 className="w-11 h-11 rounded-full flex items-center justify-center text-muted-foreground"
               >
@@ -100,10 +90,10 @@ function OptionsEditor({ profileId, module, builtIn, canEdit }: { profileId: str
           }}
         >
           <label className="flex-1">
-            <span className="sr-only">Add an option</span>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={40} placeholder="Add your own" className={`${input} rounded-full`} />
+            <span className="sr-only">{t("addOption")}</span>
+            <input value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={40} placeholder={t("addOwn")} className={`${input} rounded-full`} />
           </label>
-          <button type="submit" aria-label="Add option" className="w-[52px] h-button flex-none rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+          <button type="submit" aria-label={t("addOptionButton")} className="w-[52px] h-button flex-none rounded-full bg-primary text-primary-foreground flex items-center justify-center">
             <Plus size={20} strokeWidth={2} aria-hidden="true" />
           </button>
         </form>
@@ -116,6 +106,8 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const { profiles, currentMember } = useHousehold();
   const router = useRouter();
+  const t = useTranslations("profileSettings");
+  const tr = useTranslations();
   const profile = profiles.find((p) => p.id === id);
   const canEdit = currentMember.role === "admin";
   const [busy, startTransition] = useTransition();
@@ -142,8 +134,8 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
   if (!profile) {
     return (
       <>
-        <PageHeader title="Profile" backHref="/more" />
-        <p className="px-5 pt-4 text-body text-muted-foreground">This profile isn&rsquo;t available.</p>
+        <PageHeader title={t("fallbackTitle")} backHref="/more" />
+        <p className="px-5 pt-4 text-body text-muted-foreground">{t("unavailable")}</p>
       </>
     );
   }
@@ -164,26 +156,26 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
 
   return (
     <>
-      <PageHeader title={profile.name} subtitle="Profile and care card" backHref="/more" backLabel="Back to More" />
+      <PageHeader title={profile.name} subtitle={t("subtitle")} backHref="/more" backLabel={tr("settings.backToMore")} />
       <div className="px-5 pt-3 pb-8 space-y-6">
-        {!canEdit && <p className="text-caption text-muted-foreground">Only an admin can change profiles. You can still read the care card.</p>}
+        {!canEdit && <p className="text-caption text-muted-foreground">{t("adminOnly")}</p>}
 
         <section aria-labelledby="details-h" className="space-y-4">
-          <h2 id="details-h" className="font-display text-title-5">Details</h2>
+          <h2 id="details-h" className="font-display text-title-5">{t("details")}</h2>
           <fieldset disabled={!canEdit || busy} className="space-y-4">
             <label className="flex flex-col gap-2">
-              <span className="text-label text-muted-foreground">Name</span>
+              <span className="text-label text-muted-foreground">{t("name")}</span>
               <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} className={input} />
             </label>
-            <Group label="Color">
-              <div role="radiogroup" aria-label="Color" className="flex gap-3">
+            <Group label={t("color")}>
+              <div role="radiogroup" aria-label={t("color")} className="flex gap-3">
                 {COLORS.map((c) => (
                   <button
                     key={c}
                     type="button"
                     role="radio"
                     aria-checked={color === c}
-                    aria-label={c}
+                    aria-label={tr(`options.color.${c}`)}
                     onClick={() => setColor(c)}
                     data-profile-color={c}
                     className="w-11 h-11 rounded-full bg-profile text-on-profile flex items-center justify-center"
@@ -195,50 +187,51 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
               </div>
             </Group>
             <label className="flex flex-col gap-2">
-              <span className="text-label text-muted-foreground">Birthday</span>
+              <span className="text-label text-muted-foreground">{t("birthday")}</span>
               <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={input} />
             </label>
-            <Group label="Care stage">
-              <RadioChips label="Care stage" value={stage} onChange={setStage} options={[{ value: "baby", label: "Baby" }, { value: "child", label: "Child" }, { value: "teen_adult", label: "Teen/Adult" }]} />
+            <Group label={t("careStage")}>
+              <RadioChips label={t("careStage")} value={stage} onChange={setStage} options={(["baby", "child", "teen_adult"] as const).map((v) => ({ value: v, label: tr(`options.careStage.${v}`) }))} />
             </Group>
-            <Group label="Toileting">
-              <RadioChips label="Toileting" value={toileting} onChange={setToileting} options={[{ value: "diapers", label: stage === "teen_adult" ? "Briefs" : "Diapers" }, { value: "training", label: "Toilet training" }, { value: "toilet", label: "Uses toilet" }]} />
+            <Group label={t("toileting")}>
+              <RadioChips label={t("toileting")} value={toileting} onChange={setToileting} options={[{ value: "diapers", label: tr(stage === "teen_adult" ? "options.toileting.briefs" : "options.toileting.diapers") }, { value: "training", label: tr("options.toileting.training") }, { value: "toilet", label: tr("options.toileting.toilet") }]} />
             </Group>
-            <Group label="Feeding">
+            <Group label={t("feeding")}>
               <div className="flex flex-wrap gap-2">
                 {METHODS.map((m) => {
-                  const on = methods.includes(m.key);
+                  const on = methods.includes(m);
                   return (
-                    <button key={m.key} type="button" aria-pressed={on} onClick={() => setMethods((xs) => (on ? xs.filter((x) => x !== m.key) : [...xs, m.key]))} className={`min-h-touch-min px-4 flex items-center gap-1.5 rounded-full border text-body ${on ? "bg-profile border-profile text-on-profile font-extrabold" : "bg-secondary border-border"}`}>
-                      {on && <Check size={16} strokeWidth={2.5} aria-hidden="true" />}{m.label}
+                    <button key={m} type="button" aria-pressed={on} onClick={() => setMethods((xs) => (on ? xs.filter((x) => x !== m) : [...xs, m]))} className={`min-h-touch-min px-4 flex items-center gap-1.5 rounded-full border text-body ${on ? "bg-profile border-profile text-on-profile font-extrabold" : "bg-secondary border-border"}`}>
+                      {on && <Check size={16} strokeWidth={2.5} aria-hidden="true" />}{tr(`options.feedingPlural.${m}`)}
                     </button>
                   );
                 })}
               </div>
             </Group>
             {canEdit && (
-              <button type="button" onClick={() => save({ name, color, dob: dob || null, care_stage: stage, toileting, feeding_methods: methods }, "Details saved")} className="w-full h-button rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60">
-                Save details
+              <button type="button" onClick={() => save({ name, color, dob: dob || null, care_stage: stage, toileting, feeding_methods: methods }, t("detailsSaved"))} className="w-full h-button rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60">
+                {t("saveDetails")}
               </button>
             )}
           </fieldset>
         </section>
 
         <section aria-labelledby="modules-h" className="space-y-2">
-          <h2 id="modules-h" className="font-display text-title-5">Modules</h2>
+          <h2 id="modules-h" className="font-display text-title-5">{t("modules")}</h2>
           <div className="rounded-card bg-card shadow-card divide-y divide-divider">
             {MODULES.map((m) => {
-              const on = profile.enabledModules.includes(m.key);
+              const on = profile.enabledModules.includes(m);
+              const label = m === "mood" ? t("moodAndBehaviors") : tr(`modules.${m}`);
               return (
-                <label key={m.key} className="min-h-[56px] flex items-center justify-between gap-3 px-4">
-                  <span className="text-body font-extrabold">{m.label}</span>
+                <label key={m} className="min-h-[56px] flex items-center justify-between gap-3 px-4">
+                  <span className="text-body font-extrabold">{label}</span>
                   <input
                     type="checkbox"
                     role="switch"
                     className="switch"
                     checked={on}
                     disabled={!canEdit || busy || (on && profile.enabledModules.length === 1)}
-                    onChange={() => save({ enabled_modules: on ? profile.enabledModules.filter((x) => x !== m.key) : [...profile.enabledModules, m.key] }, `${m.label} ${on ? "hidden" : "shown"} on Home`)}
+                    onChange={() => save({ enabled_modules: on ? profile.enabledModules.filter((x) => x !== m) : [...profile.enabledModules, m] }, on ? t("moduleHidden", { name: label }) : t("moduleShown", { name: label }))}
                   />
                 </label>
               );
@@ -247,30 +240,30 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
         </section>
 
         <section aria-labelledby="options-h" className="space-y-3">
-          <h2 id="options-h" className="font-display text-title-5">Option lists</h2>
-          <p className="text-caption text-muted-foreground">Hidden or archived options leave the pickers but stay on past entries.</p>
+          <h2 id="options-h" className="font-display text-title-5">{t("optionLists")}</h2>
+          <p className="text-caption text-muted-foreground">{t("optionListsHint")}</p>
           <RadioChips<OptModule>
-            label="List"
+            label={t("list")}
             value={optModule}
             onChange={setOptModule}
             options={[
-              { value: "activity", label: "Activities" },
-              { value: "feeling", label: "Feelings" },
-              ...(stage !== "baby" ? [{ value: "behavior" as const, label: "Behaviors" }] : []),
-              { value: "prn_reason", label: "As-needed reasons" },
+              { value: "activity", label: t("activities") },
+              { value: "feeling", label: t("feelings") },
+              ...(stage !== "baby" ? [{ value: "behavior" as const, label: t("behaviors") }] : []),
+              { value: "prn_reason", label: t("prnReasons") },
             ]}
           />
           <OptionsEditor key={optModule} profileId={profile.id} module={optModule} builtIn={builtIns[optModule]} canEdit={canEdit} />
         </section>
 
         <section aria-labelledby="card-h" className="space-y-3">
-          <h2 id="card-h" className="font-display text-title-5">Care card</h2>
-          <p className="text-caption text-muted-foreground">For sitters and anyone new. Every field is optional.</p>
+          <h2 id="card-h" className="font-display text-title-5">{t("careCard")}</h2>
+          <p className="text-caption text-muted-foreground">{t("careCardHint")}</p>
           <fieldset disabled={!canEdit || busy} className="space-y-3">
             {[
-              ["Allergies", allergies, setAllergies, "Separate with commas"],
-              ["Conditions", conditions, setConditions, "Separate with commas"],
-              ["Calming strategies", calming, setCalming, "Separate with commas"],
+              [t("allergies"), allergies, setAllergies, t("commaHint")],
+              [t("conditions"), conditions, setConditions, t("commaHint")],
+              [t("calming"), calming, setCalming, t("commaHint")],
             ].map(([label, value, set, ph]) => (
               <label key={label as string} className="flex flex-col gap-1.5">
                 <span className="text-label text-muted-foreground">{label as string}</span>
@@ -278,14 +271,14 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
               </label>
             ))}
             <label className="flex flex-col gap-1.5">
-              <span className="text-label text-muted-foreground">Communication notes</span>
+              <span className="text-label text-muted-foreground">{t("communication")}</span>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={500} className="rounded-lg border border-input bg-card px-4 py-3 text-[16px] font-bold resize-none" />
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">Doctor</span><input value={doctor.name} onChange={(e) => setDoctor({ ...doctor, name: e.target.value })} className={input} /></label>
-              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">Doctor&rsquo;s phone</span><input type="tel" value={doctor.phone} onChange={(e) => setDoctor({ ...doctor, phone: e.target.value })} className={input} /></label>
-              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">Emergency contact</span><input value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} className={input} /></label>
-              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">Their phone</span><input type="tel" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} className={input} /></label>
+              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">{t("doctor")}</span><input value={doctor.name} onChange={(e) => setDoctor({ ...doctor, name: e.target.value })} className={input} /></label>
+              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">{t("doctorPhone")}</span><input type="tel" value={doctor.phone} onChange={(e) => setDoctor({ ...doctor, phone: e.target.value })} className={input} /></label>
+              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">{t("emergency")}</span><input value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} className={input} /></label>
+              <label className="flex flex-col gap-1.5"><span className="text-label text-muted-foreground">{t("theirPhone")}</span><input type="tel" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} className={input} /></label>
             </div>
             {canEdit && (
               <button
@@ -300,12 +293,12 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
                         emergency_contacts: contact.name ? [{ name: contact.name.trim(), phone: contact.phone.trim() }] : [],
                       },
                     },
-                    "Care card saved",
+                    t("cardSaved"),
                   )
                 }
                 className="w-full h-button rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
               >
-                Save care card
+                {t("saveCard")}
               </button>
             )}
           </fieldset>

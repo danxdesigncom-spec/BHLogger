@@ -1,4 +1,5 @@
 // Pattern rules (PRD 8.9). Thresholds are constants so they can be tuned after the pilot.
+import { t } from "@/lib/i18n";
 import { dataOf, eachDay, isBm, localParts, mean, moodByBlock, moodDaily, round1, behaviorEvents, ymdLocal, type InsightEntry } from "./core";
 
 export const PATTERN_RULES = {
@@ -11,7 +12,8 @@ export const PATTERN_RULES = {
   WINDOW_DAYS: 30,
 } as const;
 
-export const NOT_PROOF = "Patterns aren't proof of cause. Share them with your care team.";
+/** DSH-13 caption, shown with every pattern card. */
+export const notProof = () => t("insights.patterns.notProof");
 
 export interface KeepLogging {
   status: "keep_logging";
@@ -29,7 +31,7 @@ export function hardestTimeOfDay(entries: InsightEntry[]) {
   if (days < PATTERN_RULES.PAT01_MIN_DAYS || moods.length < PATTERN_RULES.PAT01_MIN_LOGS) {
     return {
       status: "keep_logging" as const,
-      message: `Patterns appear after ${PATTERN_RULES.PAT01_MIN_DAYS} days of mood logs`,
+      message: t("insights.patterns.pat01Need", { days: PATTERN_RULES.PAT01_MIN_DAYS }),
       progress: Math.min(days, PATTERN_RULES.PAT01_MIN_DAYS),
       goal: PATTERN_RULES.PAT01_MIN_DAYS,
       logs: moods.length,
@@ -49,7 +51,7 @@ export function moodAndBms(entries: InsightEntry[], from: Date, to: Date) {
   const without = mood.filter((d) => d.avg !== null && !bmDays.has(d.day)).map((d) => d.avg!);
   const min = PATTERN_RULES.PAT02_MIN_DAYS_EACH;
   if (withBm.length < min || without.length < min) {
-    return { status: "keep_logging" as const, message: `Needs ${min} days with a BM and ${min} without, each with a mood log`, progress: Math.min(withBm.length, without.length), goal: min };
+    return { status: "keep_logging" as const, message: t("insights.patterns.pat02Need", { days: min }), progress: Math.min(withBm.length, without.length), goal: min };
   }
   const a = round1(mean(without))!;
   const b = round1(mean(withBm))!;
@@ -95,7 +97,7 @@ export function beforeAfterChange(entries: InsightEntry[], change: ChangeLike, n
   const after = side(pivot, end);
   const min = PATTERN_RULES.PAT03_MIN_DAYS_EACH;
   if (before.days < min || after.days < min) {
-    return { status: "keep_logging" as const, message: `Needs ${min} logged days before and after the change`, progress: Math.min(before.days, after.days), goal: min, before, after };
+    return { status: "keep_logging" as const, message: t("insights.patterns.pat03Need", { days: min }), progress: Math.min(before.days, after.days), goal: min, before, after };
   }
   return { status: "ready" as const, before, after, window: W, effective: change.effective_at };
 }

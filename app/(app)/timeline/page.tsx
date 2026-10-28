@@ -1,7 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { TimelineClient } from "./TimelineClient";
 
-export const metadata = { title: "Timeline" };
+export async function generateMetadata() {
+  const t = await getTranslations("nav");
+  return { title: t("timeline") };
+}
 
 export default function TimelinePage() {
   return (

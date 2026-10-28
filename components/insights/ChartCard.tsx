@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Table2, BarChart3 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface TableData {
   columns: string[];
@@ -23,6 +24,7 @@ export function ChartCard({
   ariaRange?: string;
 }) {
   const [asTable, setAsTable] = useState(false);
+  const t = useTranslations("chart");
   return (
     <section className="rounded-card bg-card shadow-card p-4 space-y-3 break-inside-avoid" aria-label={`${kicker}: ${headline}`}>
       <div className="space-y-1">
@@ -56,7 +58,7 @@ export function ChartCard({
           {table && (
             <button type="button" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)} className="min-h-touch-min flex-none flex items-center gap-1.5 px-1 text-label font-extrabold text-profile-ink">
               {asTable ? <BarChart3 size={16} strokeWidth={2} aria-hidden="true" /> : <Table2 size={16} strokeWidth={2} aria-hidden="true" />}
-              {asTable ? "View as chart" : "View as table"}
+              {asTable ? t("viewChart") : t("viewTable")}
             </button>
           )}
         </div>

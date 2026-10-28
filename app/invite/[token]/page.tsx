@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { AcceptInviteForm } from "./AcceptInviteForm";
 
-export const metadata: Metadata = { title: "You've been invited" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("invite");
+  return { title: t("metaTitle") };
+}
 
 interface InviteProfile {
   id: string;
@@ -18,6 +22,8 @@ export default async function JoinInvitePage({
 }) {
   const { token } = await params;
   const supabase = await createClient();
+  const t = await getTranslations("invite");
+  const locale = await getLocale();
 
   // get_invite_preview is SECURITY DEFINER — callable without auth
   const { data: preview } = await supabase.rpc("get_invite_preview", {
@@ -25,14 +31,14 @@ export default async function JoinInvitePage({
   });
 
   if (!preview) {
-    return <InviteErrorPage title="This invite isn't valid" body="The link may be incomplete or already used." />;
+    return <InviteErrorPage title={t("invalidTitle")} body={t("invalidBody")} />;
   }
 
   if (preview.status === "expired") {
     return (
       <InviteErrorPage
-        title="This invite has expired"
-        body="Ask the household admin to send a new one."
+        title={t("expiredTitle")}
+        body={t("expiredBody")}
       />
     );
   }
@@ -40,43 +46,25 @@ export default async function JoinInvitePage({
   if (preview.status === "accepted") {
     return (
       <InviteErrorPage
-        title="This invite has already been accepted"
-        body="Sign in if you haven't already."
-        showSignIn
+        title={t("acceptedTitle")}
+        body={t("acceptedBody")}
+        signInLabel={t("signIn")}
       />
     );
   }
 
   const profiles = (preview.profiles as InviteProfile[] | null) ?? [];
   const profileNames = profiles.map((p) => p.name);
-  const namesStr = listFormatter(profileNames);
+  const namesStr = new Intl.ListFormat(locale, { type: "conjunction" }).format(profileNames);
 
-  const expiresDate = new Date(preview.expires_at).toLocaleDateString("en-US", {
+  const expiresDate = new Date(preview.expires_at).toLocaleDateString(locale, {
     month: "long",
     day: "numeric",
     year: "numeric",
   });
 
-  const roleCapabilities: Record<string, string[]> = {
-    caregiver: [
-      "Log bathroom, eating, activity, mood and medications",
-      "See insights and the timeline",
-      "Edit your own entries",
-    ],
-    admin: [
-      "Everything a caregiver can do",
-      "Invite and remove caregivers",
-      "Manage profiles and settings",
-    ],
-    viewer: [
-      "See the timeline and insights",
-      "Export and print reports",
-      "Can't add or edit entries",
-    ],
-  };
-
-  const capabilities = roleCapabilities[preview.role] ?? roleCapabilities.caregiver;
-  const roleLabel = preview.role.charAt(0).toUpperCase() + preview.role.slice(1);
+  const role = ["caregiver", "admin", "viewer"].includes(preview.role) ? preview.role : "caregiver";
+  const capabilities = t.raw(`capabilities.${role}`) as string[];
 
   // Check if already signed in
   const {
@@ -91,7 +79,7 @@ export default async function JoinInvitePage({
         inviterName={preview.inviter_name}
         profiles={profiles}
         namesStr={namesStr}
-        roleLabel={roleLabel}
+        role={role}
         capabilities={capabilities}
         expiresDate={expiresDate}
         alreadySignedIn
@@ -105,7 +93,7 @@ export default async function JoinInvitePage({
       inviterName={preview.inviter_name}
       profiles={profiles}
       namesStr={namesStr}
-      roleLabel={roleLabel}
+      role={role}
       capabilities={capabilities}
       expiresDate={expiresDate}
       alreadySignedIn={false}
@@ -116,33 +104,26 @@ export default async function JoinInvitePage({
 function InviteErrorPage({
   title,
   body,
-  showSignIn = false,
+  signInLabel,
 }: {
   title: string;
   body: string;
-  showSignIn?: boolean;
+  signInLabel?: string;
 }) {
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-center px-5 bg-[var(--color-card)]">
+    <main className="min-h-dvh flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm space-y-4 text-center">
-        <h1 className="font-display text-[28px] font-semibold leading-tight">{title}</h1>
-        <p className="text-muted-foreground text-sm">{body}</p>
-        {showSignIn && (
+        <h1 className="font-display text-title-1">{title}</h1>
+        <p className="text-body font-normal text-muted-foreground">{body}</p>
+        {signInLabel && (
           <Link
             href="/auth/login"
-            className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-foreground text-background px-8 text-[17px] font-extrabold"
+            className="inline-flex h-button items-center justify-center rounded-full bg-primary text-primary-foreground px-8 text-body-lg"
           >
-            Sign in
+            {signInLabel}
           </Link>
         )}
       </div>
     </main>
   );
-}
-
-function listFormatter(items: string[]): string {
-  if (items.length === 0) return "";
-  if (items.length === 1) return items[0];
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }

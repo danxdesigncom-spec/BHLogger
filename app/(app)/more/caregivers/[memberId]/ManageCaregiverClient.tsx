@@ -3,25 +3,15 @@
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2, Check, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { saveMember, removeMemberAction } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
 import { formatTime } from "@/lib/prefs";
-
-const COLOR_CLASSES: Record<ProfileColor, string> = {
-  violet: "bg-profile text-white",
-  teal:   "bg-profile text-white",
-  rose:   "bg-profile text-white",
-  amber:  "bg-profile text-white",
-  blue:   "bg-profile text-white",
-};
+import { longDate } from "@/lib/dates";
+import { roleLabel } from "@/lib/options";
+import { t as translate } from "@/lib/i18n";
 
 type Role = "admin" | "caregiver" | "viewer";
-
-const ROLE_DESCS: Record<Role, string> = {
-  admin:     "Admins can invite and remove caregivers and manage profiles.",
-  caregiver: "Caregivers log and see insights, and can edit their own entries.",
-  viewer:    "Viewers can see the timeline and export reports.",
-};
 
 interface Profile {
   id: string;
@@ -45,25 +35,19 @@ interface Props {
   profiles: Profile[];
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 function formatRelative(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 60) return translate("common.minAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `today at ${formatTime(iso)}`;
-  return formatDate(iso);
+  if (hrs < 24) return translate("caregivers.todayAt", { time: formatTime(iso) });
+  return longDate(new Date(iso));
 }
 
 export function ManageCaregiverClient({ householdId, member, profiles }: Props) {
   const router = useRouter();
+  const t = useTranslations("caregivers");
+  const tc = useTranslations("common");
   const [role, setRole] = useState<Role>(member.role);
   const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(
     member.restrictedProfileIds.length > 0
@@ -95,11 +79,11 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
       <header className="flex items-center gap-3 px-5 pt-5 pb-1">
         <button
           type="button"
-          aria-label="Back to More"
+          aria-label={tc("back")}
           onClick={() => router.back()}
-          className="w-11 h-11 flex-none rounded-full bg-white shadow-sm flex items-center justify-center"
+          className="w-11 h-11 flex-none rounded-full bg-card shadow-raised flex items-center justify-center"
         >
-          <ArrowLeft size={22} strokeWidth={2} />
+          <ArrowLeft size={22} strokeWidth={2} aria-hidden="true" />
         </button>
       </header>
 
@@ -107,17 +91,15 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
       <div className="flex items-center gap-4 px-5 pt-4 pb-0">
         <span
           aria-hidden="true"
-          className="w-[72px] h-[72px] flex-none rounded-full bg-[var(--color-secondary)] text-foreground flex items-center justify-center font-display text-[30px] font-semibold"
+          className="w-[72px] h-[72px] flex-none rounded-full bg-secondary text-foreground flex items-center justify-center font-display text-display-2"
         >
           {member.initials}
         </span>
         <div className="flex flex-col gap-1">
-          <h1 className="font-display text-[30px] font-semibold leading-tight">{member.displayName}</h1>
-          <span className="text-sm text-muted-foreground leading-snug">
-            Joined {formatDate(member.joinedAt)} ·{" "}
-            {member.lastLoggedAt
-              ? `last logged ${formatRelative(member.lastLoggedAt)}`
-              : "hasn't logged yet"}
+          <h1 className="font-display text-display-2">{member.displayName}</h1>
+          <span className="text-label font-normal text-muted-foreground">
+            {t("joined", { date: longDate(new Date(member.joinedAt)) })} ·{" "}
+            {member.lastLoggedAt ? t("lastLogged", { when: formatRelative(member.lastLoggedAt) }) : t("notLogged")}
           </span>
         </div>
       </div>
@@ -129,22 +111,22 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
         <input type="hidden" name="profileIds" value={JSON.stringify(profileIdsToSave)} />
 
         {(saveError ?? removeError) && (
-          <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p role="alert" className="rounded-lg border border-flag-border bg-flag px-4 py-3 text-label font-bold text-flag-ink">
             {saveError === "last_admin" || removeError === "last_admin"
-              ? "You can't remove or demote the last admin."
+              ? t("lastAdmin")
               : (saveError ?? removeError)}
           </p>
         )}
 
         {/* Role */}
         <div className="space-y-2">
-          <span id="role-label" className="block text-sm font-extrabold text-muted-foreground">
-            What can they do?
+          <span id="role-label" className="block text-label font-extrabold text-muted-foreground">
+            {t("whatCanTheyDo")}
           </span>
           <div
             role="group"
             aria-labelledby="role-label"
-            className="grid grid-cols-3 gap-1 p-[3px] rounded-full bg-white border border-[var(--color-border)]"
+            className="grid grid-cols-3 gap-1 p-[3px] rounded-full bg-card border border-border"
           >
             {(["admin", "caregiver", "viewer"] as Role[]).map((r) => (
               <button
@@ -152,82 +134,82 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
                 type="button"
                 aria-pressed={role === r}
                 onClick={() => setRole(r)}
-                className={`min-h-[44px] flex items-center justify-center gap-1 rounded-full text-[15px] transition-colors ${
+                className={`min-h-touch-min flex items-center justify-center gap-1 rounded-full text-body transition-colors ${
                   role === r
-                    ? "bg-[var(--color-profile)] text-white font-extrabold"
+                    ? "bg-profile text-on-profile font-extrabold"
                     : "font-bold text-foreground"
                 }`}
               >
-                {role === r && <Check size={16} strokeWidth={2} />}
-                {r.charAt(0).toUpperCase() + r.slice(1)}
+                {role === r && <Check size={16} strokeWidth={2} aria-hidden="true" />}
+                {roleLabel(r)}
               </button>
             ))}
           </div>
-          <p className="text-[13px] text-muted-foreground leading-snug">{ROLE_DESCS[role]}</p>
+          <p className="text-caption text-muted-foreground">{t(`roleDesc.${role}`)}</p>
         </div>
 
         {/* Who can they see */}
         <fieldset>
-          <legend className="text-sm font-extrabold text-muted-foreground mb-2">Who can they see?</legend>
+          <legend className="text-label font-extrabold text-muted-foreground mb-2">{t("whoCanTheySee")}</legend>
           <div className="grid grid-cols-2 gap-2">
             {profiles.map((p) => (
               <label
                 key={p.id}
-                className="min-h-[56px] flex items-center gap-2.5 px-4 rounded-[18px] border-[1.5px] border-[var(--color-border)] bg-white cursor-pointer"
+                className="min-h-[56px] flex items-center gap-2.5 px-4 rounded-[18px] border-[1.5px] border-border bg-card cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={selectedProfiles.has(p.id)}
                   onChange={() => toggleProfile(p.id)}
-                  className="w-[22px] h-[22px] flex-none accent-[var(--color-profile)]"
+                  className="w-[22px] h-[22px] flex-none accent-[var(--profile)]"
                 />
-                <span data-profile-color={p.color} className={`w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-[15px] font-semibold ${COLOR_CLASSES[p.color]}`}>
+                <span aria-hidden="true" data-profile-color={p.color} className="w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-title-5 bg-profile text-on-profile">
                   {p.name[0].toUpperCase()}
                 </span>
-                <span className="text-base font-extrabold">{p.name}</span>
+                <span className="text-body font-extrabold">{p.name}</span>
               </label>
             ))}
           </div>
         </fieldset>
 
         {/* Remove */}
-        <div className="rounded-[20px] bg-white shadow-sm p-4 space-y-2.5">
+        <div className="rounded-card bg-card shadow-card p-4 space-y-2.5">
           {!confirmRemove ? (
             <button
               type="button"
               onClick={() => setConfirmRemove(true)}
-              className="flex items-center gap-2 min-h-[48px] px-4 rounded-full border-[1.5px] border-[#E8A39B] text-[#B42318] text-[15px] font-extrabold"
+              className="flex items-center gap-2 min-h-touch px-4 rounded-full border-[1.5px] border-destructive-border text-destructive text-body font-extrabold"
             >
-              <Trash2 size={18} strokeWidth={2} />
-              Remove from household
+              <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
+              {t("remove")}
             </button>
           ) : (
             <form action={removeAction} className="space-y-2">
               <input type="hidden" name="memberId" value={member.id} />
               <input type="hidden" name="householdId" value={householdId} />
-              <p className="text-sm font-bold">
-                Remove {member.displayName} from the household?
+              <p className="text-label font-bold">
+                {t("removeConfirm", { name: member.displayName })}
               </p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setConfirmRemove(false)}
-                  className="flex-1 min-h-[44px] rounded-full border-[1.5px] border-[var(--color-border)] text-sm font-extrabold"
+                  className="flex-1 min-h-touch rounded-full bg-primary text-primary-foreground text-label font-extrabold"
                 >
-                  Keep them
+                  {t("keepThem")}
                 </button>
                 <button
                   type="submit"
                   disabled={removePending}
-                  className="flex-1 min-h-[44px] rounded-full bg-[#B42318] text-white text-sm font-extrabold disabled:opacity-60"
+                  className="flex-1 min-h-touch rounded-full border-[1.5px] border-destructive-border bg-card text-destructive text-label font-extrabold disabled:opacity-60"
                 >
-                  {removePending ? <Loader2 size={18} className="animate-spin mx-auto" /> : "Remove"}
+                  {removePending ? <Loader2 size={18} className="animate-spin mx-auto" aria-label={t("saving")} /> : t("removeButton")}
                 </button>
               </div>
             </form>
           )}
-          <p className="text-[13px] text-muted-foreground leading-snug">
-            They lose access right away. Their past entries stay, labeled with their name.
+          <p className="text-caption text-muted-foreground">
+            {t("removeNote")}
           </p>
         </div>
       </form>
@@ -241,9 +223,9 @@ export function ManageCaregiverClient({ householdId, member, profiles }: Props) 
             if (form) { e.preventDefault(); form.requestSubmit(); }
           }}
           disabled={savePending}
-          className="w-full min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+          className="w-full h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
         >
-          {savePending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" /> : "Save changes"}
+          {savePending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" aria-label={t("saving")} /> : t("saveChanges")}
         </button>
       </footer>
     </div>

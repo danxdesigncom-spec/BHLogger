@@ -4,6 +4,7 @@ import { slotsForDay, slotStatus, type MedLike } from "@/lib/meds/schedule";
 import { consistencyLabel } from "@/lib/entries/summary";
 import { behaviorLabel, feelingLabel, humanize, labelFor, moodLabels, portionLabel, STOOL_COLORS } from "@/lib/options";
 import { formatWeekdayTime } from "@/lib/prefs";
+import { has, t } from "@/lib/i18n";
 
 interface E {
   id: string;
@@ -30,17 +31,17 @@ export function daySummary(entries: E[], day: Date, meds: MedLike[], stage: Care
   const parts: string[] = [];
 
   const bms = entries.filter((e) => e.type === "bathroom" && ["bm", "both"].includes(String(d(e).kind))).length;
-  if (bms) parts.push(`${bms} BM${bms === 1 ? "" : "s"}`);
+  if (bms) parts.push(t("timeline.summary.bms", { count: bms }));
 
   const feeds = entries.filter((e) => e.type === "eating" && ["breast", "bottle"].includes(String(d(e).method))).length;
   const meals = entries.filter((e) => e.type === "eating" && d(e).method === "meal").length;
-  if (stage === "baby" && feeds) parts.push(`${feeds} feed${feeds === 1 ? "" : "s"}`);
-  if (meals) parts.push(`${meals} meal${meals === 1 ? "" : "s"}`);
+  if (stage === "baby" && feeds) parts.push(t("timeline.summary.feeds", { count: feeds }));
+  if (meals) parts.push(t("timeline.summary.meals", { count: meals }));
 
   const dayMood = entries.find((e) => e.type === "mood" && d(e).scope === "day");
   const moods = entries.filter((e) => e.type === "mood" && d(e).scope !== "day").map((e) => Number(d(e).level)).filter(Boolean);
-  if (dayMood) parts.push(`day rated ${Number(d(dayMood).level)}`);
-  else if (moods.length) parts.push(`mood ${(moods.reduce((a, b) => a + b, 0) / moods.length).toFixed(1)} average`);
+  if (dayMood) parts.push(t("timeline.summary.dayRated", { level: Number(d(dayMood).level) }));
+  else if (moods.length) parts.push(t("timeline.summary.moodAverage", { avg: (moods.reduce((a, b) => a + b, 0) / moods.length).toFixed(1) }));
 
   const doses = entries.filter((e) => e.type === "medication") as (E & { logged_by_name: string })[];
   let scheduled = 0;
@@ -52,21 +53,13 @@ export function daySummary(entries: E[], day: Date, meds: MedLike[], stage: Care
       if (s.state === "given") given += 1;
     }
   }
-  if (scheduled) parts.push(`meds ${given} of ${scheduled}`);
+  if (scheduled) parts.push(t("timeline.summary.meds", { given, scheduled }));
 
   return parts.join(" · ");
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  kind: "type", consistency: "consistency", color: "color", size: "size", flags: "flags", location: "where",
-  method: "method", portion_pct: "amount eaten", meal_type: "meal", amount_ml: "amount", contents: "contents",
-  side: "side", duration_min: "duration", reactions: "reactions", food_groups: "food groups",
-  level: "mood", feelings: "feelings", behaviors: "intensity", energy: "energy",
-  activity_id: "activity", enjoyment: "enjoyment", dose: "dose", outcome: "outcome", prn_reason: "reason",
-};
-
 function show(key: string, v: unknown, stage: CareStage): string {
-  if (v === null || v === undefined || (Array.isArray(v) && !v.length)) return "none";
+  if (v === null || v === undefined || (Array.isArray(v) && !v.length)) return t("timeline.revision.none");
   if (key === "level") return moodLabels(stage)[Number(v) - 1]?.toLowerCase() ?? String(v);
   if (key === "consistency") return consistencyLabel(v)?.toLowerCase() ?? String(v);
   if (key === "color") return labelFor(STOOL_COLORS, String(v)).toLowerCase();
@@ -87,19 +80,17 @@ export function describeRevision(
   profileName: (id: string) => string,
 ): string[] {
   const out: string[] = [];
-  if (before.deleted_at !== after.deleted_at) out.push(after.deleted_at ? "deleted this" : "restored this");
-  if (before.profile_id !== after.profile_id) out.push(`moved it to ${profileName(String(after.profile_id))}`);
-  if (before.occurred_at !== after.occurred_at) {
-    out.push(`changed the time to ${formatWeekdayTime(String(after.occurred_at))}`);
-  }
-  if (before.flagged_for_doctor !== after.flagged_for_doctor) out.push(after.flagged_for_doctor ? "flagged it for the doctor" : "removed the doctor flag");
-  if ((before.note ?? null) !== (after.note ?? null)) out.push(after.note ? "edited the note" : "removed the note");
+  if (before.deleted_at !== after.deleted_at) out.push(t(after.deleted_at ? "timeline.revision.deleted" : "timeline.revision.restored"));
+  if (before.profile_id !== after.profile_id) out.push(t("timeline.revision.moved", { name: profileName(String(after.profile_id)) }));
+  if (before.occurred_at !== after.occurred_at) out.push(t("timeline.revision.time", { time: formatWeekdayTime(String(after.occurred_at)) }));
+  if (before.flagged_for_doctor !== after.flagged_for_doctor) out.push(t(after.flagged_for_doctor ? "timeline.revision.flagged" : "timeline.revision.unflagged"));
+  if ((before.note ?? null) !== (after.note ?? null)) out.push(t(after.note ? "timeline.revision.noteEdited" : "timeline.revision.noteRemoved"));
   const bd = (before.data ?? {}) as Record<string, unknown>;
   const ad = (after.data ?? {}) as Record<string, unknown>;
   for (const key of new Set([...Object.keys(bd), ...Object.keys(ad)])) {
     if (JSON.stringify(bd[key] ?? null) === JSON.stringify(ad[key] ?? null)) continue;
-    const label = FIELD_LABELS[key] ?? humanize(key).toLowerCase();
-    out.push(`changed ${label} from ${show(key, bd[key], stage)} to ${show(key, ad[key], stage)}`);
+    const field = has(`timeline.revision.field.${key}`) ? t(`timeline.revision.field.${key}`) : humanize(key).toLowerCase();
+    out.push(t("timeline.revision.changed", { field, from: show(key, bd[key], stage), to: show(key, ad[key], stage) }));
   }
   return out;
 }

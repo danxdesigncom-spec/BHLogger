@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Lock, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { acceptInviteAction } from "./actions";
 
 interface Profile {
@@ -16,32 +17,25 @@ interface Props {
   inviterName: string;
   profiles: Profile[];
   namesStr: string;
-  roleLabel: string;
+  role: string;
   capabilities: string[];
   expiresDate: string;
   alreadySignedIn: boolean;
 }
-
-const AVATAR_COLORS: Record<string, string> = {
-  violet: "#5B3BE6",
-  teal:   "#0F766E",
-  rose:   "#B4235F",
-  amber:  "#9A4A00",
-  blue:   "#1D4F91",
-};
 
 export function AcceptInviteForm({
   token,
   inviterName,
   profiles,
   namesStr,
-  roleLabel,
+  role,
   capabilities,
   expiresDate,
   alreadySignedIn,
 }: Props) {
   const [state, action, pending] = useActionState(acceptInviteAction, null);
   const [displayName, setDisplayName] = useState("");
+  const t = useTranslations();
   const isRedirecting = state && 'redirecting' in state;
   const stateError = state && 'error' in state ? state.error : undefined;
 
@@ -51,27 +45,25 @@ export function AcceptInviteForm({
   }
 
   return (
-    <main className="min-h-dvh flex flex-col items-start justify-start px-5 pt-12 pb-8 bg-[var(--color-card)] max-w-sm mx-auto">
+    <main className="min-h-dvh flex flex-col items-start justify-start px-5 pt-12 pb-8 max-w-sm mx-auto">
       {/* Brand */}
-      <p className="text-sm font-extrabold text-muted-foreground mb-8">Behavior Logger</p>
+      <p className="text-label font-extrabold text-muted-foreground mb-8">{t("app.name")}</p>
 
       {/* Avatar cluster */}
       <div className="flex items-center mb-5">
         {profiles.slice(0, 3).map((p, i) => (
           <span
             key={p.id}
-            className="w-14 h-14 rounded-full flex items-center justify-center font-display text-[22px] font-semibold text-white border-2 border-[var(--color-card)]"
-            style={{
-              backgroundColor: AVATAR_COLORS[p.color] ?? "#5B3BE6",
-              marginLeft: i === 0 ? 0 : -10,
-              zIndex: profiles.length - i,
-            }}
+            aria-hidden="true"
+            data-profile-color={p.color}
+            className="w-14 h-14 rounded-full flex items-center justify-center font-display text-title-3 bg-profile text-on-profile border-2 border-card"
+            style={{ marginLeft: i === 0 ? 0 : -10, zIndex: profiles.length - i }}
           >
             {p.name[0].toUpperCase()}
           </span>
         ))}
         <span
-          className="w-14 h-14 rounded-full border-2 border-dashed border-[var(--color-border)] bg-white flex items-center justify-center ml-[-10px]"
+          className="w-14 h-14 rounded-full border-2 border-dashed border-dashed-line bg-card flex items-center justify-center ml-[-10px]"
           aria-hidden="true"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-muted-foreground">
@@ -81,37 +73,37 @@ export function AcceptInviteForm({
       </div>
 
       {/* Headline */}
-      <h1 className="font-display text-[28px] font-semibold leading-tight mb-5">
-        {inviterName} invited you to help care for {namesStr}
+      <h1 className="font-display text-title-1 mb-5">
+        {t("invite.headline", { inviter: inviterName, names: namesStr })}
       </h1>
 
       {/* Role card */}
-      <div className="w-full rounded-3xl bg-white p-4 mb-4 space-y-3">
-        <p className="text-sm font-extrabold text-muted-foreground">
-          You&rsquo;ll join as a {roleLabel}
+      <div className="w-full rounded-card bg-card shadow-card p-4 mb-4 space-y-3">
+        <p className="text-label font-extrabold text-muted-foreground">
+          {t("invite.joinAs", { role })}
         </p>
         <ul className="space-y-2">
           {capabilities.map((cap) => (
             <li key={cap} className="flex items-start gap-2">
-              <Check size={16} strokeWidth={2} className="mt-0.5 flex-none text-[var(--color-profile)]" />
-              <span className="text-sm font-bold">{cap}</span>
+              <Check size={16} strokeWidth={2} className="mt-0.5 flex-none text-profile" aria-hidden="true" />
+              <span className="text-label font-bold">{cap}</span>
             </li>
           ))}
         </ul>
       </div>
 
       {/* Privacy line */}
-      <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-2">
-        <Lock size={14} strokeWidth={2} className="flex-none" />
-        {namesStr}&rsquo;s information stays private to their care team.
+      <p className="flex items-center gap-1.5 text-caption text-muted-foreground mb-2">
+        <Lock size={14} strokeWidth={2} className="flex-none" aria-hidden="true" />
+        {t("invite.privacy", { names: namesStr })}
       </p>
 
-      <p className="text-[13px] text-muted-foreground mb-6">
-        Invite expires {expiresDate}
+      <p className="text-caption text-muted-foreground mb-6">
+        {t("invite.expires", { date: expiresDate })}
       </p>
 
       {stateError && (
-        <p role="alert" className="w-full rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 mb-4">
+        <p role="alert" className="w-full rounded-lg border border-flag-border bg-flag px-4 py-3 text-label font-bold text-flag-ink mb-4">
           {stateError}
         </p>
       )}
@@ -121,8 +113,8 @@ export function AcceptInviteForm({
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="alreadySignedIn" value="true" />
           <div className="space-y-2">
-            <label htmlFor="display-name" className="block text-sm font-extrabold text-muted-foreground">
-              Your name in this household
+            <label htmlFor="display-name" className="block text-label font-extrabold text-muted-foreground">
+              {t("invite.yourName")}
             </label>
             <input
               id="display-name"
@@ -131,31 +123,31 @@ export function AcceptInviteForm({
               required
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. Mom"
-              className="w-full min-h-[52px] rounded-2xl border-[1.5px] border-[var(--color-border)] bg-white px-4 text-[17px] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-profile)]"
+              placeholder={t("invite.namePlaceholder")}
+              className="w-full h-button rounded-lg border-[1.5px] border-input bg-card px-4 text-[16px] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
             />
           </div>
           <button
             type="submit"
             disabled={pending || !displayName.trim()}
-            className="w-full min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+            className="w-full h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
           >
-            Join household
+            {t("invite.join")}
           </button>
         </form>
       ) : (
         <div className="w-full space-y-3">
           <Link
             href={`/auth/login?next=/invite/${token}`}
-            className="w-full min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold"
+            className="w-full h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg"
           >
-            Accept and create account
+            {t("invite.accept")}
           </Link>
           <Link
             href={`/auth/login?next=/invite/${token}`}
-            className="w-full min-h-[48px] flex items-center justify-center rounded-full border-[1.5px] border-[var(--color-profile)] text-[var(--color-profile)] text-[15px] font-extrabold"
+            className="w-full h-button flex items-center justify-center rounded-full border-[1.5px] border-border-strong bg-card text-foreground text-body-md"
           >
-            I already have an account
+            {t("invite.haveAccount")}
           </Link>
         </div>
       )}

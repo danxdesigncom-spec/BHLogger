@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface ToastEntry {
   entryId: string;
@@ -24,6 +25,7 @@ export const TOAST_DURATION_MS = 6000;
 export function UndoToast({ toast, onUndo, onDismiss }: Props) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [paused, setPaused] = useState(false);
+  const t = useTranslations();
 
   useEffect(() => {
     if (!toast || paused) return;
@@ -52,7 +54,7 @@ export function UndoToast({ toast, onUndo, onDismiss }: Props) {
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-label font-extrabold truncate">
-          {toast.message ?? `${toast.summary} logged for ${toast.profileName}`}
+          {toast.message ?? t("toast.logged", { summary: toast.summary, name: toast.profileName })}
         </p>
         <p className="text-caption text-toast-muted">{toast.time}</p>
       </div>
@@ -61,7 +63,7 @@ export function UndoToast({ toast, onUndo, onDismiss }: Props) {
         onClick={() => onUndo(toast.entryId, toast.householdId)}
         className="flex-none h-11 px-4 rounded-[14px] bg-toast-action text-body font-extrabold"
       >
-        Undo
+        {t("common.undo")}
       </button>
     </div>
   );

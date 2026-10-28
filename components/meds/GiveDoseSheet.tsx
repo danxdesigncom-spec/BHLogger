@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LogSheet, type ModuleFormContext } from "@/components/log/LogSheet";
 import { Group, RadioChips, Stepper } from "@/components/log/controls";
 import type { ToastEntry } from "@/components/log/UndoToast";
@@ -27,6 +28,7 @@ export function GiveDoseSheet({ med, open, onClose, onSaved }: Props) {
   const doses = useEntries({ profileId: activeProfile?.id, types: ["medication"], from: since }, open && !!activeProfile);
   const [conflict, setConflict] = useState<DuplicateConflict | null>(null);
   const resolver = useRef<((proceed: boolean) => void) | null>(null);
+  const t = useTranslations();
 
   if (!med) return null;
   const all = doses.data ?? [];
@@ -57,10 +59,10 @@ export function GiveDoseSheet({ med, open, onClose, onSaved }: Props) {
     <>
       <LogSheet
         module="medication"
-        moduleLabel="Medication"
+        moduleLabel={t("modules.medication")}
         title={med.name}
-        subtitle={med.kind === "prn" ? "as needed" : slot ? `due ${formatClock(slot.toISOString())}` : "scheduled"}
-        saveLabel="Save dose"
+        subtitle={med.kind === "prn" ? t("meds.dose.asNeeded") : slot ? t("meds.dose.due", { time: formatClock(slot.toISOString()) }) : t("meds.dose.scheduled")}
+        saveLabel={t("meds.dose.save")}
         open={open}
         onClose={onClose}
         onSaved={onSaved}
@@ -75,8 +77,8 @@ export function GiveDoseSheet({ med, open, onClose, onSaved }: Props) {
             lastHint={
               last
                 ? {
-                    text: `Last given ${formatClock(last.occurred_at)} by ${last.logged_by_name} (${formatElapsed(lastElapsed!)} ago)`,
-                    setting: `Your setting: at least ${formatHours(intervalHours).replace(" hours", " h").replace(" hour", " h")} between doses`,
+                    text: t("meds.dose.lastGiven", { time: formatClock(last.occurred_at), name: last.logged_by_name, elapsed: formatElapsed(lastElapsed!) }),
+                    setting: t("meds.dose.setting", { hours: intervalHours < 1 ? formatHours(intervalHours) : t("meds.hoursShort", { count: Number(intervalHours.toFixed(1)) }) }),
                     warn: insideInterval,
                   }
                 : null
@@ -113,6 +115,8 @@ export function DoseForm({
   const [reason, setReason] = useState<string | null>(init.prn_reason ?? null);
   const step = Number(med.default_dose) >= 10 ? 1 : 0.5;
   const reasons = useOptionSet(med.profile_id, "prn_reason", [...PRN_REASONS]).options;
+  const t = useTranslations("meds.dose");
+  const to = useTranslations("options.doseOutcome");
 
   useEffect(() => {
     ctx.setData(
@@ -122,7 +126,7 @@ export function DoseForm({
         prn_reason: med.kind === "prn" ? reason : null,
         duplicate_override: init.duplicate_override ?? false, followup: (initial?.followup as string | null | undefined) ?? null,
       },
-      `${med.name} ${formatDose(dose, med.dose_unit)}`,
+      t("summary", { name: med.name, dose: formatDose(dose, med.dose_unit) }),
       true,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,14 +144,14 @@ export function DoseForm({
         </div>
       )}
 
-      <Group label="Dose">
+      <Group label={t("dose")}>
         <Stepper
           display={formatDose(dose, med.dose_unit)}
-          caption={dose === Number(med.default_dose) ? "Saved dose" : dose === Number(med.default_dose) / 2 ? "Half dose" : "Changed from saved dose"}
+          caption={dose === Number(med.default_dose) ? t("savedDose") : dose === Number(med.default_dose) / 2 ? t("halfDose") : t("changed")}
           onDecrease={() => setDose((d) => Math.max(step, Math.round((d - step) * 100) / 100))}
           onIncrease={() => setDose((d) => Math.round((d + step) * 100) / 100)}
-          decreaseLabel="Decrease dose"
-          increaseLabel="Increase dose"
+          decreaseLabel={t("decrease")}
+          increaseLabel={t("increase")}
           canDecrease={dose > step}
         />
         <div className="flex gap-2">
@@ -157,18 +161,18 @@ export function DoseForm({
             onClick={() => setDose(dose === Number(med.default_dose) / 2 ? Number(med.default_dose) : Number(med.default_dose) / 2)}
             className={`min-h-touch-min px-4 rounded-full border text-body ${dose === Number(med.default_dose) / 2 ? "bg-profile border-profile text-on-profile font-extrabold" : "bg-secondary border-border"}`}
           >
-            Half dose
+            {t("halfDose")}
           </button>
         </div>
       </Group>
 
-      <Group label="What happened?">
-        <RadioChips label="What happened" value={outcome} onChange={setOutcome} options={DOSE_OUTCOMES.map((o) => ({ value: o.key, label: o.key === "spit_up_vomited" ? "Spit up" : o.label }))} />
+      <Group label={t("whatHappened")}>
+        <RadioChips label={t("whatHappenedLabel")} value={outcome} onChange={setOutcome} options={DOSE_OUTCOMES.map((o) => ({ value: o.key, label: o.key === "spit_up_vomited" ? to("spit_up_short") : o.label }))} />
       </Group>
 
       {med.kind === "prn" && (
-        <Group label="Reason">
-          <RadioChips label="Reason" value={reason} onChange={(r) => setReason(r === reason ? null : r)} options={reasons.map((r) => ({ value: r.key, label: r.label }))} />
+        <Group label={t("reason")}>
+          <RadioChips label={t("reason")} value={reason} onChange={(r) => setReason(r === reason ? null : r)} options={reasons.map((r) => ({ value: r.key, label: r.label }))} />
         </Group>
       )}
     </div>
@@ -184,16 +188,19 @@ export function DuplicateDoseDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useTranslations("meds.duplicate");
   const d = conflict.dose.data as { dose?: number; unit?: string };
   const when = formatClock(conflict.dose.occurred_at);
+  const by = conflict.dose.logged_by_name;
+  const dose = formatDose(d.dose ?? 0, d.unit ?? "");
   const title =
     conflict.reason === "slot"
-      ? `${medName} was already given today at ${when}`
-      : `${medName} was already given ${formatElapsed(conflict.elapsedMin)} ago`;
+      ? t("slotTitle", { name: medName, time: when })
+      : t("recentTitle", { name: medName, elapsed: formatElapsed(conflict.elapsedMin) });
   const body =
     conflict.reason === "slot"
-      ? `${conflict.dose.logged_by_name} logged ${formatDose(d.dose ?? 0, d.unit ?? "")} for this dose.`
-      : `${conflict.dose.logged_by_name} logged ${formatDose(d.dose ?? 0, d.unit ?? "")} at ${when}. Your setting for ${profileName} is at least ${formatHours(conflict.intervalHours)} between doses.`;
+      ? t("slotBody", { by, dose })
+      : t("recentBody", { by, dose, time: when, profile: profileName, hours: formatHours(conflict.intervalHours) });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -215,12 +222,12 @@ export function DuplicateDoseDialog({
         <h2 id="dup-title" className="font-display text-title-2">{title}</h2>
         <p id="dup-body" className="text-body text-foreground-2">{body}</p>
         <button type="button" autoFocus onClick={onCancel} className="w-full h-button rounded-full bg-primary text-primary-foreground text-body-lg mt-1">
-          Don&rsquo;t log this dose
+          {t("cancel")}
         </button>
         <button type="button" onClick={onConfirm} className="w-full h-button rounded-full border-[1.5px] border-border-strong bg-card text-body-lg">
-          Log another dose anyway
+          {t("confirm")}
         </button>
-        <p className="text-caption text-muted-foreground">Not sure? Check with {profileName}&rsquo;s doctor or pharmacist.</p>
+        <p className="text-caption text-muted-foreground">{t("check", { name: profileName })}</p>
       </div>
     </div>
   );

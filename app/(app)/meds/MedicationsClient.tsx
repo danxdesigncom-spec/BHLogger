@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronRight, Clock, History, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GiveDoseSheet } from "@/components/meds/GiveDoseSheet";
 import { MODULE_ICONS } from "@/components/log/LogSheet";
@@ -12,7 +13,7 @@ import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useMedications } from "@/lib/data/hooks";
 import type { MedicationRow } from "@/lib/data/types";
 import { formatClock, formatWhen } from "@/lib/entries/summary";
-import { formatDose, labelFor, DOSE_OUTCOMES } from "@/lib/options";
+import { formatDose, labelFor, DOSE_OUTCOMES, medFormLabel } from "@/lib/options";
 import { friendlySchedule, lastDose, todaySlots, type SlotStatus } from "@/lib/meds/schedule";
 import { startOfDay } from "@/lib/dates";
 
@@ -24,6 +25,8 @@ export function MedicationsClient() {
   const params = useSearchParams();
   const giveId = params.get("give");
   const { showToast, toastElement } = useUndoToast();
+  const t = useTranslations("meds.list");
+  const tc = useTranslations("common");
 
   const meds = useMedications(activeProfile?.id ?? null);
   const since = useMemo(() => new Date(Date.now() - 2 * 86_400_000).toISOString(), []);
@@ -60,38 +63,38 @@ export function MedicationsClient() {
   return (
     <>
       <PageHeader
-        title="Medications"
+        title={t("title")}
         backHref="/"
-        backLabel="Back to Home"
-        subtitle={`for ${activeProfile?.name ?? ""}${scheduledToday ? ` · ${givenToday} of ${scheduledToday} given today` : ""}`}
+        backLabel={t("backHome")}
+        subtitle={[tc("for", { name: activeProfile?.name ?? "" }), scheduledToday ? t("givenToday", { given: givenToday, total: scheduledToday }) : null].filter(Boolean).join(" · ")}
         action={
           canLog && (
             <Link href="/meds/new" className="min-h-touch-min flex items-center gap-1.5 px-4 rounded-full bg-card shadow-raised text-body font-extrabold text-profile-ink">
-              <Plus size={18} strokeWidth={2} aria-hidden="true" /> Add
+              <Plus size={18} strokeWidth={2} aria-hidden="true" /> {t("add")}
             </Link>
           )
         }
       />
 
       <div className="px-5 pt-2 pb-6 space-y-5">
-        {meds.isLoading && <p className="text-body text-muted-foreground">Loading…</p>}
+        {meds.isLoading && <p className="text-body text-muted-foreground">{tc("loading")}</p>}
         {!meds.isLoading && active.length === 0 && (
           <div className="rounded-card bg-card p-5 shadow-card space-y-2">
-            <p className="text-body-md">No medications yet</p>
-            <p className="text-caption text-muted-foreground">Add medicines and supplements once. Giving a dose is then one tap, and the app warns before a double dose.</p>
+            <p className="text-body-md">{t("emptyTitle")}</p>
+            <p className="text-caption text-muted-foreground">{t("emptyBody")}</p>
           </div>
         )}
 
-        <Section title="Overdue" rows={sections.overdue} render={(r) => (
-          <MedRow key={`${r.med.id}-${r.slot!.slot.getTime()}`} med={r.med} status={<Chip tone="warning">Not logged · due {formatClock(r.slot!.slot.toISOString())}</Chip>} onGive={canLog ? () => openGive(r.med.id) : undefined} />
+        <Section id="overdue" title={t("overdue")} rows={sections.overdue} render={(r) => (
+          <MedRow key={`${r.med.id}-${r.slot!.slot.getTime()}`} med={r.med} status={<Chip tone="warning">{t("notLoggedDue", { time: formatClock(r.slot!.slot.toISOString()) })}</Chip>} onGive={canLog ? () => openGive(r.med.id) : undefined} />
         )} />
-        <Section title="Due" rows={sections.due} render={(r) => (
-          <MedRow key={`${r.med.id}-${r.slot!.slot.getTime()}`} med={r.med} status={<Chip tone="warning">Due {formatClock(r.slot!.slot.toISOString())}</Chip>} onGive={canLog ? () => openGive(r.med.id) : undefined} />
+        <Section id="due" title={t("due")} rows={sections.due} render={(r) => (
+          <MedRow key={`${r.med.id}-${r.slot!.slot.getTime()}`} med={r.med} status={<Chip tone="warning">{t("dueAt", { time: formatClock(r.slot!.slot.toISOString()) })}</Chip>} onGive={canLog ? () => openGive(r.med.id) : undefined} />
         )} />
-        <Section title="Later today" rows={sections.later} render={(r) => (
-          <MedRow key={`${r.med.id}-${r.slot!.slot.getTime()}`} med={r.med} status={<Chip tone="neutral">Due {formatClock(r.slot!.slot.toISOString())}</Chip>} onGive={canLog ? () => openGive(r.med.id) : undefined} giveLabel="Give early" />
+        <Section id="later" title={t("later")} rows={sections.later} render={(r) => (
+          <MedRow key={`${r.med.id}-${r.slot!.slot.getTime()}`} med={r.med} status={<Chip tone="neutral">{t("dueAt", { time: formatClock(r.slot!.slot.toISOString()) })}</Chip>} onGive={canLog ? () => openGive(r.med.id) : undefined} giveLabel={t("giveEarly")} />
         )} />
-        <Section title="As needed" rows={sections.prn} render={(r) => {
+        <Section id="prn" title={t("asNeeded")} rows={sections.prn} render={(r) => {
           const last = lastDose(r.med, all);
           return (
             <MedRow
@@ -101,7 +104,7 @@ export function MedicationsClient() {
               status={
                 <span className="flex items-center gap-1.5 text-caption font-bold text-foreground-2">
                   <Clock size={14} strokeWidth={2} aria-hidden="true" />
-                  {last ? `Last given ${formatWhen(last.occurred_at)} by ${last.logged_by_name}` : "Not given in the last 2 days"}
+                  {last ? t("lastGivenBy", { when: formatWhen(last.occurred_at), name: last.logged_by_name }) : t("notGiven2d")}
                 </span>
               }
             />
@@ -110,7 +113,7 @@ export function MedicationsClient() {
 
         {(sections.given.length > 0 || prnGivenToday.length > 0) && (
           <section aria-labelledby="given-h" className="space-y-2">
-            <h2 id="given-h" className="font-display text-title-5">Given today</h2>
+            <h2 id="given-h" className="font-display text-title-5">{t("givenTodayTitle")}</h2>
             <div className="rounded-card bg-card shadow-card divide-y divide-divider">
               {sections.given.map((r) => {
                 const outcome = (r.slot!.dose!.data as { outcome?: string }).outcome ?? "given";
@@ -118,9 +121,11 @@ export function MedicationsClient() {
                   <GivenRow
                     key={r.slot!.dose!.id}
                     name={r.med.name}
-                    sub={`${formatDose(Number(r.med.default_dose), r.med.dose_unit)} · ${friendlySchedule(r.med)}`}
+                    sub={t("doseSchedule", { dose: formatDose(Number(r.med.default_dose), r.med.dose_unit), schedule: friendlySchedule(r.med) })}
                     ok={r.slot!.state === "given"}
-                    label={`${r.slot!.state === "given" ? "" : `${labelFor(DOSE_OUTCOMES, outcome)} · `}${formatClock(r.slot!.dose!.occurred_at)} · ${r.slot!.dose!.logged_by_name}`}
+                    label={r.slot!.state === "given"
+                      ? t("timeBy", { time: formatClock(r.slot!.dose!.occurred_at), name: r.slot!.dose!.logged_by_name })
+                      : t("outcomeAt", { outcome: labelFor(DOSE_OUTCOMES, outcome), time: formatClock(r.slot!.dose!.occurred_at), name: r.slot!.dose!.logged_by_name })}
                   />
                 );
               })}
@@ -131,9 +136,9 @@ export function MedicationsClient() {
                   <GivenRow
                     key={d.id}
                     name={med.name}
-                    sub={`${formatDose(data.dose ?? 0, data.unit ?? med.dose_unit)} · as needed`}
+                    sub={t("doseAsNeeded", { dose: formatDose(data.dose ?? 0, data.unit ?? med.dose_unit) })}
                     ok={data.outcome === "given" || data.outcome === "partial"}
-                    label={`${formatClock(d.occurred_at)} · ${d.logged_by_name}`}
+                    label={t("timeBy", { time: formatClock(d.occurred_at), name: d.logged_by_name })}
                   />
                 );
               })}
@@ -143,18 +148,18 @@ export function MedicationsClient() {
 
         {active.length > 0 && (
           <section aria-labelledby="manage-h" className="space-y-2">
-            <h2 id="manage-h" className="font-display text-title-5">Manage</h2>
+            <h2 id="manage-h" className="font-display text-title-5">{t("manage")}</h2>
             <div className="rounded-card bg-card shadow-card divide-y divide-divider">
               {[...active, ...stopped].map((m) => (
                 <Link key={m.id} href={`/meds/${m.id}`} className="flex items-center gap-3 min-h-[56px] px-3.5">
                   <span className="flex-1 min-w-0">
                     <span className="block text-body font-extrabold truncate">{m.name}</span>
                     <span className="block text-caption text-muted-foreground">
-                      {m.active ? `${formatDose(Number(m.default_dose), m.dose_unit)} · ${friendlySchedule(m)}` : "Stopped"}
+                      {m.active ? t("doseSchedule", { dose: formatDose(Number(m.default_dose), m.dose_unit), schedule: friendlySchedule(m) }) : t("stopped")}
                     </span>
                   </span>
                   <span className="flex items-center gap-1 text-caption font-bold text-muted-foreground">
-                    <History size={14} strokeWidth={2} aria-hidden="true" /> History
+                    <History size={14} strokeWidth={2} aria-hidden="true" /> {t("history")}
                   </span>
                   <ChevronRight size={18} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
                 </Link>
@@ -170,19 +175,18 @@ export function MedicationsClient() {
   );
 }
 
-function Section({ title, rows, render }: { title: string; rows: Row[]; render: (r: Row) => React.ReactNode }) {
+function Section({ id, title, rows, render }: { id: string; title: string; rows: Row[]; render: (r: Row) => React.ReactNode }) {
   if (!rows.length) return null;
-  const id = `sec-${title.replace(/\W+/g, "-").toLowerCase()}`;
   return (
-    <section aria-labelledby={id} className="space-y-2">
-      <h2 id={id} className="font-display text-title-5">{title}</h2>
+    <section aria-labelledby={`sec-${id}`} className="space-y-2">
+      <h2 id={`sec-${id}`} className="font-display text-title-5">{title}</h2>
       <div className="space-y-2">{rows.map(render)}</div>
     </section>
   );
 }
 
 function MedRow({
-  med, status, onGive, onRow, giveLabel = "Give",
+  med, status, onGive, onRow, giveLabel,
 }: {
   med: MedicationRow;
   status: React.ReactNode;
@@ -190,6 +194,8 @@ function MedRow({
   onRow?: () => void;
   giveLabel?: string;
 }) {
+  const t = useTranslations("meds.list");
+  const action = giveLabel ?? t("give");
   const body = (
     <>
       <span className="w-11 h-11 flex-none rounded-full bg-medication text-medication-ink flex items-center justify-center [&_svg]:w-5 [&_svg]:h-5">
@@ -198,7 +204,7 @@ function MedRow({
       <span className="flex-1 min-w-0 flex flex-col items-start gap-1 text-left">
         <span className="text-body-lg">{med.name}</span>
         <span className="text-label font-normal text-muted-foreground">
-          {formatDose(Number(med.default_dose), med.dose_unit)}{med.form ? ` · ${med.form.toLowerCase()}` : ""} · {friendlySchedule(med)}
+          {formatDose(Number(med.default_dose), med.dose_unit)}{med.form ? ` · ${medFormLabel(med.form).toLowerCase()}` : ""} · {friendlySchedule(med)}
         </span>
         {status}
       </span>
@@ -216,8 +222,8 @@ function MedRow({
     <div className="flex items-center gap-3 p-3.5 rounded-card bg-card shadow-card">
       {body}
       {onGive && (
-        <button type="button" onClick={onGive} aria-label={`${giveLabel} ${med.name}`} className="min-h-touch-min px-[18px] flex-none rounded-full bg-primary text-primary-foreground text-body-md">
-          {giveLabel}
+        <button type="button" onClick={onGive} aria-label={t("giveMed", { action, name: med.name })} className="min-h-touch-min px-[18px] flex-none rounded-full bg-primary text-primary-foreground text-body-md">
+          {action}
         </button>
       )}
     </div>

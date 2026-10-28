@@ -2,6 +2,7 @@
 // Day and time-of-day use each entry's own IANA time zone (PRD section 11).
 
 import { weekStartIndex } from "@/lib/prefs";
+import { t } from "@/lib/i18n";
 export interface InsightEntry {
   id: string;
   type: string;
@@ -129,14 +130,14 @@ export function longestBmGap(entries: InsightEntry[], from: Date, to: Date): { d
 
 // ─── Time-of-day blocks (PAT-01, DSH-05 heatmap) ─────────────────────────────
 
-export const BLOCKS = [
-  { key: "morning", label: "Morning", from: 7, to: 10 },
-  { key: "midday", label: "Midday", from: 10, to: 13 },
-  { key: "early_pm", label: "1–4 PM", from: 13, to: 16 },
-  { key: "late_pm", label: "4–7 PM", from: 16, to: 19 },
-  { key: "evening", label: "Evening", from: 19, to: 22 },
-  { key: "night", label: "Night", from: 22, to: 31 },
-] as const;
+export const BLOCKS = ([
+  { key: "morning", from: 7, to: 10 },
+  { key: "midday", from: 10, to: 13 },
+  { key: "early_pm", from: 13, to: 16 },
+  { key: "late_pm", from: 16, to: 19 },
+  { key: "evening", from: 19, to: 22 },
+  { key: "night", from: 22, to: 31 },
+] as const).map((b) => ({ ...b, get label() { return t(`insights.blocks.${b.key}`); } }));
 
 export function blockOf(hour: number) {
   const h = hour < 7 ? hour + 24 : hour;

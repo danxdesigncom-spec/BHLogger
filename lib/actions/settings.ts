@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isDemoMode } from "@/app/auth/demo/actions";
 import { DEMO_OVERRIDES_COOKIE, readDemoOverrides, type DemoOverrides } from "@/lib/demo/overrides";
 import type { Json } from "@/lib/supabase/types";
+import { t } from "@/lib/i18n";
 
 type Result = { success: true } | { error: string };
 
@@ -45,7 +46,7 @@ async function writeDemo(update: (o: DemoOverrides) => DemoOverrides) {
 /** SET-01 units and formats, ACC-04 household name. Admins only (RLS). */
 export async function updateHousehold(householdId: string, input: unknown): Promise<Result> {
   const parsed = HouseholdSchema.safeParse(input);
-  if (!parsed.success || !z.string().uuid().safeParse(householdId).success) return { error: "Invalid settings." };
+  if (!parsed.success || !z.string().uuid().safeParse(householdId).success) return { error: t("errors.invalidSettings") };
 
   if (await isDemoMode()) {
     await writeDemo((o) => ({
@@ -61,7 +62,7 @@ export async function updateHousehold(householdId: string, input: unknown): Prom
 
   const supabase = await createClient();
   const { data: current } = await supabase.from("households").select("settings").eq("id", householdId).maybeSingle();
-  if (!current) return { error: "Household not found." };
+  if (!current) return { error: t("errors.householdNotFound") };
   const { data, error } = await supabase
     .from("households")
     .update({
@@ -72,7 +73,7 @@ export async function updateHousehold(householdId: string, input: unknown): Prom
     .select("id")
     .maybeSingle();
   if (error) return { error: error.message };
-  if (!data) return { error: "Only an admin can change household settings." };
+  if (!data) return { error: t("errors.adminHouseholdSettings") };
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -80,7 +81,7 @@ export async function updateHousehold(householdId: string, input: unknown): Prom
 /** ACC-05/06 profile fields, SET-04 modules, ACC-12 care card, ACC-13 archive. Admins only (RLS). */
 export async function updateProfile(profileId: string, input: unknown): Promise<Result> {
   const parsed = ProfileSchema.safeParse(input);
-  if (!parsed.success || !z.string().uuid().safeParse(profileId).success) return { error: "Invalid profile change." };
+  if (!parsed.success || !z.string().uuid().safeParse(profileId).success) return { error: t("errors.invalidProfileChange") };
   const { archived, care_card, ...fields } = parsed.data;
 
   if (await isDemoMode()) {
@@ -104,7 +105,7 @@ export async function updateProfile(profileId: string, input: unknown): Promise<
     .select("id")
     .maybeSingle();
   if (error) return { error: error.message };
-  if (!data) return { error: "Only an admin can change this profile." };
+  if (!data) return { error: t("errors.adminProfile") };
   revalidatePath("/", "layout");
   return { success: true };
 }

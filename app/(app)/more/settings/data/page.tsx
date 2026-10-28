@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Download, FileJson, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useHousehold, type ProfileSummary } from "@/lib/context/household-provider";
@@ -15,6 +16,7 @@ export default function DataPage() {
   const { profiles, archivedProfiles, householdName, householdSettings, currentMember } = useHousehold();
   const repo = useRepo();
   const router = useRouter();
+  const t = useTranslations("settings");
   const [busy, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<ProfileSummary | null>(null);
@@ -53,34 +55,34 @@ export default function DataPage() {
       };
       downloadText(`behavior-logger-export-${stamp}.json`, JSON.stringify(json, null, 2), "application/json;charset=utf-8");
       setTimeout(() => downloadText(`behavior-logger-entries-${stamp}.csv`, entriesToCsv(entries, nameOf)), 400);
-      setMessage(`Exported ${entries.length} entries for ${everyone.length} ${everyone.length === 1 ? "person" : "people"}.`);
+      setMessage(t("data.exported", { entries: entries.length, people: everyone.length }));
     });
 
   return (
     <>
-      <PageHeader title="Your data" backHref="/more" backLabel="Back to More" showDot={false} />
+      <PageHeader title={t("data.title")} backHref="/more" backLabel={t("backToMore")} showDot={false} />
       <div className="px-5 pt-3 pb-8 space-y-6">
         <section aria-labelledby="export-h" className="space-y-2.5">
-          <h2 id="export-h" className="font-display text-title-5">Export everything</h2>
+          <h2 id="export-h" className="font-display text-title-5">{t("data.exportTitle")}</h2>
           <p className="text-label font-normal text-foreground-2">
-            A JSON file with every profile, entry, medication and change, plus a CSV of all entries. Your family owns this data.
+            {t("data.exportBody")}
           </p>
           <button type="button" disabled={busy} onClick={exportAll} className="w-full h-button flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60">
-            <FileJson size={20} strokeWidth={2} aria-hidden="true" /> {busy ? "Preparing…" : "Export JSON and CSV"}
+            <FileJson size={20} strokeWidth={2} aria-hidden="true" /> {busy ? t("data.preparing") : t("data.exportButton")}
           </button>
-          <p className="flex items-center gap-1.5 text-caption text-muted-foreground"><Download size={14} strokeWidth={2} aria-hidden="true" /> Doctor-ready reports are under Reports.</p>
+          <p className="flex items-center gap-1.5 text-caption text-muted-foreground"><Download size={14} strokeWidth={2} aria-hidden="true" /> {t("data.reportsHint")}</p>
         </section>
 
         {isAdmin && (
           <section aria-labelledby="archive-h" className="space-y-2.5">
-            <h2 id="archive-h" className="font-display text-title-5">Archive a profile</h2>
-            <p className="text-label font-normal text-foreground-2">Archived profiles leave the switcher. Their data stays in exports, and you can restore them from More.</p>
+            <h2 id="archive-h" className="font-display text-title-5">{t("data.archiveTitle")}</h2>
+            <p className="text-label font-normal text-foreground-2">{t("data.archiveBody")}</p>
             <div className="rounded-card bg-card shadow-card divide-y divide-divider">
               {profiles.map((p) => (
                 <div key={p.id} className="min-h-[60px] flex items-center gap-3 px-3.5 py-2">
                   <span className="flex-1 text-body-md">{p.name}</span>
                   <button type="button" disabled={profiles.length <= 1} onClick={() => setArchiving(p)} className="min-h-touch-min flex items-center gap-1.5 px-4 rounded-full border-[1.5px] border-border-strong text-label font-extrabold disabled:opacity-40">
-                    <Archive size={16} strokeWidth={2} aria-hidden="true" /> Archive
+                    <Archive size={16} strokeWidth={2} aria-hidden="true" /> {t("data.archive")}
                   </button>
                 </div>
               ))}
@@ -89,11 +91,11 @@ export default function DataPage() {
         )}
 
         <section aria-labelledby="delete-h" className="space-y-2.5">
-          <h2 id="delete-h" className="font-display text-title-5">Delete permanently</h2>
+          <h2 id="delete-h" className="font-display text-title-5">{t("data.deleteTitle")}</h2>
           <div className="flex items-start gap-2.5 p-3.5 rounded-[18px] bg-secondary text-foreground-2">
             <Trash2 size={18} strokeWidth={2} className="flex-none mt-0.5" aria-hidden="true" />
             <p className="text-label font-normal">
-              Permanently deleting a profile or the whole account isn&rsquo;t switched on yet. Export your data first; until then, archiving hides a profile everywhere.
+              {t("data.deleteBody")}
             </p>
           </div>
         </section>
@@ -103,17 +105,17 @@ export default function DataPage() {
 
       {archiving && (
         <ConfirmDialog
-          title={`Archive ${archiving.name}?`}
-          body={`${archiving.name} leaves the switcher for every caregiver. Nothing is deleted, and an admin can restore the profile from More.`}
-          cancelLabel="Keep"
-          confirmLabel="Archive"
+          title={t("data.confirmTitle", { name: archiving.name })}
+          body={t("data.confirmBody", { name: archiving.name })}
+          cancelLabel={t("data.keep")}
+          confirmLabel={t("data.archive")}
           onCancel={() => setArchiving(null)}
           onConfirm={() => {
             const p = archiving;
             setArchiving(null);
             startTransition(async () => {
               const r = await updateProfile(p.id, { archived: true });
-              setMessage("error" in r ? r.error : `${p.name} archived.`);
+              setMessage("error" in r ? r.error : t("data.archivedMessage", { name: p.name }));
               router.refresh();
             });
           }}

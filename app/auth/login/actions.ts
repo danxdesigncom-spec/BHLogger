@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
+import { t } from "@/lib/i18n";
 
 type State =
   | null
@@ -16,7 +17,7 @@ export async function sendMagicLink(
   const next = (formData.get("next") as string | null) ?? "/";
 
   if (!email || typeof email !== "string") {
-    return { sent: false, error: "Please enter your email address." };
+    return { sent: false, error: t("errors.enterEmail") };
   }
 
   const supabase = await createClient();
@@ -32,7 +33,7 @@ export async function sendMagicLink(
   });
 
   if (error) {
-    return { sent: false, error: "Something went wrong. Please try again." };
+    return { sent: false, error: t("errors.somethingWrong") };
   }
 
   return { sent: true, email };

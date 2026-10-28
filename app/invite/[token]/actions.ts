@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { acceptInvite } from "@/lib/actions/invites";
+import { t } from "@/lib/i18n";
 
 type State =
   | null
@@ -26,7 +27,7 @@ export async function acceptInviteAction(
 
   if ("error" in result) {
     if (result.error.includes("Invalid or expired")) {
-      return { error: "This invite has expired or is no longer valid." };
+      return { error: t("errors.inviteExpired") };
     }
     return { error: result.error };
   }

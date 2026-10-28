@@ -1,7 +1,8 @@
 // Medication rules: scheduled slots (computed, never stored), slot status (MED-08),
 // the duplicate-dose guard (MED-07) and adherence (MED-10).
 
-import { formatTime } from "@/lib/prefs";
+import { dateLocale, formatTime } from "@/lib/prefs";
+import { t } from "@/lib/i18n";
 export interface MedLike {
   id: string;
   name: string;
@@ -156,15 +157,15 @@ function minutesBetween(iso: string, at: Date) {
 
 /** "1 h 5 min", "45 min", "2 h". */
 export function formatElapsed(min: number): string {
-  if (min < 60) return `${min} min`;
+  if (min < 60) return t("common.elapsedMin", { min });
   const h = Math.floor(min / 60);
   const m = min % 60;
-  return m ? `${h} h ${m} min` : `${h} h`;
+  return m ? t("common.elapsedHMin", { h, min: m }) : t("common.elapsedH", { h });
 }
 
 export function formatHours(h: number): string {
-  if (h < 1) return `${Math.round(h * 60)} minutes`;
-  return `${Number.isInteger(h) ? h : h.toFixed(1)} hour${h === 1 ? "" : "s"}`;
+  if (h < 1) return t("common.minutes", { count: Math.round(h * 60) });
+  return t("common.hours", { count: Number.isInteger(h) ? h : Number(h.toFixed(1)) });
 }
 
 export interface Adherence {
@@ -197,30 +198,36 @@ export function adherence(med: MedLike, doses: DoseLike[], from: Date, to: Date,
   return result;
 }
 
+/** Short weekday names in the household's language, Sunday first. */
+function weekdayNames(): string[] {
+  return [0, 1, 2, 3, 4, 5, 6].map((d) => new Date(2023, 0, 1 + d).toLocaleDateString(dateLocale(), { weekday: "short" }));
+}
+
 /** S06 wording: "nightly", "mornings", "midday", "2 times a day", "mornings, Mon–Fri". */
 export function friendlySchedule(med: MedLike): string {
   const s = scheduleOf(med);
-  if (!s) return "as needed";
+  if (!s) return t("meds.schedule.asNeeded");
   let when: string;
   if (s.times.length === 1) {
     const h = Number(s.times[0].split(":")[0]);
-    when = h < 11 ? "mornings" : h < 15 ? "midday" : h < 18 ? "afternoons" : "nightly";
+    when = t(`meds.schedule.${h < 11 ? "mornings" : h < 15 ? "midday" : h < 18 ? "afternoons" : "nightly"}`);
   } else {
-    when = `${s.times.length} times a day`;
+    when = t("meds.schedule.timesADay", { count: s.times.length });
   }
   if (s.days.length === 7) return when;
-  const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const weekdays = s.days.length === 5 && [1, 2, 3, 4, 5].every((d) => s.days.includes(d));
-  return `${when}, ${weekdays ? "Mon–Fri" : s.days.map((d) => names[d]).join(", ")}`;
+  const names = weekdayNames();
+  return t("meds.schedule.withDays", { when, days: weekdays ? t("meds.schedule.weekdays") : s.days.map((d) => names[d]).join(", ") });
 }
 
 export function describeSchedule(med: MedLike): string {
   const s = scheduleOf(med);
-  if (!s) return "as needed";
-  const times = s.times.map((t) => {
-    const [h, m] = t.split(":").map(Number);
+  if (!s) return t("meds.schedule.asNeeded");
+  const times = s.times.map((hm) => {
+    const [h, m] = hm.split(":").map(Number);
     return formatTime(new Date(2000, 0, 1, h, m));
   });
-  const days = s.days.length === 7 ? "daily" : s.days.map((d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ");
-  return `${times.join(" and ")} ${days}`;
+  const names = weekdayNames();
+  const days = s.days.length === 7 ? t("meds.schedule.daily") : s.days.map((d) => names[d]).join(", ");
+  return t("meds.schedule.timesAndDays", { times: times.join(t("meds.schedule.and")), days });
 }

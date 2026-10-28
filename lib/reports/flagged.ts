@@ -4,6 +4,9 @@ import { behaviorLabel, formatDose, labelFor, REACTIONS, STOOL_COLORS } from "@/
 import { eachDay, isBm, localParts, type InsightEntry } from "@/lib/insights/core";
 import { shortDate } from "@/lib/dates";
 import { formatDateTime } from "@/lib/prefs";
+import { t } from "@/lib/i18n";
+
+const F = (k: string, v?: Record<string, string | number>) => t(`reports.flagged.${k}`, v);
 
 export interface FlaggedEvent {
   when: string;
@@ -26,19 +29,22 @@ export function flaggedEvents(
     const d = (e.data ?? {}) as D;
     const reasons: string[] = [];
     if (e.type === "bathroom") {
-      if (d.color && NOTICE_COLORS.has(String(d.color))) reasons.push(`${labelFor(STOOL_COLORS, String(d.color)).toLowerCase()} stool`);
-      if (Array.isArray(d.flags) && d.flags.includes("blood")) reasons.push("blood in stool");
+      if (d.color && NOTICE_COLORS.has(String(d.color))) reasons.push(F("stool", { color: labelFor(STOOL_COLORS, String(d.color)).toLowerCase() }));
+      if (Array.isArray(d.flags) && d.flags.includes("blood")) reasons.push(F("blood"));
     }
     if (e.type === "eating" && Array.isArray(d.reactions) && d.reactions.length) {
-      reasons.push(`reaction: ${(d.reactions as string[]).map((r) => labelFor(REACTIONS, r).toLowerCase()).join(", ")}`);
+      reasons.push(F("reaction", { list: (d.reactions as string[]).map((r) => labelFor(REACTIONS, r).toLowerCase()).join(", ") }));
     }
     if (e.type === "mood") {
       for (const b of (d.behaviors as { key: string; severity?: string; duration_min?: number }[] | undefined) ?? []) {
-        if (b.severity === "severe") reasons.push(`${behaviorLabel(b.key).toLowerCase()}, severe${b.duration_min ? `, about ${b.duration_min} minutes` : ""}`);
+        if (b.severity === "severe") {
+          const name = behaviorLabel(b.key).toLowerCase();
+          reasons.push(b.duration_min ? F("severeFor", { name, minutes: b.duration_min }) : F("severe", { name }));
+        }
       }
     }
     if (e.type === "medication" && ["refused", "spit_up_vomited"].includes(String(d.outcome))) {
-      reasons.push(`${opts.medName(String(d.medication_id))} ${formatDose(Number(d.dose), String(d.unit))} ${d.outcome === "refused" ? "refused" : "spit up or vomited"}`);
+      reasons.push(F(d.outcome === "refused" ? "refused" : "vomited", { name: opts.medName(String(d.medication_id)), dose: formatDose(Number(d.dose), String(d.unit)) }));
     }
     if (!reasons.length && !e.flagged_for_doctor) continue;
     const base = reasons.length ? reasons.join("; ") : opts.describe(e);
@@ -55,10 +61,10 @@ export function flaggedEvents(
         const a = new Date(`${run[0]}T00:00:00`);
         const b = new Date(`${run[run.length - 1]}T00:00:00`);
         out.push({
-          when: run.length > 1 ? `${shortDate(a)} to ${shortDate(b)}` : shortDate(a),
+          when: run.length > 1 ? F("range", { from: shortDate(a), to: shortDate(b) }) : shortDate(a),
           sortKey: `${run[0]}T00:00:00`,
-          what: `No BM for ${run.length} days; the family's alert was reached`,
-          by: "App alert",
+          what: F("noBm", { days: run.length }),
+          by: F("appAlert"),
         });
       }
       run = [];

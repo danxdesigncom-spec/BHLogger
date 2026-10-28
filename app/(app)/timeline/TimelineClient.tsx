@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { RadioChips } from "@/components/log/controls";
 import { EntryRow } from "@/components/timeline/EntryRow";
@@ -29,6 +30,8 @@ export function TimelineClient() {
   const entryId = params.get("entry");
   const repo = useRepo();
   const qc = useQueryClient();
+  const t = useTranslations();
+  const tl = useTranslations("timeline");
 
   const [filter, setFilter] = useState<string>("all");
   const [days, setDays] = useState(PAGE_DAYS);
@@ -73,20 +76,20 @@ export function TimelineClient() {
 
   return (
     <>
-      <AppHeader title="Timeline">
+      <AppHeader title={tl("title")}>
         <div className="-mx-5 px-5 overflow-x-auto [scrollbar-width:none]">
           <div className="w-max">
             <RadioChips
-              label="Filter by module"
+              label={tl("filter")}
               value={filter}
               onChange={setFilter}
               options={[
-                { value: "all", label: "All" },
+                { value: "all", label: tl("all") },
                 { value: "bathroom", label: bathroomTileLabel(stage, activeProfile?.toileting ?? "toilet") },
-                { value: "eating", label: stage === "baby" ? "Feeding" : "Eating" },
-                { value: "mood", label: "Mood" },
-                { value: "activity", label: "Activity" },
-                { value: "medication", label: "Meds" },
+                { value: "eating", label: stage === "baby" ? t("modules.feeding") : t("modules.eating") },
+                { value: "mood", label: t("modules.mood") },
+                { value: "activity", label: t("modules.activity") },
+                { value: "medication", label: tl("meds") },
               ]}
             />
           </div>
@@ -94,11 +97,11 @@ export function TimelineClient() {
       </AppHeader>
 
       <div className="px-5 pt-3 pb-6 space-y-5" aria-live="polite" aria-busy={entries.isLoading}>
-        {entries.isLoading && <p className="text-body text-muted-foreground">Loading…</p>}
+        {entries.isLoading && <p className="text-body text-muted-foreground">{t("common.loading")}</p>}
         {!entries.isLoading && groups.length === 0 && (
           <div className="rounded-card bg-card p-5 shadow-card">
-            <p className="text-body-md">Nothing logged {filter === "all" ? "" : "here "}in the last {days} days</p>
-            <p className="text-caption text-muted-foreground">Entries from every caregiver show up here as they&rsquo;re logged.</p>
+            <p className="text-body-md">{filter === "all" ? tl("emptyAll", { days }) : tl("emptyFiltered", { days })}</p>
+            <p className="text-caption text-muted-foreground">{tl("emptyHint")}</p>
           </div>
         )}
 
@@ -118,10 +121,10 @@ export function TimelineClient() {
         })}
 
         <div ref={sentinel} aria-hidden="true" />
-        {groups.length > 0 && days >= 90 && <p className="text-caption text-muted-foreground text-center">Showing the last 90 days. Reports cover longer ranges.</p>}
+        {groups.length > 0 && days >= 90 && <p className="text-caption text-muted-foreground text-center">{tl("limit")}</p>}
 
         <Link href="/timeline/deleted" className="min-h-touch-min inline-flex items-center gap-2 text-label font-extrabold text-profile-ink">
-          <Trash2 size={16} strokeWidth={2} aria-hidden="true" /> Recently deleted
+          <Trash2 size={16} strokeWidth={2} aria-hidden="true" /> {tl("recentlyDeleted")}
         </Link>
       </div>
 
@@ -135,7 +138,7 @@ export function TimelineClient() {
             setToast({
               entryId: e.id, householdId: e.household_id, profileName: activeProfile?.name ?? "", summary: entryShortLabel(e, ctx),
               time: formatTime(e.occurred_at),
-              message: `Deleted ${entryShortLabel(e, ctx).toLowerCase()} for ${activeProfile?.name ?? ""}`,
+              message: tl("deletedToast", { summary: entryShortLabel(e, ctx).toLowerCase(), name: activeProfile?.name ?? "" }),
             });
           }}
         />

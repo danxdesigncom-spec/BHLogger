@@ -2,6 +2,7 @@
 
 import { createInvite } from "@/lib/actions/invites";
 import type { Role } from "@/lib/supabase/types";
+import { t } from "@/lib/i18n";
 
 type State = null | { success: true; inviteUrl: string } | { error: string };
 
@@ -15,7 +16,7 @@ export async function sendInvite(
   const profileIdsJson = formData.get("profileIds") as string;
 
   if (!email?.trim()) {
-    return { error: "Please enter the caregiver's email address." };
+    return { error: t("errors.caregiverEmail") };
   }
 
   let profileIds: string[] = [];

@@ -1,6 +1,7 @@
 "use client";
 
 import { CloudOff, Flag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { MODULE_CIRCLE, MODULE_ICONS, type ModuleType } from "@/components/log/LogSheet";
 import type { LocalEntry } from "@/lib/data/types";
 import { entryDetail, entryTitle, formatClock, type SummaryContext } from "@/lib/entries/summary";
@@ -11,6 +12,7 @@ const KNOWN = new Set(["bathroom", "eating", "activity", "mood", "medication"]);
 export function EntryRow({ entry, ctx, onOpen, action }: { entry: LocalEntry; ctx: SummaryContext; onOpen?: () => void; action?: React.ReactNode }) {
   const mod = (KNOWN.has(entry.type) ? entry.type : null) as ModuleType | null;
   const detail = entryDetail(entry);
+  const t = useTranslations("entry");
   const body = (
     <>
       <span className="w-[62px] flex-none text-caption font-extrabold text-foreground-2 tabular-nums">{formatClock(entry.occurred_at)}</span>
@@ -24,15 +26,15 @@ export function EntryRow({ entry, ctx, onOpen, action }: { entry: LocalEntry; ct
             {detail && <span>{detail}</span>}
             {entry.flagged_for_doctor && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-flag border border-flag-border text-flag-ink text-micro font-extrabold">
-                <Flag size={12} strokeWidth={2.5} aria-hidden="true" /> For doctor
+                <Flag size={12} strokeWidth={2.5} aria-hidden="true" /> {t("forDoctor")}
               </span>
             )}
             {entry._sync === "pending" && (
               <span className="inline-flex items-center gap-1 text-micro font-bold">
-                <CloudOff size={12} strokeWidth={2} aria-hidden="true" /> Waiting to sync
+                <CloudOff size={12} strokeWidth={2} aria-hidden="true" /> {t("waitingSync")}
               </span>
             )}
-            {entry._sync === "failed" && <span className="text-micro font-bold text-destructive">Couldn&rsquo;t sync</span>}
+            {entry._sync === "failed" && <span className="text-micro font-bold text-destructive">{t("syncFailed")}</span>}
           </span>
         )}
       </span>

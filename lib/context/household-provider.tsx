@@ -3,7 +3,8 @@
 import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
 import type { ProfileColor, Toileting } from "@/lib/supabase/types";
 import { HouseholdSettingsSchema, type HouseholdSettings } from "@/lib/schemas/household";
-import { setDisplayPrefs } from "@/lib/prefs";
+import { setDateLocale, setDisplayPrefs } from "@/lib/prefs";
+import { setLocale } from "@/lib/i18n";
 
 export interface ProfileSummary {
   id: string;
@@ -71,6 +72,8 @@ export function HouseholdProvider({
   const settings = HouseholdSettingsSchema.parse(householdSettings ?? {});
   // SET-01: time format and week start for every formatter (client only).
   setDisplayPrefs({ timeFormat: settings.time_format, weekStart: settings.week_start });
+  setLocale(settings.locale);
+  setDateLocale(settings.locale);
 
   const [activeProfileId, setActiveProfileIdState] = useState<string | null>(
     initialActiveProfileId ?? profiles[0]?.id ?? null,

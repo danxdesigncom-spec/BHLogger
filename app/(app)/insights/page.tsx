@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { ChevronRight, Lightbulb } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { InsightsNav } from "@/components/insights/InsightsNav";
 import { Sparkline } from "@/components/insights/charts";
@@ -28,6 +29,7 @@ const TREND_MODULE: Record<TodayCard["module"], string> = {
 export default function InsightsTodayPage() {
   const { activeProfile, householdSettings } = useHousehold();
   const settings = useProfileSettings(activeProfile?.id ?? null);
+  const t = useTranslations("insights");
   const now = useMemo(() => new Date(), []);
   const from = useMemo(() => startOfDay(addDays(now, -29)), [now]);
   const data = useInsightsData(from, now);
@@ -47,7 +49,7 @@ export default function InsightsTodayPage() {
 
   return (
     <>
-      <AppHeader title="Insights">
+      <AppHeader title={t("title")}>
         <InsightsNav />
       </AppHeader>
       <div className="px-5 pt-3 pb-6 space-y-3">
@@ -88,8 +90,8 @@ export default function InsightsTodayPage() {
               <Lightbulb size={20} strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block text-body-md">New pattern: {pattern.hardest.label} is hardest</span>
-              <span className="block text-caption text-muted-foreground">See what we noticed this month</span>
+              <span className="block text-body-md">{t("today.newPattern", { block: pattern.hardest.label })}</span>
+              <span className="block text-caption text-muted-foreground">{t("today.seeNoticed")}</span>
             </span>
             <ChevronRight size={20} strokeWidth={2} aria-hidden="true" />
           </Link>

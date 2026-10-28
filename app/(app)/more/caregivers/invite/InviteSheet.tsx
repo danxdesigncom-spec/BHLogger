@@ -3,16 +3,10 @@
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, X, Check, UserPlus, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { sendInvite, copyInviteLink } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
-
-const COLOR_CLASSES: Record<ProfileColor, string> = {
-  violet: "bg-profile text-white",
-  teal:   "bg-profile text-white",
-  rose:   "bg-profile text-white",
-  amber:  "bg-profile text-white",
-  blue:   "bg-profile text-white",
-};
+import { roleLabel } from "@/lib/options";
 
 interface Profile {
   id: string;
@@ -27,14 +21,12 @@ interface Props {
 
 type Role = "admin" | "caregiver" | "viewer";
 
-const ROLES: { value: Role; label: string; desc: string }[] = [
-  { value: "caregiver", label: "Caregiver", desc: "Logs and sees insights. Edits their own entries." },
-  { value: "viewer",    label: "Viewer",    desc: "Sees and exports reports. Can't log." },
-  { value: "admin",     label: "Admin",     desc: "Everything, including people and settings." },
-];
+const ROLES: Role[] = ["caregiver", "viewer", "admin"];
 
 export function InviteSheet({ householdId, profiles }: Props) {
   const router = useRouter();
+  const t = useTranslations("caregivers");
+  const tc = useTranslations("common");
   const [role, setRole] = useState<Role>("caregiver");
   const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(
     new Set(profiles.map((p) => p.id)),
@@ -74,7 +66,7 @@ export function InviteSheet({ householdId, profiles }: Props) {
       {/* Scrim */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-foreground/40"
+        className="fixed inset-0 bg-[var(--overlay)]"
         onClick={() => router.back()}
       />
 
@@ -82,29 +74,29 @@ export function InviteSheet({ householdId, profiles }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="sheet-title"
-        className="fixed left-0 right-0 top-14 bottom-0 flex flex-col bg-white rounded-t-[32px] overflow-hidden"
+        className="fixed left-0 right-0 top-14 bottom-0 flex flex-col bg-card rounded-t-sheet overflow-hidden md:left-1/2 md:right-auto md:top-1/2 md:bottom-auto md:-translate-x-1/2 md:-translate-y-1/2 md:w-[480px] md:max-h-[85dvh] md:rounded-sheet"
       >
-        <div aria-hidden="true" className="w-10 h-[5px] self-center mt-2.5 rounded-full bg-[var(--color-border)]" />
+        <div aria-hidden="true" className="w-10 h-[5px] self-center mt-2.5 rounded-full bg-grabber" />
 
         <header className="flex items-center justify-between gap-3 px-5 pt-3 pb-1">
           <div className="flex items-center gap-3">
-            <span className="w-12 h-12 flex-none rounded-full bg-[var(--color-profile-tint)] text-[var(--color-profile)] flex items-center justify-center">
-              <UserPlus size={24} strokeWidth={2} />
+            <span className="w-12 h-12 flex-none rounded-full bg-profile-tint text-profile-ink flex items-center justify-center">
+              <UserPlus size={24} strokeWidth={2} aria-hidden="true" />
             </span>
             <div>
-              <h1 id="sheet-title" className="font-display text-[26px] font-semibold leading-tight">
-                Invite a caregiver
+              <h1 id="sheet-title" className="font-display text-title-1">
+                {t("inviteTitle")}
               </h1>
-              <span className="text-sm font-bold text-muted-foreground">They get their own sign-in</span>
+              <span className="text-label font-bold text-muted-foreground">{t("inviteSubtitle")}</span>
             </div>
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={tc("close")}
             onClick={() => router.back()}
-            className="w-11 h-11 rounded-full bg-[var(--color-card)] flex items-center justify-center"
+            className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center"
           >
-            <X size={20} strokeWidth={2} />
+            <X size={20} strokeWidth={2} aria-hidden="true" />
           </button>
         </header>
 
@@ -114,41 +106,39 @@ export function InviteSheet({ householdId, profiles }: Props) {
           <input type="hidden" name="profileIds" value={JSON.stringify(Array.from(selectedProfiles))} />
 
           {stateError && (
-            <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p role="alert" className="rounded-lg border border-flag-border bg-flag px-4 py-3 text-label font-bold text-flag-ink">
               {stateError}
             </p>
           )}
           {stateSuccess && (
-            <p role="status" className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
-              Invite sent!
+            <p role="status" className="rounded-lg bg-success px-4 py-3 text-label font-bold text-success-ink">
+              {t("inviteSent")}
             </p>
           )}
 
           {/* Email */}
           <div className="space-y-2">
-            <label htmlFor="invite-email" className="block text-sm font-extrabold text-muted-foreground">
-              Their email
+            <label htmlFor="invite-email" className="block text-label font-extrabold text-muted-foreground">
+              {t("email")}
             </label>
             <input
               id="invite-email"
               name="email"
               type="email"
-              placeholder="name@email.com"
-              className="w-full min-h-[52px] rounded-2xl border-[1.5px] border-[var(--color-border)] bg-white px-4 text-[17px] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-profile)]"
+              placeholder={t("emailPlaceholder")}
+              className="w-full h-button rounded-lg border-[1.5px] border-input bg-card px-4 text-[16px] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
             />
           </div>
 
           {/* Role */}
           <fieldset>
-            <legend className="text-sm font-extrabold text-muted-foreground mb-2">What can they do?</legend>
+            <legend className="text-label font-extrabold text-muted-foreground mb-2">{t("whatCanTheyDo")}</legend>
             <div className="space-y-2">
-              {ROLES.map(({ value, label, desc }) => (
+              {ROLES.map((value) => (
                 <label
                   key={value}
                   className={`min-h-[64px] flex items-center gap-3 px-4 py-2 rounded-[20px] border-[1.5px] cursor-pointer ${
-                    role === value
-                      ? "border-[var(--color-profile)] bg-[var(--color-profile-tint)]"
-                      : "border-[var(--color-border)] bg-white"
+                    role === value ? "border-profile bg-profile-tint" : "border-border bg-card"
                   }`}
                 >
                   <input
@@ -157,11 +147,11 @@ export function InviteSheet({ householdId, profiles }: Props) {
                     value={value}
                     checked={role === value}
                     onChange={() => setRole(value)}
-                    className="w-[22px] h-[22px] flex-none accent-[var(--color-profile)]"
+                    className="w-[22px] h-[22px] flex-none accent-[var(--profile)]"
                   />
                   <span className="flex flex-col gap-[2px]">
-                    <span className="text-base font-extrabold">{label}</span>
-                    <span className="text-[13px] text-muted-foreground">{desc}</span>
+                    <span className="text-body font-extrabold">{roleLabel(value)}</span>
+                    <span className="text-caption text-muted-foreground">{t(`roleInvite.${value}`)}</span>
                   </span>
                 </label>
               ))}
@@ -170,46 +160,46 @@ export function InviteSheet({ householdId, profiles }: Props) {
 
           {/* Who can they see */}
           <fieldset>
-            <legend className="text-sm font-extrabold text-muted-foreground mb-2">Who can they see?</legend>
+            <legend className="text-label font-extrabold text-muted-foreground mb-2">{t("whoCanTheySee")}</legend>
             <div className="grid grid-cols-2 gap-2">
               {profiles.map((p) => (
                 <label
                   key={p.id}
-                  className="min-h-[56px] flex items-center gap-2.5 px-4 rounded-[18px] border-[1.5px] border-[var(--color-border)] bg-white cursor-pointer"
+                  className="min-h-[56px] flex items-center gap-2.5 px-4 rounded-[18px] border-[1.5px] border-border bg-card cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={selectedProfiles.has(p.id)}
                     onChange={() => toggleProfile(p.id)}
-                    className="w-[22px] h-[22px] flex-none accent-[var(--color-profile)]"
+                    className="w-[22px] h-[22px] flex-none accent-[var(--profile)]"
                   />
-                  <span data-profile-color={p.color} className={`w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-[15px] font-semibold ${COLOR_CLASSES[p.color]}`}>
+                  <span aria-hidden="true" data-profile-color={p.color} className="w-[30px] h-[30px] flex-none rounded-full flex items-center justify-center font-display text-title-5 bg-profile text-on-profile">
                     {p.name[0].toUpperCase()}
                   </span>
-                  <span className="text-base font-extrabold">{p.name}</span>
+                  <span className="text-body font-extrabold">{p.name}</span>
                 </label>
               ))}
             </div>
           </fieldset>
 
-          <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
             <span className="w-4 h-4 flex-none">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
               </svg>
             </span>
-            Invites expire after 7 days. You can remove access anytime.
+            {t("expires")}
           </p>
         </form>
 
-        <footer className="flex-none flex items-center gap-2.5 px-5 py-3 border-t border-[var(--color-border)] pb-7">
+        <footer className="flex-none flex items-center gap-2.5 px-5 pt-3 border-t border-divider" style={{ paddingBottom: "calc(28px + env(safe-area-inset-bottom, 0px))" }}>
           <button
             type="button"
             onClick={handleCopy}
-            className="min-h-[52px] flex items-center gap-1.5 px-4 rounded-full border-[1.5px] border-[var(--color-border)] bg-white text-foreground text-[15px] font-extrabold"
+            className="h-button flex items-center gap-1.5 px-4 rounded-full border-[1.5px] border-border-strong bg-card text-foreground text-body-md"
           >
-            {copied ? <Check size={18} strokeWidth={2} /> : <Link2 size={18} strokeWidth={2} />}
-            {copied ? "Copied!" : "Copy link"}
+            {copied ? <Check size={18} strokeWidth={2} aria-hidden="true" /> : <Link2 size={18} strokeWidth={2} aria-hidden="true" />}
+            {copied ? t("copied") : t("copyLink")}
           </button>
           <button
             type="submit"
@@ -223,9 +213,9 @@ export function InviteSheet({ householdId, profiles }: Props) {
               }
             }}
             disabled={pending}
-            className="flex-1 min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+            className="flex-1 h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
           >
-            {pending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" /> : "Send invite"}
+            {pending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" aria-label={t("sending")} /> : t("sendInvite")}
           </button>
         </footer>
       </section>

@@ -1,4 +1,3 @@
-import { defineRouting } from "next-intl/routing";
 import { getRequestConfig } from "next-intl/server";
 import { routing } from "./routing";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { AlertTriangle, Check, ChevronDown, Info, Minus, Plus } from "lucide-react";
 
 // ─── Group ───────────────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ export function ToggleChips<T extends string>({
   tone?: "profile" | "warning";
 }) {
   const [expanded, setExpanded] = useState(false);
+  const t = useTranslations("common");
   const showAll = visibleCount === undefined || expanded || options.slice(visibleCount).some((o) => selected.includes(o.value));
   const shown = showAll ? options : options.slice(0, visibleCount);
   const selClass = tone === "warning" ? "bg-warning border-warning-border text-warning-ink font-extrabold" : `${SEL} font-extrabold`;
@@ -132,9 +134,9 @@ export function ToggleChips<T extends string>({
         );
       })}
       {!showAll && (
-        <MoreChip label="More" onClick={() => setExpanded(true)} />
+        <MoreChip label={t("more")} onClick={() => setExpanded(true)} />
       )}
-      {onAdd && <MoreChip label={addLabel ?? "Add"} plus onClick={onAdd} />}
+      {onAdd && <MoreChip label={addLabel ?? t("add")} plus onClick={onAdd} />}
     </div>
   );
 }
@@ -308,7 +310,7 @@ export function Segmented<T extends string>({
 // ─── Stepper ─────────────────────────────────────────────────────────────────
 
 export function Stepper({
-  display, caption, onDecrease, onIncrease, decreaseLabel = "Less", increaseLabel = "More", canDecrease = true, canIncrease = true,
+  display, caption, onDecrease, onIncrease, decreaseLabel, increaseLabel, canDecrease = true, canIncrease = true,
 }: {
   display: string;
   caption?: string;
@@ -319,16 +321,17 @@ export function Stepper({
   canDecrease?: boolean;
   canIncrease?: boolean;
 }) {
+  const t = useTranslations();
   return (
     <div className="grid grid-cols-[56px_minmax(0,1fr)_56px] items-center gap-2 p-3 rounded-card bg-secondary">
-      <button type="button" aria-label={decreaseLabel} onClick={onDecrease} disabled={!canDecrease} className="w-14 h-14 rounded-full bg-card shadow-raised flex items-center justify-center disabled:opacity-40">
+      <button type="button" aria-label={decreaseLabel ?? t("log.less")} onClick={onDecrease} disabled={!canDecrease} className="w-14 h-14 rounded-full bg-card shadow-raised flex items-center justify-center disabled:opacity-40">
         <Minus size={22} strokeWidth={2} aria-hidden="true" />
       </button>
       <div className="flex flex-col items-center" aria-live="polite">
         <span className="font-display text-display-1 tabular-nums">{display}</span>
         {caption && <span className="text-caption font-bold text-muted-foreground">{caption}</span>}
       </div>
-      <button type="button" aria-label={increaseLabel} onClick={onIncrease} disabled={!canIncrease} className="w-14 h-14 rounded-full bg-card shadow-raised flex items-center justify-center disabled:opacity-40">
+      <button type="button" aria-label={increaseLabel ?? t("common.more")} onClick={onIncrease} disabled={!canIncrease} className="w-14 h-14 rounded-full bg-card shadow-raised flex items-center justify-center disabled:opacity-40">
         <Plus size={22} strokeWidth={2} aria-hidden="true" />
       </button>
     </div>

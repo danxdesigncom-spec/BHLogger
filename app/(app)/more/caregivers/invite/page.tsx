@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { InviteSheet } from "./InviteSheet";
 import type { ProfileColor } from "@/lib/supabase/types";
 
-export const metadata: Metadata = { title: "Invite a caregiver" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("caregivers");
+  return { title: t("inviteTitle") };
+}
 
 export default async function InviteCaregiversPage() {
   const supabase = await createClient();

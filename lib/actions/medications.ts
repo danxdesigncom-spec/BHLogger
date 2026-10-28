@@ -6,6 +6,7 @@ import { isDemoMode } from "@/app/auth/demo/actions";
 import { medicationChangesFor } from "@/lib/meds/changes";
 import { slugify } from "@/lib/data/types";
 import type { Json } from "@/lib/supabase/types";
+import { t } from "@/lib/i18n";
 
 type Result = { success: true } | { error: string };
 
@@ -33,21 +34,23 @@ const MedicationSchema = z
     active: z.boolean(),
     effectiveFrom: date.optional(),
   })
-  .refine((m) => m.kind === "prn" || m.schedule !== null, { message: "Scheduled medications need at least one time." });
+  .refine((m) => m.kind === "prn" || m.schedule !== null, { message: "schedule_required" });
 
 export type MedicationInputParsed = z.infer<typeof MedicationSchema>;
 
 export async function saveMedication(input: unknown): Promise<Result> {
   const parsed = MedicationSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid medication." };
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message === "schedule_required" ? t("meds.form.scheduleRequired") : t("errors.invalidMedication") };
+  }
   if (await isDemoMode()) return { success: true };
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in." };
+  if (!user) return { error: t("errors.notSignedIn") };
 
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", parsed.data.profileId).maybeSingle();
-  if (!profile) return { error: "Profile not found." };
+  if (!profile) return { error: t("errors.profileNotFound") };
 
   const m = parsed.data;
   const row = {
@@ -89,12 +92,12 @@ export async function saveMedication(input: unknown): Promise<Result> {
 
 export async function addAppointment(input: { profileId: string; date: string; provider: string | null; notes: string | null }): Promise<Result> {
   const parsed = z.object({ profileId: z.string().uuid(), date, provider: z.string().max(80).nullable(), notes: z.string().max(500).nullable() }).safeParse(input);
-  if (!parsed.success) return { error: "Invalid appointment." };
+  if (!parsed.success) return { error: t("errors.invalidAppointment") };
   if (await isDemoMode()) return { success: true };
 
   const supabase = await createClient();
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", parsed.data.profileId).maybeSingle();
-  if (!profile) return { error: "Profile not found." };
+  if (!profile) return { error: t("errors.profileNotFound") };
   const { error } = await supabase.from("appointments").insert({
     household_id: profile.household_id, profile_id: parsed.data.profileId, date: parsed.data.date,
     provider: parsed.data.provider, notes: parsed.data.notes,
@@ -109,12 +112,12 @@ export async function addOption(input: { profileId: string; module: string; labe
     label: z.string().trim().min(1).max(40),
     icon: z.string().max(40).nullable(),
   }).safeParse(input);
-  if (!parsed.success) return { error: "Give it a short name." };
+  if (!parsed.success) return { error: t("errors.shortName") };
   if (await isDemoMode()) return { success: true };
 
   const supabase = await createClient();
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", parsed.data.profileId).maybeSingle();
-  if (!profile) return { error: "Profile not found." };
+  if (!profile) return { error: t("errors.profileNotFound") };
   const { error } = await supabase.from("option_lists").insert({
     household_id: profile.household_id, profile_id: parsed.data.profileId, module: parsed.data.module,
     key: `opt_${slugify(parsed.data.label)}`, label: parsed.data.label, icon: parsed.data.icon,
@@ -123,12 +126,12 @@ export async function addOption(input: { profileId: string; module: string; labe
 }
 
 export async function archiveOption(id: string): Promise<Result> {
-  if (!z.string().uuid().safeParse(id).success) return { error: "Invalid option." };
+  if (!z.string().uuid().safeParse(id).success) return { error: t("errors.invalidOption") };
   if (await isDemoMode()) return { success: true };
   const supabase = await createClient();
   const { data, error } = await supabase.from("option_lists").update({ archived: true }).eq("id", id).select("id").maybeSingle();
   if (error) return { error: error.message };
-  return data ? { success: true } : { error: "Couldn't archive that option." };
+  return data ? { success: true } : { error: t("errors.archiveOption") };
 }
 
 export async function updateProfileSettings(profileId: string, settings: Record<string, unknown>): Promise<Result> {
@@ -142,14 +145,14 @@ export async function updateProfileSettings(profileId: string, settings: Record<
     hidden_options: z.record(z.array(z.string().max(60)).max(60)).optional(),
     hidden_tiles: z.array(z.string()).optional(),
   }).strict().safeParse(settings);
-  if (!parsed.success || !z.string().uuid().safeParse(profileId).success) return { error: "Invalid settings." };
+  if (!parsed.success || !z.string().uuid().safeParse(profileId).success) return { error: t("errors.invalidSettings") };
   if (await isDemoMode()) return { success: true };
 
   const supabase = await createClient();
   const { data: profile } = await supabase.from("profiles").select("settings").eq("id", profileId).maybeSingle();
-  if (!profile) return { error: "Profile not found." };
+  if (!profile) return { error: t("errors.profileNotFound") };
   const merged = { ...(profile.settings as Record<string, unknown>), ...parsed.data };
   const { data, error } = await supabase.from("profiles").update({ settings: merged as Json }).eq("id", profileId).select("id").maybeSingle();
   if (error) return { error: error.message };
-  return data ? { success: true } : { error: "Only an admin can change these settings." };
+  return data ? { success: true } : { error: t("errors.adminSettings") };
 }

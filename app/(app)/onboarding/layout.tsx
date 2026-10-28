@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = { title: "Set up" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("onboarding");
+  return { title: t("metaSetUp") };
+}
 
 // Onboarding uses its own layout: no tab bar, centered content
 export default function OnboardingLayout({

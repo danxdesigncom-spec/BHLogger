@@ -10,6 +10,7 @@ import {
   type Actor, type AppointmentRow, type EntryQuery, type LocalEntry, type MedicationChangeRow, type MedicationInput,
   type MedicationRow, type OptionRow, type Repo, type Result, type RevisionRow,
 } from "./types";
+import { t } from "@/lib/i18n";
 
 const DEMO_DB = "bl-demo";
 const DATA_VERSION = 5;
@@ -137,8 +138,8 @@ export function createDemoRepo(actor: Actor): Repo {
     async updateEntry(id, patch) {
       const db = await openDb();
       const before = await db.entries.get(id);
-      if (!before) return { error: "Entry not found." };
-      if (before.logged_by !== actor.userId && actor.role !== "admin") return { error: "You can only edit entries you logged." };
+      if (!before) return { error: t("errors.entryNotFound") };
+      if (before.logged_by !== actor.userId && actor.role !== "admin") return { error: t("errors.editOwnOnly") };
       if (patch.data) {
         const valid = validateEntryData(before.type, patch.data);
         if (!valid.success) return { error: valid.error };
@@ -160,8 +161,8 @@ export function createDemoRepo(actor: Actor): Repo {
     async deleteEntry(id) {
       const db = await openDb();
       const e = await db.entries.get(id);
-      if (!e) return { error: "Entry not found." };
-      if (e.logged_by !== actor.userId && actor.role !== "admin") return { error: "You can only delete entries you logged." };
+      if (!e) return { error: t("errors.entryNotFound") };
+      if (e.logged_by !== actor.userId && actor.role !== "admin") return { error: t("errors.deleteOwnOnly") };
       await db.entries.update(id, { deleted_at: now(), updated_at: now() });
       return ok;
     },

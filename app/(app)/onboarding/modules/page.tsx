@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ModulesForm } from "./ModulesForm";
 
-export const metadata: Metadata = { title: "Set up · Step 2" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("onboarding");
+  return { title: t("metaModules") };
+}
 
 const MODULES_BY_STAGE = {
   baby:       ["bathroom", "eating", "mood", "medication"],

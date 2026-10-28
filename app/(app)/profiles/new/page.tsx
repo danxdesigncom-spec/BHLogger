@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/app/(app)/onboarding/profile/ProfileForm";
 
-export const metadata: Metadata = { title: "Add a person" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("onboarding");
+  return { title: t("metaAddPerson") };
+}
 
 export default async function NewProfilePage() {
   const supabase = await createClient();

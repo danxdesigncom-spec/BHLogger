@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { X, Flag, ChevronDown, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TimeChip } from "./TimeChip";
 import type { ToastEntry } from "./UndoToast";
 import { useRepo } from "@/lib/data/repo-context";
@@ -60,6 +61,8 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
   const qc = useQueryClient();
   const repo = useRepo();
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const t = useTranslations("log");
+  const tc = useTranslations("common");
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
 
@@ -158,7 +161,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
     setPending(false);
 
     if ("error" in result) {
-      setError(result.error ?? "Couldn't save. Try again.");
+      setError(result.error ?? t("saveFailed"));
       return;
     }
 
@@ -201,12 +204,12 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
             </h2>
             <p className="flex items-center gap-1.5 text-label font-bold text-muted-foreground">
               <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-profile" />
-              for {activeProfile?.name ?? ""}{subtitle ? ` · ${subtitle}` : ""}
+              {subtitle ? t("forWith", { name: activeProfile?.name ?? "", subtitle }) : t("for", { name: activeProfile?.name ?? "" })}
             </p>
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={tc("close")}
             onClick={requestClose}
             className="w-11 h-11 flex-none rounded-full bg-secondary flex items-center justify-center"
           >
@@ -225,10 +228,10 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
               className="w-full min-h-button flex items-center gap-2.5 px-4 text-left"
             >
               <span className="flex-1 flex flex-col">
-                <span className="text-body font-extrabold">Add details</span>
+                <span className="text-body font-extrabold">{t("addDetails")}</span>
                 {!detailsOpen && (
                   <span className="text-caption text-muted-foreground">
-                    {flagged ? "Flagged for doctor" : detailsHint ?? "Note, flag for doctor"}
+                    {flagged ? t("flaggedForDoctor") : detailsHint ?? t("detailsHint")}
                   </span>
                 )}
               </span>
@@ -237,9 +240,9 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
             <div hidden={!detailsOpen} className="px-4 pb-4 space-y-3">
               <div ref={setDetailsEl} className="space-y-3 empty:hidden" />
                 <label className="block">
-                  <span className="sr-only">Note</span>
+                  <span className="sr-only">{t("note")}</span>
                   <textarea
-                    placeholder="Note (optional)"
+                    placeholder={t("notePlaceholder")}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     rows={3}
@@ -250,9 +253,9 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
                   <span className="flex flex-col">
                     <span className="flex items-center gap-1.5 text-body font-extrabold">
                       <Flag size={16} strokeWidth={2} aria-hidden="true" />
-                      Flag for doctor
+                      {t("flagForDoctor")}
                     </span>
-                    <span className="text-caption text-muted-foreground">Shows up in the next doctor report</span>
+                    <span className="text-caption text-muted-foreground">{t("flagHint")}</span>
                   </span>
                   <input
                     type="checkbox"
@@ -268,7 +271,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
 
         {(showHint || error) && (
           <p role="alert" className="flex-none px-5 pb-1 text-caption font-bold text-destructive">
-            {error ?? "Pick what happened"}
+            {error ?? t("pickWhat")}
           </p>
         )}
 
@@ -284,29 +287,29 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
             aria-disabled={!ready || pending}
             className={`flex-1 h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg ${!ready ? "opacity-40" : ""} disabled:opacity-60`}
           >
-            {pending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" aria-label="Saving" /> : saveLabel ?? "Save"}
+            {pending ? <Loader2 size={20} strokeWidth={2} className="animate-spin" aria-label={t("saving")} /> : saveLabel ?? tc("save")}
           </button>
         </footer>
 
         {confirmDiscard && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-t-sheet bg-[var(--overlay)] px-6">
             <div role="alertdialog" aria-modal="true" aria-labelledby="discard-title" className="w-full max-w-sm rounded-tile bg-card p-6 shadow-dialog space-y-3">
-              <h3 id="discard-title" className="font-display text-title-2 text-center">Discard this entry?</h3>
-              <p className="text-body text-foreground-2 text-center">Nothing has been saved yet.</p>
+              <h3 id="discard-title" className="font-display text-title-2 text-center">{t("discardTitle")}</h3>
+              <p className="text-body text-foreground-2 text-center">{t("discardBody")}</p>
               <button
                 type="button"
                 autoFocus
                 onClick={() => setConfirmDiscard(false)}
                 className="w-full h-button rounded-full bg-primary text-primary-foreground text-body-lg"
               >
-                Keep editing
+                {tc("keepEditing")}
               </button>
               <button
                 type="button"
                 onClick={() => { reset(); onClose(); }}
                 className="w-full h-button rounded-full border-[1.5px] border-border-strong bg-card text-body-lg text-destructive"
               >
-                Discard
+                {tc("discard")}
               </button>
             </div>
           </div>

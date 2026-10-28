@@ -2,16 +2,13 @@
 
 import { useActionState, useState } from "react";
 import { Calendar, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { submitProfileStep } from "./actions";
 import type { ProfileColor } from "@/lib/supabase/types";
 
-const COLORS: { value: ProfileColor; label: string; bg: string }[] = [
-  { value: "violet", label: "Violet", bg: "bg-profile" },
-  { value: "teal",   label: "Teal",   bg: "bg-profile" },
-  { value: "rose",   label: "Rose",   bg: "bg-profile" },
-  { value: "amber",  label: "Amber",  bg: "bg-profile" },
-  { value: "blue",   label: "Blue",   bg: "bg-profile" },
-];
+const COLORS: ProfileColor[] = ["violet", "teal", "rose", "amber", "blue"];
+const STAGES: Stage[] = ["baby", "child", "teen_adult"];
+const TOILETING: Toileting[] = ["diapers", "training", "toilet"];
 
 type Stage = "baby" | "child" | "teen_adult";
 type Toileting = "diapers" | "training" | "toilet";
@@ -35,6 +32,8 @@ export function ProfileForm({
   const [toileting, setToileting] = useState<Toileting>("toilet");
   const [color, setColor] = useState<ProfileColor>("violet");
   const [showBirthday, setShowBirthday] = useState(false);
+  const t = useTranslations();
+  const o = (k: string, v?: Record<string, string | number>) => t(`onboarding.${k}`, v);
 
   const [state, action, pending] = useActionState(submitProfileStep, null);
 
@@ -51,19 +50,19 @@ export function ProfileForm({
 
       {/* Progress */}
       <div className="pt-6 pb-0 space-y-2">
-        <span className="text-[13px] font-extrabold text-muted-foreground">
-          Step {step} of {totalSteps}
+        <span className="text-caption font-extrabold text-muted-foreground">
+          {o("stepOf", { step, total: totalSteps })}
         </span>
         <div
           role="progressbar"
-          aria-label="Setup progress"
+          aria-label={o("progress")}
           aria-valuemin={1}
           aria-valuemax={totalSteps}
           aria-valuenow={step}
-          className="h-2 rounded-full bg-[var(--color-border)]"
+          className="h-2 rounded-full bg-secondary"
         >
           <div
-            className="h-2 rounded-full bg-[var(--color-profile)]"
+            className="h-2 rounded-full bg-profile"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -71,26 +70,26 @@ export function ProfileForm({
 
       {/* Heading */}
       <div className="pt-5 pb-0 space-y-1">
-        <h1 className="font-display text-[30px] font-semibold leading-tight">
-          Who are you caring for?
+        <h1 className="font-display text-display-2">
+          {o("who")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          You can add more people later.
+        <p className="text-body font-normal text-muted-foreground">
+          {o("addLater")}
         </p>
       </div>
 
       {/* Form fields */}
       <div className="flex flex-col gap-4 pt-5 flex-1 overflow-y-auto pb-4">
         {state?.error && (
-          <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p role="alert" className="rounded-lg border border-flag-border bg-flag px-4 py-3 text-label font-bold text-flag-ink">
             {state.error}
           </p>
         )}
 
         {/* Name */}
         <div className="space-y-2">
-          <label htmlFor="name" className="block text-sm font-extrabold text-muted-foreground">
-            Name
+          <label htmlFor="name" className="block text-label font-extrabold text-muted-foreground">
+            {o("name")}
           </label>
           <input
             id="name"
@@ -98,27 +97,19 @@ export function ProfileForm({
             type="text"
             required
             autoFocus
-            className="w-full min-h-[52px] rounded-2xl border-[1.5px] border-[var(--color-border)] bg-white px-4 text-[17px] font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--color-profile)]"
+            className="w-full h-button rounded-lg border-[1.5px] border-input bg-card px-4 text-[16px] font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
           />
         </div>
 
         {/* Age group */}
         <fieldset>
-          <legend className="text-sm font-extrabold text-muted-foreground mb-2">Age group</legend>
+          <legend className="text-label font-extrabold text-muted-foreground mb-2">{o("ageGroup")}</legend>
           <div className="space-y-2">
-            {(
-              [
-                { value: "baby", label: "Baby", desc: "Up to 12 months · diapers and feeds" },
-                { value: "child", label: "Child", desc: "1 to 12 years" },
-                { value: "teen_adult", label: "Teen or adult", desc: "13 and up" },
-              ] as { value: Stage; label: string; desc: string }[]
-            ).map(({ value, label, desc }) => (
+            {STAGES.map((value) => (
               <label
                 key={value}
                 className={`min-h-[64px] flex items-center gap-3 px-4 rounded-[20px] border-[1.5px] cursor-pointer ${
-                  stage === value
-                    ? "border-[var(--color-profile)] bg-[var(--color-profile-tint)]"
-                    : "border-[var(--color-border)] bg-white"
+                  stage === value ? "border-profile bg-profile-tint" : "border-border bg-card"
                 }`}
               >
                 <input
@@ -132,27 +123,28 @@ export function ProfileForm({
                     else if (value === "child") setToileting("toilet");
                     else setToileting("toilet");
                   }}
-                  className="w-[22px] h-[22px] accent-[var(--color-profile)]"
+                  className="w-[22px] h-[22px] accent-[var(--profile)]"
                 />
                 <span className="flex flex-col gap-[2px]">
-                  <span className="text-base font-extrabold">{label}</span>
-                  <span className="text-[13px] text-muted-foreground">{desc}</span>
+                  <span className="text-body font-extrabold">{o(`stage.${value}.label`)}</span>
+                  <span className="text-caption text-muted-foreground">{o(`stage.${value}.desc`)}</span>
                 </span>
               </label>
             ))}
             <button
               type="button"
               onClick={() => setShowBirthday((v) => !v)}
-              className="flex items-center gap-1.5 min-h-[44px] text-sm font-extrabold text-[var(--color-profile)] pl-1"
+              className="flex items-center gap-1.5 min-h-touch-min text-label font-extrabold text-profile-ink pl-1"
             >
-              <Calendar size={18} strokeWidth={2} />
-              Add a birthday instead (optional)
+              <Calendar size={18} strokeWidth={2} aria-hidden="true" />
+              {o("addBirthday")}
             </button>
             {showBirthday && (
               <input
                 name="dob"
                 type="date"
-                className="w-full min-h-[52px] rounded-2xl border-[1.5px] border-[var(--color-border)] bg-white px-4 text-base font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-profile)]"
+                aria-label={t("profileSettings.birthday")}
+                className="w-full h-button rounded-lg border-[1.5px] border-input bg-card px-4 text-[16px] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
               />
             )}
           </div>
@@ -160,30 +152,24 @@ export function ProfileForm({
 
         {/* Bathroom */}
         <div className="space-y-2">
-          <span id="bath-label" className="block text-sm font-extrabold text-muted-foreground">
-            Bathroom
+          <span id="bath-label" className="block text-label font-extrabold text-muted-foreground">
+            {o("bathroom")}
           </span>
           <div role="group" aria-labelledby="bath-label" className="flex flex-wrap gap-2">
-            {(
-              [
-                { value: "diapers", label: "Diapers" },
-                { value: "training", label: "Learning" },
-                { value: "toilet", label: "Uses the toilet" },
-              ] as { value: Toileting; label: string }[]
-            ).map(({ value, label }) => (
+            {TOILETING.map((value) => (
               <button
                 key={value}
                 type="button"
                 aria-pressed={toileting === value}
                 onClick={() => setToileting(value)}
-                className={`min-h-[44px] flex items-center gap-1.5 px-4 rounded-full text-[15px] font-bold border transition-colors ${
+                className={`min-h-touch-min flex items-center gap-1.5 px-4 rounded-full text-body border transition-colors ${
                   toileting === value
-                    ? "border-[var(--color-profile)] bg-[var(--color-profile)] text-white"
-                    : "border-[var(--color-border)] bg-white text-foreground"
+                    ? "border-profile bg-profile text-on-profile font-extrabold"
+                    : "border-border bg-secondary text-foreground"
                 }`}
               >
-                {toileting === value && <Check size={16} strokeWidth={2} />}
-                {label}
+                {toileting === value && <Check size={16} strokeWidth={2.5} aria-hidden="true" />}
+                {value === "diapers" && stage === "teen_adult" ? t("options.toileting.briefs") : o(`toileting.${value}`)}
               </button>
             ))}
           </div>
@@ -191,26 +177,23 @@ export function ProfileForm({
 
         {/* Profile color */}
         <div className="space-y-2">
-          <span id="color-label" className="block text-sm font-extrabold text-muted-foreground">
-            Profile color
+          <span id="color-label" className="block text-label font-extrabold text-muted-foreground">
+            {o("color")}
           </span>
           <div role="group" aria-labelledby="color-label" className="flex gap-3">
-            {COLORS.map(({ value, label, bg }) => (
+            {COLORS.map((value) => (
               <button
                 key={value}
                 type="button"
                 aria-pressed={color === value}
-                aria-label={label}
+                aria-label={t(`options.color.${value}`)}
                 onClick={() => setColor(value)}
                 data-profile-color={value}
-                className={`w-11 h-11 rounded-full ${bg} flex items-center justify-center transition-shadow ${
-                  color === value
-                    ? "ring-2 ring-offset-2 ring-offset-[var(--color-card)] ring-foreground"
-                    : ""
-                }`}
+                className="w-11 h-11 rounded-full bg-profile text-on-profile flex items-center justify-center"
+                style={color === value ? { boxShadow: "0 0 0 3px var(--background), 0 0 0 5px var(--foreground)" } : undefined}
               >
                 {color === value && (
-                  <Check size={18} strokeWidth={2} className="text-white" />
+                  <Check size={18} strokeWidth={3} aria-hidden="true" />
                 )}
               </button>
             ))}
@@ -219,13 +202,13 @@ export function ProfileForm({
       </div>
 
       {/* Footer */}
-      <footer className="pb-7 pt-3 flex-none">
+      <footer className="pt-3 flex-none" style={{ paddingBottom: "calc(28px + env(safe-area-inset-bottom, 0px))" }}>
         <button
           type="submit"
           disabled={pending}
-          className="w-full min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+          className="w-full h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
         >
-          Continue
+          {o("continue")}
         </button>
       </footer>
     </form>

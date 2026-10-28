@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface BannerItem {
   /** Unique per event, so a dismissed banner never returns for the same event (QL-08). */
@@ -28,6 +29,7 @@ function readDismissed(): string[] {
 export function Banners({ items }: { items: BannerItem[] }) {
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const t = useTranslations("common");
 
   useEffect(() => setDismissed(readDismissed()), []);
 
@@ -69,14 +71,14 @@ export function Banners({ items }: { items: BannerItem[] }) {
               {b.action.label}
             </button>
           )}
-          <button type="button" aria-label={`Dismiss: ${b.title}`} onClick={() => dismiss(b.key)} className="w-11 h-11 -mr-1.5 flex-none rounded-full flex items-center justify-center text-muted-foreground">
+          <button type="button" aria-label={t("dismiss", { title: b.title })} onClick={() => dismiss(b.key)} className="w-11 h-11 -mr-1.5 flex-none rounded-full flex items-center justify-center text-muted-foreground">
             <X size={18} strokeWidth={2} aria-hidden="true" />
           </button>
         </section>
       ))}
       {visible.length > 2 && !showAll && (
         <button type="button" onClick={() => setShowAll(true)} className="min-h-touch-min px-2 text-label font-extrabold text-profile-ink">
-          Show all {visible.length}
+          {t("showAll", { count: visible.length })}
         </button>
       )}
     </div>

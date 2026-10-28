@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import type { ModuleFormContext } from "../LogSheet";
 import { Group, Notice, OptionTiles, RadioChips, Stepper, ToggleChips } from "../controls";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useLatestEntry } from "@/lib/data/hooks";
 import {
   ageInMonths, BOTTLE_CONTENTS, BREAST_DURATIONS, BREAST_SIDES, DRINKS, eatingMethodLabel, eatingMethods, FOOD_GROUPS,
-  formatVolume, mealTypeForHour, MEAL_TYPES, ML_CHIPS, mlToOz, OZ_CHIPS, ozToMl, PORTIONS, REACTIONS, URGENT_REACTION,
+  formatVolume, labelFor, mealTypeForHour, MEAL_TYPES, ML_CHIPS, mlToOz, OZ_CHIPS, ozToMl, PORTIONS, REACTIONS, URGENT_REACTION,
   type EatingMethod,
 } from "@/lib/options";
 
@@ -30,10 +31,10 @@ function Plate({ pct }: { pct: number }) {
 }
 
 const CUPS = [
-  { ml: 118, label: "½ cup" },
-  { ml: 237, label: "1 cup" },
-  { ml: 473, label: "2 cups" },
-];
+  { ml: 118, key: "half" },
+  { ml: 237, key: "one" },
+  { ml: 473, key: "two" },
+] as const;
 
 type D = Record<string, unknown>;
 
@@ -42,6 +43,9 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
   const profileId = activeProfile?.id ?? null;
   const stage = activeProfile?.careStage ?? "child";
   const unit = householdSettings.volume_unit;
+  const t = useTranslations();
+  const e = (k: string, v?: Record<string, string | number>) => t(`eating.${k}`, v);
+  const sideLabel = (s: string) => labelFor(BREAST_SIDES, s).toLowerCase();
   const profileMethods = eatingMethods(stage, activeProfile?.feedingMethods ?? [], ageInMonths(activeProfile?.dob ?? null));
   const initMethod = (initial as { method?: EatingMethod } | undefined)?.method;
   const methods = initMethod && !profileMethods.includes(initMethod) ? [...profileMethods, initMethod] : profileMethods;
@@ -87,15 +91,15 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
     switch (effMethod) {
       case "breast":
         data = { method: "breast", side: effSide, ...(duration ? { duration_min: duration } : {}) };
-        summary = `Breastfeed, ${effSide}`;
+        summary = e("breastfeedSide", { side: sideLabel(effSide) });
         break;
       case "bottle":
         data = { method: "bottle", contents: effContents, amount_ml: effAmount };
-        summary = `Bottle ${formatVolume(effAmount, unit)}`;
+        summary = e("bottleAmount", { amount: formatVolume(effAmount, unit) });
         break;
       case "drink":
         data = { method: "drink", contents: drink, ...(drinkMl ? { amount_ml: drinkMl } : {}) };
-        summary = DRINKS.find((d) => d.key === drink)?.label ?? "Drink";
+        summary = DRINKS.find((d) => d.key === drink)?.label ?? e("drink");
         break;
       default: {
         const isMeal = effMethod === "meal";
@@ -103,23 +107,23 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
           method: effMethod, ...(isMeal ? { meal_type: mealType } : {}), ...(portion !== null ? { portion_pct: portion } : {}),
           food_groups: groups, food_ids: [], new_food: false, reactions,
         };
-        summary = isMeal ? (stage === "baby" ? "Solids" : MEAL_TYPES.find((m) => m.key === mealType)!.label) : "Snack";
+        summary = isMeal ? (stage === "baby" ? e("solids") : MEAL_TYPES.find((m) => m.key === mealType)!.label) : e("snack");
       }
     }
     ctx.setData(data, summary, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effMethod, effSide, duration, effContents, effAmount, mealType, portion, drink, drinkMl, groups, reactions, unit, stage]);
 
-  const amountChips = unit === "oz" ? OZ_CHIPS.map((oz) => ({ ml: ozToMl(oz), label: `${oz} oz` })) : ML_CHIPS.map((ml) => ({ ml, label: `${ml} ml` }));
+  const amountChips = unit === "oz" ? OZ_CHIPS.map((oz) => ({ ml: ozToMl(oz), label: e("oz", { n: oz }) })) : ML_CHIPS.map((ml) => ({ ml, label: e("ml", { n: ml }) }));
   const step = unit === "oz" ? ozToMl(0.5) : 10;
   const sameAsLast = lastAmountMl !== null && Math.abs(effAmount - lastAmountMl) < 2;
   const isMealLike = effMethod === "meal" || effMethod === "snack";
 
   return (
     <div className="space-y-4">
-      <Group label="How?">
+      <Group label={e("how")}>
         <RadioChips
-          label="How"
+          label={e("howLabel")}
           variant="block"
           columns={Math.min(methods.length, 3)}
           value={effMethod}
@@ -127,22 +131,22 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
           options={methods.map((m) => ({
             value: m,
             label: eatingMethodLabel(m, stage),
-            sub: m === "breast" && lastSide ? `Start on ${startSide}` : undefined,
+            sub: m === "breast" && lastSide ? e("startOn", { side: sideLabel(startSide) }) : undefined,
           }))}
         />
       </Group>
 
       {effMethod === "breast" && (
         <>
-          <Group label="Side" hint={lastSide ? `Last: ${lastSide}` : undefined}>
-            <RadioChips label="Side" value={effSide} onChange={(s) => { setSide(s); setTouchedSide(true); }} options={BREAST_SIDES.map((s) => ({ value: s.key, label: s.label }))} />
+          <Group label={e("side")} hint={lastSide ? e("lastSide", { side: sideLabel(lastSide) }) : undefined}>
+            <RadioChips label={e("side")} value={effSide} onChange={(s) => { setSide(s); setTouchedSide(true); }} options={BREAST_SIDES.map((s) => ({ value: s.key, label: s.label }))} />
           </Group>
-          <Group label="How long?">
+          <Group label={e("howLong")}>
             <RadioChips
-              label="How long"
+              label={e("howLongLabel")}
               value={duration}
               onChange={(d) => setDuration(d === duration ? null : d)}
-              options={BREAST_DURATIONS.map((d) => ({ value: d, label: `${d} min` }))}
+              options={BREAST_DURATIONS.map((d) => ({ value: d, label: t("options.durationMin", { count: d }) }))}
             />
           </Group>
         </>
@@ -150,18 +154,18 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
 
       {effMethod === "bottle" && (
         <>
-          <Group label="What's in the bottle?">
-            <RadioChips label="Bottle contents" value={effContents} onChange={setContents} options={BOTTLE_CONTENTS.map((c) => ({ value: c.key, label: c.label }))} />
+          <Group label={e("bottleWhat")}>
+            <RadioChips label={e("bottleContents")} value={effContents} onChange={setContents} options={BOTTLE_CONTENTS.map((c) => ({ value: c.key, label: c.label }))} />
           </Group>
-          <Group label="How much?">
+          <Group label={e("howMuch")}>
             <Stepper
               display={formatVolume(effAmount, unit)}
-              caption={sameAsLast ? "Same as last feed" : undefined}
+              caption={sameAsLast ? e("sameAsLast") : undefined}
               onDecrease={() => setAmountMl(Math.max(step, effAmount - step))}
               onIncrease={() => setAmountMl(Math.min(ozToMl(16), effAmount + step))}
               canDecrease={effAmount > step}
             />
-            <div role="radiogroup" aria-label="Amount" className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${amountChips.length}, minmax(0, 1fr))` }}>
+            <div role="radiogroup" aria-label={e("amount")} className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${amountChips.length}, minmax(0, 1fr))` }}>
               {amountChips.map((c) => {
                 const sel = unit === "oz" ? mlToOz(effAmount) === mlToOz(c.ml) : effAmount === c.ml;
                 return (
@@ -183,34 +187,34 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
       )}
 
       {effMethod === "meal" && (
-        <Group label="Which meal?">
-          <RadioChips label="Which meal" value={mealType} onChange={setMealType} options={MEAL_TYPES.map((m) => ({ value: m.key, label: m.label }))} />
+        <Group label={e("whichMeal")}>
+          <RadioChips label={e("whichMealLabel")} value={mealType} onChange={setMealType} options={MEAL_TYPES.map((m) => ({ value: m.key, label: m.label }))} />
         </Group>
       )}
 
       {isMealLike && (
-        <Group label="How much was eaten?">
+        <Group label={e("howMuchEaten")}>
           <OptionTiles
-            label="How much was eaten"
+            label={e("howMuchEatenLabel")}
             columns={5}
             value={portion}
             onChange={(p) => setPortion(p === portion ? null : p)}
-            options={PORTIONS.map((p) => ({ value: p.pct, label: p.label, ariaLabel: `${p.label}, ${p.pct}%`, icon: <Plate pct={p.pct} /> }))}
+            options={PORTIONS.map((p) => ({ value: p.pct, label: p.label, ariaLabel: e("portionAria", { label: p.label, pct: p.pct }), icon: <Plate pct={p.pct} /> }))}
           />
         </Group>
       )}
 
       {effMethod === "drink" && (
         <>
-          <Group label="What?">
-            <RadioChips label="Drink" value={drink} onChange={setDrink} options={DRINKS.map((d) => ({ value: d.key, label: d.label }))} />
+          <Group label={e("what")}>
+            <RadioChips label={e("drink")} value={drink} onChange={setDrink} options={DRINKS.map((d) => ({ value: d.key, label: d.label }))} />
           </Group>
-          <Group label="How much?">
+          <Group label={e("howMuch")}>
             <RadioChips
-              label="How much"
+              label={e("howMuchLabel")}
               value={drinkMl}
               onChange={(v) => setDrinkMl(v === drinkMl ? null : v)}
-              options={CUPS.map((c) => ({ value: c.ml, label: c.label, ariaLabel: `${c.label}, ${formatVolume(c.ml, unit)}` }))}
+              options={CUPS.map((c) => ({ value: c.ml, label: t(`options.cups.${c.key}`), ariaLabel: e("cupAria", { label: t(`options.cups.${c.key}`), amount: formatVolume(c.ml, unit) }) }))}
             />
           </Group>
         </>
@@ -219,14 +223,14 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
       {ctx.detailsEl && isMealLike &&
         createPortal(
           <>
-            <Group label="Food groups">
+            <Group label={e("foodGroups")}>
               <ToggleChips
                 options={FOOD_GROUPS.map((g) => ({ value: g.key, label: g.label }))}
                 selected={groups}
                 onToggle={(g) => setGroups((xs) => (xs.includes(g) ? xs.filter((x) => x !== g) : [...xs, g]))}
               />
             </Group>
-            <Group label="Any reaction?">
+            <Group label={e("anyReaction")}>
               <ToggleChips
                 tone="warning"
                 options={REACTIONS.map((r) => ({ value: r.key, label: r.label }))}
@@ -235,7 +239,7 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
               />
             </Group>
             {reactions.includes(URGENT_REACTION) && (
-              <Notice tone="urgent" role="alert" title="If this is happening now, call 911." />
+              <Notice tone="urgent" role="alert" title={e("call911")} />
             )}
           </>,
           ctx.detailsEl,

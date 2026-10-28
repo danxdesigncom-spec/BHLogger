@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n";
+
 // BTH-08: days since the last BM, and whether that crosses the profile's alert threshold.
 
 export function daysSince(iso: string | null | undefined, now = new Date()): number | null {
@@ -10,6 +12,6 @@ export function bmAlert(lastBmIso: string | null | undefined, thresholdDays: num
   return {
     days,
     alert: thresholdDays !== null && days !== null && days >= thresholdDays,
-    label: days === null ? null : days === 0 ? "BM today" : `${days} day${days === 1 ? "" : "s"} since BM`,
+    label: days === null ? null : days === 0 ? t("alerts.bmToday") : t("alerts.daysSinceBm", { count: days }),
   };
 }

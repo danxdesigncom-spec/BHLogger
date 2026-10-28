@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ManageCaregiverClient } from "./ManageCaregiverClient";
 import type { ProfileColor } from "@/lib/supabase/types";
 
-export const metadata: Metadata = { title: "Manage caregiver" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("caregivers");
+  return { title: t("manageTitle") };
+}
 
 export default async function ManageCaregiverPage({
   params,

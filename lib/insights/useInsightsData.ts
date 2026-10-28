@@ -5,6 +5,9 @@ import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useMedicationChanges, useMedications } from "@/lib/data/hooks";
 import { startOfDay, addDays } from "@/lib/dates";
 import { eachDay, ymdLocal } from "./core";
+import { t } from "@/lib/i18n";
+
+const MARKER_KEY: Record<string, string> = { started: "markerStarted", stopped: "markerStopped", dose_changed: "markerDose", schedule_changed: "markerSchedule" };
 
 export type RangeKey = "7" | "30" | "90" | "custom";
 const KEY = "bl-insights-range";
@@ -70,12 +73,12 @@ export function useInsightsData(from: Date, to: Date) {
   const inRange = all.filter((e) => e.occurred_at >= from.toISOString() && e.occurred_at <= to.toISOString());
   const previous = all.filter((e) => e.occurred_at >= prevFrom.toISOString() && e.occurred_at < from.toISOString());
 
-  const medName = (id: string) => meds.data?.find((m) => m.id === id)?.name ?? "Medication";
+  const medName = (id: string) => meds.data?.find((m) => m.id === id)?.name ?? t("modules.medication");
   const markers = (changes.data ?? [])
     .filter((c) => c.effective_at >= days[0] && c.effective_at <= days[days.length - 1])
     .map((c) => ({
       day: c.effective_at,
-      label: `${medName(c.medication_id)} ${c.change_type === "started" ? "started" : c.change_type === "stopped" ? "stopped" : c.change_type === "dose_changed" ? "dose changed" : "schedule changed"}`,
+      label: t(`insights.trends.${MARKER_KEY[c.change_type] ?? "markerSchedule"}`, { name: medName(c.medication_id) }),
       change: c,
     }));
 

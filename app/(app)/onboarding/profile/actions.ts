@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createHousehold } from "@/lib/actions/household";
 import { createProfile } from "@/lib/actions/profiles";
 import type { ProfileColor, CareStage, Toileting } from "@/lib/supabase/types";
+import { t } from "@/lib/i18n";
 
 type State = null | { error: string };
 
@@ -20,7 +21,7 @@ export async function submitProfileStep(
   const householdNameInput = (formData.get("householdName") as string) || "";
   let householdId = (formData.get("householdId") as string) || null;
 
-  if (!name?.trim()) return { error: "Please enter a name." };
+  if (!name?.trim()) return { error: t("errors.enterName") };
 
   // Create the household if this is the first profile
   if (!householdId) {

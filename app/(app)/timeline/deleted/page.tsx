@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EntryRow } from "@/components/timeline/EntryRow";
 import { useHousehold } from "@/lib/context/household-provider";
@@ -13,6 +14,7 @@ export default function RecentlyDeletedPage() {
   const { activeProfile, householdSettings, currentMember } = useHousehold();
   const repo = useRepo();
   const qc = useQueryClient();
+  const t = useTranslations();
   const since = useMemo(() => new Date(Date.now() - 30 * 86_400_000).toISOString(), []);
   const deleted = useEntries({ profileId: activeProfile?.id, deleted: "only" }, !!activeProfile);
   const meds = useMedications(activeProfile?.id ?? null);
@@ -25,12 +27,12 @@ export default function RecentlyDeletedPage() {
 
   return (
     <>
-      <PageHeader title="Recently deleted" subtitle={`for ${activeProfile?.name ?? ""} · last 30 days`} backHref="/timeline" backLabel="Back to Timeline" />
+      <PageHeader title={t("timeline.recentlyDeleted")} subtitle={t("timeline.deletedSubtitle", { name: activeProfile?.name ?? "" })} backHref="/timeline" backLabel={t("timeline.backToTimeline")} />
       <div className="px-5 pt-3 pb-6">
         {deleted.isLoading ? (
-          <p className="text-body text-muted-foreground">Loading…</p>
+          <p className="text-body text-muted-foreground">{t("common.loading")}</p>
         ) : rows.length === 0 ? (
-          <p className="text-body text-muted-foreground">Nothing deleted in the last 30 days.</p>
+          <p className="text-body text-muted-foreground">{t("timeline.nothingDeleted")}</p>
         ) : (
           <div className="rounded-card bg-card shadow-card divide-y divide-divider">
             {rows.map((e) => (
@@ -48,7 +50,7 @@ export default function RecentlyDeletedPage() {
                       }}
                       className="flex-none min-h-touch-min px-4 rounded-full bg-primary text-primary-foreground text-label font-extrabold"
                     >
-                      Restore
+                      {t("common.restore")}
                     </button>
                   ) : undefined
                 }

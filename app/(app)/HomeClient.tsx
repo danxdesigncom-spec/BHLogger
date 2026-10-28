@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Droplet, Moon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ProfileSwitcherSheet } from "@/components/profile/ProfileSwitcherSheet";
 import { LogSheet, MODULE_ICONS, type ModuleType } from "@/components/log/LogSheet";
 import { ModuleTile } from "@/components/log/ModuleTile";
@@ -28,6 +29,8 @@ const LOG_PARAM: Record<string, ModuleType> = {
 
 export function HomeClient() {
   const { profiles, activeProfile, activeProfileId, setActiveProfile, householdSettings, currentMember } = useHousehold();
+  const t = useTranslations();
+  const h = (k: string, v?: Record<string, string | number>) => t(`home.${k}`, v);
   const router = useRouter();
   const params = useSearchParams();
   const openSheet = LOG_PARAM[params.get("log") ?? ""] ?? null;
@@ -72,12 +75,12 @@ export function HomeClient() {
   const medStatus = !meds.isFetched || !todayDoses.isFetched
     ? ""
     : !meds.data?.some((m) => m.active)
-    ? "No medications yet"
+    ? h("noMeds")
     : slots.length
       ? notLogged.length
-        ? `${notLogged.length} not logged`
-        : `${givenCount} of ${slots.length} given today`
-      : "As needed only";
+        ? h("notLogged", { count: notLogged.length })
+        : h("givenToday", { given: givenCount, total: slots.length })
+      : h("asNeededOnly");
 
   // ─── Banners (QL-08) ─────────────────────────────────────────────────────
   const banners: BannerItem[] = [];
@@ -85,16 +88,16 @@ export function HomeClient() {
     banners.push({
       key: `med-${s.med.id}-${s.slot.toISOString()}`, priority: 0, tone: "warning",
       icon: <span className="[&_svg]:w-6 [&_svg]:h-6">{MODULE_ICONS.medication}</span>,
-      title: `${s.med.name} not logged`, sub: `Was due ${formatClock(s.slot.toISOString())} · ${formatDose(Number(s.med.default_dose), s.med.dose_unit)}`,
-      action: { label: "Give", href: `/meds?give=${s.med.id}` },
+      title: h("medNotLogged", { name: s.med.name }), sub: h("wasDue", { time: formatClock(s.slot.toISOString()), dose: formatDose(Number(s.med.default_dose), s.med.dose_unit) }),
+      action: { label: h("give"), href: `/meds?give=${s.med.id}` },
     });
   }
   if (bm.alert && enabled.has("bathroom")) {
     banners.push({
       key: `bm-${activeProfileId}-${lastBmIso ?? "none"}`, priority: 1, tone: "warning",
       icon: <Droplet size={24} strokeWidth={2} aria-hidden="true" />,
-      title: `${bm.days} days since ${activeProfile?.name}'s last BM`, sub: `Your alert is set to ${settings.bm_alert_days} days`,
-      action: { label: "Log BM", onClick: () => setOpenSheet("bathroom") },
+      title: h("bmDays", { days: bm.days ?? 0, name: activeProfile?.name ?? "" }), sub: h("alertSet", { days: settings.bm_alert_days ?? 0 }),
+      action: { label: h("logBm"), onClick: () => setOpenSheet("bathroom") },
     });
   }
   // BTH-09: fewer wet diapers than the caregiver's minimum by the chosen time.
@@ -107,9 +110,9 @@ export function HomeClient() {
     banners.push({
       key: `wet-${activeProfileId}-${todayStart}`, priority: 1, tone: "warning",
       icon: <Droplet size={24} strokeWidth={2} aria-hidden="true" />,
-      title: `Fewer than ${wetMin} wet diapers by ${formatClock(wetDeadline.toISOString())}`,
-      sub: `${wetToday} so far today`,
-      action: { label: "Log diaper", onClick: () => setOpenSheet("bathroom") },
+      title: h("fewerWet", { min: wetMin, time: formatClock(wetDeadline.toISOString()) }),
+      sub: h("wetSoFar", { count: wetToday }),
+      action: { label: h("logDiaper"), onClick: () => setOpenSheet("bathroom") },
     });
   }
   if (nextSlot && nextSlot.slot.getTime() - now.getTime() < 2 * 3_600_000) {
@@ -117,18 +120,21 @@ export function HomeClient() {
     banners.push({
       key: `due-${nextSlot.med.id}-${nextSlot.slot.toISOString()}`, priority: 2, tone: "amber",
       icon: <Moon size={24} strokeWidth={2} aria-hidden="true" />,
-      title: `${nextSlot.med.name} at ${formatClock(nextSlot.slot.toISOString())}`,
-      sub: `${mins > 0 ? `In ${mins} minutes` : "Due now"} · ${formatDose(Number(nextSlot.med.default_dose), nextSlot.med.dose_unit)}`,
-      action: { label: "Give", href: `/meds?give=${nextSlot.med.id}` },
+      title: h("medAt", { name: nextSlot.med.name, time: formatClock(nextSlot.slot.toISOString()) }),
+      sub: (() => {
+        const dose = formatDose(Number(nextSlot.med.default_dose), nextSlot.med.dose_unit);
+        return mins > 0 ? h("inMinutes", { count: mins, dose }) : h("dueNow", { dose });
+      })(),
+      action: { label: h("give"), href: `/meds?give=${nextSlot.med.id}` },
     });
   }
   if (isBaby && eating.data && enabled.has("eating")) {
     banners.push({
       key: `fed-${eating.data.id}`, priority: 3, tone: "profile",
       icon: <span className="[&_svg]:w-6 [&_svg]:h-6">{MODULE_ICONS.eating}</span>,
-      title: `Last fed ${formatAgo(eating.data.occurred_at, now)}`,
-      sub: `${entryShortLabel(eating.data, ctx)} · ${formatClock(eating.data.occurred_at)}`,
-      action: { label: "Log feed", onClick: () => setOpenSheet("eating") },
+      title: h("lastFed", { ago: formatAgo(eating.data.occurred_at, now) }),
+      sub: h("lastFedSub", { label: entryShortLabel(eating.data, ctx), time: formatClock(eating.data.occurred_at) }),
+      action: { label: h("logFeed"), onClick: () => setOpenSheet("eating") },
     });
   }
 
@@ -136,10 +142,10 @@ export function HomeClient() {
   const canLog = currentMember.role !== "viewer";
   const tileLabels: Record<ModuleType, string> = {
     bathroom: bathroomTileLabel(stage, toileting),
-    eating: isBaby ? "Feeding" : "Eating",
-    mood: "Mood",
-    activity: "Activity",
-    medication: "Medication",
+    eating: isBaby ? t("modules.feeding") : t("modules.eating"),
+    mood: t("modules.mood"),
+    activity: t("modules.activity"),
+    medication: t("modules.medication"),
   };
 
   return (
@@ -147,7 +153,7 @@ export function HomeClient() {
       <header className="flex items-center justify-between gap-3 px-5 pt-[18px] pb-1">
         <button
           type="button"
-          aria-label={`Switch profile. Current profile: ${activeProfile?.name ?? ""}`}
+          aria-label={t("common.switchProfile", { name: activeProfile?.name ?? "" })}
           onClick={() => setSwitcherOpen(true)}
           className="min-h-touch flex items-center gap-2 py-1.5 pl-1.5 pr-3.5 rounded-full bg-card shadow-raised"
         >
@@ -158,7 +164,7 @@ export function HomeClient() {
         {other && (
           <button
             type="button"
-            aria-label={`Switch to ${other.name}`}
+            aria-label={h("switchTo", { name: other.name })}
             onClick={() => setActiveProfile(other.id)}
             data-profile-color={other.color}
             className="w-12 h-12 rounded-full border-[3px] border-card bg-profile text-on-profile shadow-raised flex items-center justify-center font-display text-title-5"
@@ -169,23 +175,23 @@ export function HomeClient() {
       </header>
 
       <div className="px-5 pt-3.5 pb-4 space-y-4">
-        <h1 className="font-display text-display-1">How&rsquo;s {activeProfile?.name ?? "everyone"} doing?</h1>
+        <h1 className="font-display text-display-1">{h("greeting", { name: activeProfile?.name ?? h("everyone") })}</h1>
 
         {canLog && <Banners items={banners} />}
         <InstallPrompt />
 
         {nothingYet && (
           <div className="rounded-card bg-card p-4 shadow-card space-y-1.5">
-            <p className="text-body-md">Nothing logged yet</p>
+            <p className="text-body-md">{t("common.nothingLoggedYet")}</p>
             <ul className="text-caption text-muted-foreground space-y-1">
-              <li>Tap a tile to log in 3 taps or fewer.</li>
-              <li>Entries sync to every caregiver.</li>
-              <li>Made a mistake? Tap Undo, or edit it in Timeline.</li>
+              <li>{h("tipTap")}</li>
+              <li>{h("tipSync")}</li>
+              <li>{h("tipUndo")}</li>
             </ul>
           </div>
         )}
 
-        <nav aria-label={`Log for ${activeProfile?.name ?? ""}`} className="grid grid-cols-2 gap-3">
+        <nav aria-label={h("logFor", { name: activeProfile?.name ?? "" })} className="grid grid-cols-2 gap-3">
           {enabled.has("bathroom") && (
             <ModuleTile
               module="bathroom"
@@ -200,10 +206,10 @@ export function HomeClient() {
             <ModuleTile module="eating" label={tileLabels.eating} icon={MODULE_ICONS.eating} status={eating.isFetched ? tileStatus(eating.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("eating")} />
           )}
           {enabled.has("mood") && (
-            <ModuleTile module="mood" label="Mood" icon={MODULE_ICONS.mood} status={mood.isFetched ? tileStatus(mood.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("mood")} />
+            <ModuleTile module="mood" label={tileLabels.mood} icon={MODULE_ICONS.mood} status={mood.isFetched ? tileStatus(mood.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("mood")} />
           )}
           {enabled.has("activity") && (
-            <ModuleTile module="activity" label="Activity" icon={MODULE_ICONS.activity} status={activity.isFetched ? tileStatus(activity.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("activity")} />
+            <ModuleTile module="activity" label={tileLabels.activity} icon={MODULE_ICONS.activity} status={activity.isFetched ? tileStatus(activity.data, ctx, now) : null} onClick={() => canLog && setOpenSheet("activity")} />
           )}
           {enabled.has("medication") && (
             <Link
@@ -214,7 +220,7 @@ export function HomeClient() {
                 {MODULE_ICONS.medication}
               </span>
               <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-                <span className="font-display text-title-3">Medication</span>{" "}
+                <span className="font-display text-title-3">{tileLabels.medication}</span>{" "}
                 <span className={notLogged.length ? "self-start px-2.5 py-0.5 rounded-full bg-card text-caption font-extrabold text-warning-ink" : "text-label font-bold text-foreground-2"}>
                   {medStatus}
                 </span>
@@ -227,16 +233,16 @@ export function HomeClient() {
 
       <ProfileSwitcherSheet open={switcherOpen} onClose={() => setSwitcherOpen(false)} />
 
-      <LogSheet module="bathroom" moduleLabel={tileLabels.bathroom} detailsHint={toileting === "diapers" ? "Size, rash, blowout, note" : "Size, pain, blood, note"} open={openSheet === "bathroom"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+      <LogSheet module="bathroom" moduleLabel={tileLabels.bathroom} detailsHint={toileting === "diapers" ? h("hintDiaper") : h("hintToilet")} open={openSheet === "bathroom"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
         {(c) => <BathroomSheet ctx={c} />}
       </LogSheet>
-      <LogSheet module="eating" moduleLabel={tileLabels.eating} detailsHint={isBaby ? "Note, flag for doctor" : "Food groups, reactions, note"} open={openSheet === "eating"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+      <LogSheet module="eating" moduleLabel={tileLabels.eating} detailsHint={isBaby ? h("hintFeeding") : h("hintEating")} open={openSheet === "eating"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
         {(c) => <EatingSheet ctx={c} />}
       </LogSheet>
-      <LogSheet module="activity" moduleLabel="Activity" open={openSheet === "activity"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+      <LogSheet module="activity" moduleLabel={tileLabels.activity} open={openSheet === "activity"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
         {(c) => <ActivitySheet ctx={c} />}
       </LogSheet>
-      <LogSheet module="mood" moduleLabel="Mood" detailsHint="Energy, note, flag for doctor" open={openSheet === "mood"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
+      <LogSheet module="mood" moduleLabel={tileLabels.mood} detailsHint={h("hintMood")} open={openSheet === "mood"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
         {(c) => <MoodSheet ctx={c} />}
       </LogSheet>
 

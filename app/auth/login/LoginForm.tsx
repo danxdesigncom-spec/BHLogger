@@ -3,6 +3,7 @@
 import { useActionState, use } from "react";
 import { sendMagicLink } from "./actions";
 import { Mail, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { enterDemoMode } from "../demo/actions";
 import { DEMO_ENABLED } from "@/lib/demo";
 
@@ -16,17 +17,17 @@ export function LoginForm({ searchParams }: Props) {
   const callbackError = params.error;
 
   const [state, action, pending] = useActionState(sendMagicLink, null);
+  const t = useTranslations("auth");
 
   if (state?.sent) {
     return (
-      <div className="rounded-3xl bg-white p-6 shadow-sm space-y-3 text-center">
+      <div role="status" className="rounded-card bg-card p-6 shadow-card space-y-3 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-profile-tint">
-          <Mail className="text-profile" size={24} strokeWidth={2} />
+          <Mail className="text-profile-ink" size={24} strokeWidth={2} aria-hidden="true" />
         </div>
-        <h2 className="font-display text-2xl font-semibold">Check your email</h2>
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          We sent a sign-in link to <strong>{state.email}</strong>. It expires
-          in 1 hour.
+        <h2 className="font-display text-title-2">{t("checkEmail")}</h2>
+        <p className="text-body font-normal text-muted-foreground">
+          {t.rich("sentTo", { email: state.email ?? "", strong: (chunks) => <strong>{chunks}</strong> })}
         </p>
       </div>
     );
@@ -37,17 +38,17 @@ export function LoginForm({ searchParams }: Props) {
       <input type="hidden" name="next" value={next} />
 
       {(state?.error ?? callbackError) && (
-        <p role="alert" className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          {state?.error ?? "Sign-in failed. Please try again."}
+        <p role="alert" className="rounded-lg border border-flag-border bg-flag px-4 py-3 text-label font-bold text-flag-ink">
+          {state?.error ?? t("failed")}
         </p>
       )}
 
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="block text-sm font-extrabold text-muted-foreground"
+          className="block text-label font-extrabold text-muted-foreground"
         >
-          Email
+          {t("email")}
         </label>
         <input
           id="email"
@@ -55,8 +56,8 @@ export function LoginForm({ searchParams }: Props) {
           type="email"
           autoComplete="email"
           required
-          placeholder="you@example.com"
-          className="w-full min-h-[52px] rounded-2xl border border-[var(--color-border)] bg-white px-4 text-[17px] font-bold text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[var(--color-profile)] disabled:opacity-50"
+          placeholder={t("emailPlaceholder")}
+          className="w-full h-button rounded-lg border border-input bg-card px-4 text-[16px] font-bold text-foreground placeholder:font-normal placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-50"
           disabled={pending}
         />
       </div>
@@ -64,12 +65,12 @@ export function LoginForm({ searchParams }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full min-h-[52px] flex items-center justify-center gap-2 rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+        className="w-full h-button flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
       >
         {pending ? (
-          <Loader2 size={20} strokeWidth={2} className="animate-spin" />
+          <Loader2 size={20} strokeWidth={2} className="animate-spin" aria-label={t("sending")} />
         ) : (
-          "Send magic link"
+          t("send")
         )}
       </button>
 
@@ -78,9 +79,9 @@ export function LoginForm({ searchParams }: Props) {
           type="submit"
           formAction={enterDemoMode}
           formNoValidate
-          className="w-full min-h-[52px] flex items-center justify-center rounded-full border-[1.5px] border-[var(--color-border)] bg-white text-foreground text-[17px] font-extrabold"
+          className="w-full h-button flex items-center justify-center rounded-full border-[1.5px] border-border-strong bg-card text-foreground text-body-lg"
         >
-          Continue without saving
+          {t("demo")}
         </button>
       )}
     </form>

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isDemoMode } from "@/app/auth/demo/actions";
 import { validateEntryData } from "@/lib/schemas/entry";
 import type { Json } from "@/lib/supabase/types";
+import { t } from "@/lib/i18n";
 
 type Result = { success: true } | { error: string };
 
@@ -30,14 +31,14 @@ async function authed() {
 
 export async function saveEntry(input: SaveEntryInput): Promise<Result> {
   const parsed = SaveEntrySchema.safeParse(input);
-  if (!parsed.success) return { error: "Invalid entry." };
-  if (new Date(parsed.data.occurredAt).getTime() > Date.now() + 60_000) return { error: "Entries can't be in the future." };
+  if (!parsed.success) return { error: t("errors.invalidEntry") };
+  if (new Date(parsed.data.occurredAt).getTime() > Date.now() + 60_000) return { error: t("errors.futureEntry") };
   const data = validateEntryData(parsed.data.type, parsed.data.data);
   if (!data.success) return { error: data.error };
   if (await isDemoMode()) return { success: true };
 
   const { supabase, user } = await authed();
-  if (!user) return { error: "Not signed in." };
+  if (!user) return { error: t("errors.notSignedIn") };
 
   const { data: member } = await supabase
     .from("household_members")
@@ -45,7 +46,7 @@ export async function saveEntry(input: SaveEntryInput): Promise<Result> {
     .eq("household_id", parsed.data.householdId)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!member || member.role === "viewer") return { error: "Not allowed to log." };
+  if (!member || member.role === "viewer") return { error: t("errors.notAllowedToLog") };
 
   // Upsert-ignore on the client UUID makes outbox retries idempotent.
   const { error } = await supabase.from("entries").upsert(
@@ -79,19 +80,19 @@ const UpdateEntrySchema = z.object({
 export type UpdateEntryPatch = z.infer<typeof UpdateEntrySchema>;
 
 export async function updateEntry(entryId: string, patch: UpdateEntryPatch): Promise<Result> {
-  if (!z.string().uuid().safeParse(entryId).success) return { error: "Invalid entry." };
+  if (!z.string().uuid().safeParse(entryId).success) return { error: t("errors.invalidEntry") };
   const parsed = UpdateEntrySchema.safeParse(patch);
-  if (!parsed.success) return { error: "Invalid change." };
+  if (!parsed.success) return { error: t("errors.invalidChange") };
   if (parsed.data.occurredAt && new Date(parsed.data.occurredAt).getTime() > Date.now() + 60_000) {
-    return { error: "Entries can't be in the future." };
+    return { error: t("errors.futureEntry") };
   }
   if (await isDemoMode()) return { success: true };
 
   const { supabase, user } = await authed();
-  if (!user) return { error: "Not signed in." };
+  if (!user) return { error: t("errors.notSignedIn") };
 
   const { data: before } = await supabase.from("entries").select("*").eq("id", entryId).maybeSingle();
-  if (!before) return { error: "Entry not found." };
+  if (!before) return { error: t("errors.entryNotFound") };
   if (parsed.data.data) {
     const valid = validateEntryData(before.type, parsed.data.data);
     if (!valid.success) return { error: valid.error };
@@ -109,7 +110,7 @@ export async function updateEntry(entryId: string, patch: UpdateEntryPatch): Pro
   // RLS rejects the update unless the user wrote the entry or is an admin (ACC-09).
   const { data: after, error } = await supabase.from("entries").update(update).eq("id", entryId).select("*").maybeSingle();
   if (error) return { error: error.message };
-  if (!after) return { error: "You can only edit entries you logged." };
+  if (!after) return { error: t("errors.editOwnOnly") };
 
   await supabase.from("entry_revisions").insert({
     entry_id: entryId,
@@ -122,11 +123,11 @@ export async function updateEntry(entryId: string, patch: UpdateEntryPatch): Pro
 }
 
 async function setDeleted(entryId: string, deletedAt: string | null): Promise<Result> {
-  if (!z.string().uuid().safeParse(entryId).success) return { error: "Invalid entry." };
+  if (!z.string().uuid().safeParse(entryId).success) return { error: t("errors.invalidEntry") };
   if (await isDemoMode()) return { success: true };
 
   const { supabase, user } = await authed();
-  if (!user) return { error: "Not signed in." };
+  if (!user) return { error: t("errors.notSignedIn") };
 
   const { data, error } = await supabase
     .from("entries")
@@ -135,7 +136,7 @@ async function setDeleted(entryId: string, deletedAt: string | null): Promise<Re
     .select("id")
     .maybeSingle();
   if (error) return { error: error.message };
-  return data ? { success: true } : { error: "You can only delete entries you logged." };
+  return data ? { success: true } : { error: t("errors.deleteOwnOnly") };
 }
 
 export async function deleteEntry(entryId: string): Promise<Result> {

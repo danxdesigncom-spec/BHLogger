@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useHousehold } from "@/lib/context/household-provider";
 import { ProfileSwitcherSheet } from "@/components/profile/ProfileSwitcherSheet";
 
@@ -9,6 +10,7 @@ import { ProfileSwitcherSheet } from "@/components/profile/ProfileSwitcherSheet"
 export function AppHeader({ title, children }: { title: string; children?: ReactNode }) {
   const { activeProfile, profiles } = useHousehold();
   const [open, setOpen] = useState(false);
+  const t = useTranslations("common");
 
   return (
     <header className="px-5 pt-[18px] pb-1 space-y-3">
@@ -17,7 +19,7 @@ export function AppHeader({ title, children }: { title: string; children?: React
         {profiles.length > 0 && (
           <button
             type="button"
-            aria-label={`Switch profile. Current profile: ${activeProfile?.name ?? ""}`}
+            aria-label={t("switchProfile", { name: activeProfile?.name ?? "" })}
             onClick={() => setOpen(true)}
             className="min-h-touch-min flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full bg-card shadow-raised"
           >

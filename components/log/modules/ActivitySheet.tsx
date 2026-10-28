@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ModuleFormContext } from "../LogSheet";
 import { FaceScale, Group, OptionTiles, RadioChips } from "../controls";
 import { ActivityIcon } from "../activity-icons";
@@ -10,11 +11,13 @@ import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries } from "@/lib/data/hooks";
 import { useOptionSet } from "@/lib/data/useOptionSet";
 import { useRepo } from "@/lib/data/repo-context";
-import { ACTIVITY_DURATIONS, ACTIVITY_LIBRARY, activityLabel, ENJOYMENT_LABELS, type Option } from "@/lib/options";
+import { ACTIVITY_DURATIONS, ACTIVITY_LIBRARY, activityLabel, enjoymentLabels, type Option } from "@/lib/options";
 
 const VISIBLE = 8;
 
 export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initial?: Record<string, unknown> }) {
+  const t = useTranslations();
+  const a = (k: string, v?: Record<string, string | number>) => t(`activitySheet.${k}`, v);
   const { activeProfile } = useHousehold();
   const profileId = activeProfile?.id ?? null;
   const stage = activeProfile?.careStage ?? "child";
@@ -53,7 +56,7 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
 
   useEffect(() => {
     if (!activity) return;
-    const label = options.find((o) => o.key === activity)?.label ?? "Activity";
+    const label = options.find((o) => o.key === activity)?.label ?? a("fallback");
     ctx.setData({ activity_id: activity, enjoyment, ...(duration ? { duration_min: duration } : {}) }, label, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activity, enjoyment, duration]);
@@ -76,9 +79,9 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
 
   return (
     <div className="space-y-4">
-      <Group label="What did they do?">
+      <Group label={a("whatDid")}>
         <OptionTiles
-          label="Activity"
+          label={a("activity")}
           columns={3}
           value={activity}
           onChange={setActivity}
@@ -90,13 +93,13 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
               className="min-h-[76px] flex flex-col items-center justify-center gap-1 rounded-[18px] border-[1.5px] border-dashed border-dashed-line bg-card text-foreground"
             >
               <Plus size={22} strokeWidth={2} aria-hidden="true" />
-              <span className="text-[0.8125rem] font-extrabold">New activity</span>
+              <span className="text-[0.8125rem] font-extrabold">{a("newActivity")}</span>
             </button>
           }
         />
         {!showAll && options.length > VISIBLE && (
           <button type="button" onClick={() => setShowAll(true)} className="self-start min-h-touch-min text-label font-extrabold text-profile-ink">
-            Show all {options.length} activities
+            {a("showAll", { count: options.length })}
           </button>
         )}
         {adding && (
@@ -108,17 +111,17 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
             }}
           >
             <label className="flex-1">
-              <span className="sr-only">New activity name</span>
+              <span className="sr-only">{a("newName")}</span>
               <input
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 maxLength={40}
-                placeholder="Activity name"
+                placeholder={a("namePlaceholder")}
                 className="w-full h-button rounded-full border border-input bg-card px-4 text-[16px] font-bold"
               />
             </label>
-            <button type="submit" className="h-button px-5 rounded-full bg-primary text-primary-foreground text-body font-extrabold">Add</button>
+            <button type="submit" className="h-button px-5 rounded-full bg-primary text-primary-foreground text-body font-extrabold">{t("common.add")}</button>
           </form>
         )}
         {addError && <p role="alert" className="text-caption font-bold text-destructive">{addError}</p>}
@@ -126,12 +129,12 @@ export function ActivitySheet({ ctx, initial }: { ctx: ModuleFormContext; initia
 
       {activity && (
         <>
-          <Group label="How did it go?" hint="Optional">
-            <FaceScale label="Enjoyment" labels={ENJOYMENT_LABELS} value={enjoyment} onChange={(v) => setEnjoyment(v === enjoyment ? null : v)} />
+          <Group label={a("howDidItGo")} hint={t("common.optional")}>
+            <FaceScale label={a("enjoyment")} labels={enjoymentLabels()} value={enjoyment} onChange={(v) => setEnjoyment(v === enjoyment ? null : v)} />
           </Group>
-          <Group label="How long?">
+          <Group label={a("howLong")}>
             <RadioChips
-              label="How long"
+              label={a("howLongLabel")}
               value={duration}
               onChange={(d) => setDuration(d === duration ? null : d)}
               options={ACTIVITY_DURATIONS.map((d) => ({ value: d.min, label: d.label }))}

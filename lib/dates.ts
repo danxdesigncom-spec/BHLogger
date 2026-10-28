@@ -1,3 +1,6 @@
+import { t } from "@/lib/i18n";
+import { dateLocale } from "@/lib/prefs";
+
 export function startOfDay(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -28,13 +31,18 @@ export function fromYmd(s: string): Date {
 
 /** "Today · Mon, Oct 26", "Yesterday · Sun, Oct 25", "Sat, Oct 24". */
 export function dayHeading(day: Date, now = new Date()): string {
-  const label = day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const date = day.toLocaleDateString(dateLocale(), { weekday: "short", month: "short", day: "numeric" });
   const diff = Math.round((startOfDay(now).getTime() - startOfDay(day).getTime()) / 86_400_000);
-  if (diff === 0) return `Today · ${label}`;
-  if (diff === 1) return `Yesterday · ${label}`;
-  return label;
+  if (diff === 0) return t("common.dayHeadingToday", { date });
+  if (diff === 1) return t("common.dayHeadingYesterday", { date });
+  return date;
 }
 
 export function shortDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString(dateLocale(), { month: "short", day: "numeric" });
+}
+
+/** "Oct 26, 2026". */
+export function longDate(d: Date): string {
+  return d.toLocaleDateString(dateLocale(), { month: "short", day: "numeric", year: "numeric" });
 }

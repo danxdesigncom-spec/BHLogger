@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { Check, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useHousehold } from "@/lib/context/household-provider";
-import { ageLabel } from "@/lib/options";
-
-const STAGE: Record<string, string> = { baby: "Baby", child: "Child", teen_adult: "Teen/Adult" };
+import { ageLabel, careStageLabel } from "@/lib/options";
 
 export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { profiles, activeProfileId, setActiveProfile, currentMember } = useHousehold();
+  const t = useTranslations("profiles");
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +31,7 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
         style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))" }}
       >
         <div aria-hidden="true" className="w-10 h-[5px] mx-auto mt-2.5 rounded-full bg-grabber" />
-        <h2 id="switch-title" className="font-display text-title-1 px-5 pt-4 pb-3">Switch profile</h2>
+        <h2 id="switch-title" className="font-display text-title-1 px-5 pt-4 pb-3">{t("switchTitle")}</h2>
         <ul className="px-4 space-y-2">
           {profiles.map((p) => {
             const active = p.id === activeProfileId;
@@ -52,7 +52,7 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
                   </span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-body-lg">{p.name}</span>
-                    <span className="block text-caption text-muted-foreground">{[STAGE[p.careStage], age].filter(Boolean).join(" · ")}</span>
+                    <span className="block text-caption text-muted-foreground">{[careStageLabel(p.careStage), age].filter(Boolean).join(" · ")}</span>
                   </span>
                   {active && <Check size={20} strokeWidth={2.5} className="flex-none text-profile" aria-hidden="true" />}
                 </button>
@@ -65,7 +65,7 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
                 <span className="w-9 h-9 flex-none rounded-full border-[1.5px] border-dashed border-dashed-line flex items-center justify-center">
                   <Plus size={18} strokeWidth={2} aria-hidden="true" />
                 </span>
-                Add a person
+                {t("addPerson")}
               </Link>
             </li>
           )}

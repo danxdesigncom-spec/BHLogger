@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Share, SquarePlus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { isIosSafari, isStandalone, loggingSessions } from "@/lib/install";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -14,6 +15,8 @@ const DISMISSED = "bl-install-dismissed";
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<"hidden" | "native" | "ios">("hidden");
+  const t = useTranslations("install");
+  const tc = useTranslations("common");
 
   useEffect(() => {
     let dismissed = false;
@@ -45,18 +48,18 @@ export function InstallPrompt() {
   };
 
   return (
-    <section aria-label="Add to Home Screen" className="flex items-start gap-3 p-3.5 rounded-card bg-card shadow-card">
+    <section aria-label={t("label")} className="flex items-start gap-3 p-3.5 rounded-card bg-card shadow-card">
       <span className="w-12 h-12 flex-none rounded-lg bg-profile-tint text-profile-ink flex items-center justify-center">
         <SquarePlus size={24} strokeWidth={2} aria-hidden="true" />
       </span>
       <span className="flex-1 min-w-0 flex flex-col gap-1">
-        <span className="text-body-md">Add Behavior Logger to your Home Screen</span>
+        <span className="text-body-md">{t("title")}</span>
         {mode === "ios" ? (
           <span className="text-label font-normal text-muted-foreground">
-            Tap <Share size={14} strokeWidth={2} className="inline -mt-0.5" aria-label="Share" /> then &ldquo;Add to Home Screen&rdquo;. It opens faster, works offline, and keeps this phone&rsquo;s logs safe.
+            {t("iosBefore")} <Share size={14} strokeWidth={2} className="inline -mt-0.5" aria-label={t("share")} /> {t("iosAfter")}
           </span>
         ) : (
-          <span className="text-label font-normal text-muted-foreground">It opens like an app and works offline.</span>
+          <span className="text-label font-normal text-muted-foreground">{t("native")}</span>
         )}
         {mode === "native" && deferred && (
           <button
@@ -68,11 +71,11 @@ export function InstallPrompt() {
             }}
             className="self-start mt-1 min-h-touch-min px-[18px] rounded-full bg-primary text-primary-foreground text-body-md"
           >
-            Install
+            {t("install")}
           </button>
         )}
       </span>
-      <button type="button" aria-label="Not now" onClick={dismiss} className="w-11 h-11 -mr-1.5 -mt-1.5 flex-none rounded-full flex items-center justify-center text-muted-foreground">
+      <button type="button" aria-label={tc("notNow")} onClick={dismiss} className="w-11 h-11 -mr-1.5 -mt-1.5 flex-none rounded-full flex items-center justify-center text-muted-foreground">
         <X size={18} strokeWidth={2} aria-hidden="true" />
       </button>
     </section>

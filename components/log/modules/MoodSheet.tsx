@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import type { ModuleFormContext } from "../LogSheet";
 import { FaceScale, Group, RadioChips, Segmented, ToggleChips } from "../controls";
 import { useHousehold } from "@/lib/context/household-provider";
@@ -14,6 +15,8 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
   const { activeProfile } = useHousehold();
   const stage = activeProfile?.careStage ?? "child";
   const labels = moodLabels(stage);
+  const t = useTranslations();
+  const m = (k: string, v?: Record<string, string | number>) => t(`moodSheet.${k}`, v);
   const feelingOptions = useOptionSet(activeProfile?.id ?? null, "feeling", FEELINGS[stage]).options;
   const behaviorSet = useOptionSet(activeProfile?.id ?? null, "behavior", behaviorOptions(stage)).options;
   const behaviorList = stage === "baby" ? [] : behaviorSet;
@@ -41,11 +44,11 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
 
   return (
     <div className="space-y-4">
-      <Group label={scope === "day" ? "How was today overall?" : `How is ${activeProfile?.name ?? "they"} feeling?`}>
-        <FaceScale label="Mood" labels={labels} value={level} onChange={setLevel} />
+      <Group label={scope === "day" ? m("dayQuestion") : m("momentQuestion", { name: activeProfile?.name ?? m("they") })}>
+        <FaceScale label={m("mood")} labels={labels} value={level} onChange={setLevel} />
       </Group>
 
-      <Group label="Feelings" hint="Optional">
+      <Group label={m("feelings")} hint={t("common.optional")}>
         <ToggleChips
           visibleCount={6}
           options={feelingOptions.map((f) => ({ value: f.key, label: f.label }))}
@@ -55,7 +58,7 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
       </Group>
 
       {behaviorList.length > 0 && scope === "moment" && (
-        <Group label="Notable behaviors" hint="Optional">
+        <Group label={m("behaviors")} hint={t("common.optional")}>
           <ToggleChips
             visibleCount={5}
             options={behaviorList.map((b) => ({ value: b.key, label: b.label }))}
@@ -65,10 +68,10 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
           {behaviors.map((b) => (
             <div key={b.key} className="flex flex-col gap-2 p-3 rounded-[18px] bg-secondary">
               <span className="text-label text-muted-foreground">
-                {behaviorList.find((x) => x.key === b.key)?.label} intensity
+                {m("intensity", { name: behaviorList.find((x) => x.key === b.key)?.label ?? "" })}
               </span>
               <Segmented
-                label={`${behaviorList.find((x) => x.key === b.key)?.label} intensity`}
+                label={m("intensity", { name: behaviorList.find((x) => x.key === b.key)?.label ?? "" })}
                 value={b.severity ?? null}
                 onChange={(s) => setSeverity(b.key, s)}
                 options={SEVERITIES.map((s) => ({ value: s.key, label: s.label }))}
@@ -80,16 +83,12 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
 
       {ctx.detailsEl &&
         createPortal(
-          <Group label="Energy">
+          <Group label={m("energy")}>
             <RadioChips
-              label="Energy"
+              label={m("energy")}
               value={energy}
               onChange={(v) => setEnergy(v === energy ? null : v)}
-              options={[
-                { value: "low", label: "Low" },
-                { value: "normal", label: "Normal" },
-                { value: "high", label: "High" },
-              ]}
+              options={(["low", "normal", "high"] as const).map((v) => ({ value: v, label: t(`options.energy.${v}`) }))}
             />
           </Group>,
           ctx.detailsEl,

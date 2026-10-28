@@ -3,29 +3,33 @@
 import Link from "next/link";
 import { use, useMemo } from "react";
 import { Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useMedicationChanges, useMedications } from "@/lib/data/hooks";
 import type { MedicationChangeRow } from "@/lib/data/types";
 import { formatClock } from "@/lib/entries/summary";
-import { DOSE_OUTCOMES, formatDose, labelFor, PRN_REASONS } from "@/lib/options";
+import { DOSE_OUTCOMES, formatDose, labelFor, medFormLabel, PRN_REASONS } from "@/lib/options";
 import { adherence, describeSchedule } from "@/lib/meds/schedule";
 import { fromYmd, shortDate } from "@/lib/dates";
 
-function describeChange(c: MedicationChangeRow): string {
+function describeChange(c: MedicationChangeRow, t: ReturnType<typeof useTranslations<"meds.detail">>): string {
   const b = c.before as { default_dose?: number; dose_unit?: string };
   const a = c.after as { default_dose?: number; dose_unit?: string };
   switch (c.change_type) {
-    case "started": return a.default_dose ? `Started at ${formatDose(a.default_dose, a.dose_unit ?? "")}` : "Started";
-    case "stopped": return "Stopped";
-    case "dose_changed": return `Dose changed from ${formatDose(b.default_dose ?? 0, b.dose_unit ?? "")} to ${formatDose(a.default_dose ?? 0, a.dose_unit ?? "")}`;
-    case "schedule_changed": return "Schedule changed";
+    case "started": return a.default_dose ? t("startedAt", { dose: formatDose(a.default_dose, a.dose_unit ?? "") }) : t("started");
+    case "stopped": return t("stopped");
+    case "dose_changed": return t("doseChanged", { from: formatDose(b.default_dose ?? 0, b.dose_unit ?? ""), to: formatDose(a.default_dose ?? 0, a.dose_unit ?? "") });
+    case "schedule_changed": return t("scheduleChanged");
   }
 }
 
 export default function MedicationHistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { activeProfile, currentMember } = useHousehold();
+  const t = useTranslations("meds.detail");
+  const tc = useTranslations("common");
+  const tm = useTranslations("meds");
   const meds = useMedications(activeProfile?.id ?? null);
   const changes = useMedicationChanges(activeProfile?.id ?? null);
   const since = useMemo(() => new Date(Date.now() - 30 * 86_400_000), []);
@@ -39,8 +43,8 @@ export default function MedicationHistoryPage({ params }: { params: Promise<{ id
   if (!med) {
     return (
       <>
-        <PageHeader title="Medication" backHref="/meds" />
-        <p className="px-5 pt-4 text-body text-muted-foreground">{meds.isLoading ? "Loading…" : "Not found for this profile."}</p>
+        <PageHeader title={t("medication")} backHref="/meds" />
+        <p className="px-5 pt-4 text-body text-muted-foreground">{meds.isLoading ? tc("loading") : t("notFound")}</p>
       </>
     );
   }
@@ -49,13 +53,13 @@ export default function MedicationHistoryPage({ params }: { params: Promise<{ id
     <>
       <PageHeader
         title={med.name}
-        subtitle={`for ${activeProfile?.name ?? ""} · ${med.active ? describeSchedule(med) : "stopped"}`}
+        subtitle={`${tc("for", { name: activeProfile?.name ?? "" })} · ${med.active ? describeSchedule(med) : t("stoppedLower")}`}
         backHref="/meds"
-        backLabel="Back to Medications"
+        backLabel={t("backToMeds")}
         action={
           currentMember.role !== "viewer" && (
             <Link href={`/meds/${id}/edit`} className="min-h-touch-min flex items-center gap-1.5 px-4 rounded-full bg-card shadow-raised text-body font-extrabold text-profile-ink">
-              <Pencil size={16} strokeWidth={2} aria-hidden="true" /> Edit
+              <Pencil size={16} strokeWidth={2} aria-hidden="true" /> {t("edit")}
             </Link>
           )
         }
@@ -63,10 +67,10 @@ export default function MedicationHistoryPage({ params }: { params: Promise<{ id
       <div className="px-5 pt-3 pb-8 space-y-5">
         <dl className="grid grid-cols-2 gap-2">
           {[
-            ["Saved dose", formatDose(Number(med.default_dose), med.dose_unit)],
-            ["Form", med.form ?? "—"],
-            ["Min. between doses", med.min_interval_hours ? `${med.min_interval_hours} h` : "Not set"],
-            ...(adh ? [["Last 30 days", adh.pct === null ? "No doses yet" : `${adh.pct}% given`]] : []),
+            [t("savedDose"), formatDose(Number(med.default_dose), med.dose_unit)],
+            [t("form"), med.form ? medFormLabel(med.form) : "—"],
+            [t("minBetween"), med.min_interval_hours ? tm("hoursShort", { count: Number(med.min_interval_hours) }) : t("notSet")],
+            ...(adh ? [[t("last30"), adh.pct === null ? t("noDosesYet") : t("pctGiven", { pct: adh.pct })]] : []),
           ].map(([k, v]) => (
             <div key={k} className="rounded-card bg-card shadow-card p-3.5">
               <dt className="text-caption text-muted-foreground">{k}</dt>
@@ -77,25 +81,25 @@ export default function MedicationHistoryPage({ params }: { params: Promise<{ id
 
         {adh && adh.scheduled > 0 && (
           <p className="text-caption text-muted-foreground">
-            {adh.given} given, {adh.partial} partial, {adh.refused} refused, {adh.spitUp} spit up, {adh.skipped} skipped, {adh.notLogged} not logged, of {adh.scheduled} scheduled.
+            {t("breakdown", { given: adh.given, partial: adh.partial, refused: adh.refused, spitUp: adh.spitUp, skipped: adh.skipped, notLogged: adh.notLogged, scheduled: adh.scheduled })}
           </p>
         )}
 
         <section aria-labelledby="changes-h" className="space-y-2">
-          <h2 id="changes-h" className="font-display text-title-5">History and dose changes</h2>
+          <h2 id="changes-h" className="font-display text-title-5">{t("changesTitle")}</h2>
           <ol className="rounded-card bg-card shadow-card divide-y divide-divider">
             {medChanges.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 min-h-[56px] px-3.5 py-2">
-                <span className="text-body">{describeChange(c)}</span>
-                <span className="text-caption font-bold text-muted-foreground whitespace-nowrap">from {shortDate(fromYmd(c.effective_at))}</span>
+                <span className="text-body">{describeChange(c, t)}</span>
+                <span className="text-caption font-bold text-muted-foreground whitespace-nowrap">{t("fromDate", { date: shortDate(fromYmd(c.effective_at)) })}</span>
               </li>
             ))}
-            {!medChanges.length && <li className="px-3.5 py-4 text-caption text-muted-foreground">No changes recorded.</li>}
+            {!medChanges.length && <li className="px-3.5 py-4 text-caption text-muted-foreground">{t("noChanges")}</li>}
           </ol>
         </section>
 
         <section aria-labelledby="doses-h" className="space-y-2">
-          <h2 id="doses-h" className="font-display text-title-5">Doses, last 30 days</h2>
+          <h2 id="doses-h" className="font-display text-title-5">{t("dosesTitle")}</h2>
           <ol className="rounded-card bg-card shadow-card divide-y divide-divider">
             {mine.slice(0, 40).map((d) => {
               const data = d.data as { dose?: number; unit?: string; outcome?: string; prn_reason?: string | null; duplicate_override?: boolean };
@@ -103,19 +107,19 @@ export default function MedicationHistoryPage({ params }: { params: Promise<{ id
                 <li key={d.id} className="flex items-center justify-between gap-3 min-h-[56px] px-3.5 py-2">
                   <span className="flex flex-col">
                     <span className="text-body font-extrabold">
-                      {labelFor(DOSE_OUTCOMES, data.outcome ?? "given")} · {formatDose(data.dose ?? 0, data.unit ?? "")}
+                      {t("outcomeDose", { outcome: labelFor(DOSE_OUTCOMES, data.outcome ?? "given"), dose: formatDose(data.dose ?? 0, data.unit ?? "") })}
                     </span>
                     <span className="text-caption text-muted-foreground">
-                      {[data.prn_reason ? labelFor(PRN_REASONS, data.prn_reason) : null, data.duplicate_override ? "extra dose confirmed" : null, d.logged_by_name].filter(Boolean).join(" · ")}
+                      {[data.prn_reason ? labelFor(PRN_REASONS, data.prn_reason) : null, data.duplicate_override ? t("extraDose") : null, d.logged_by_name].filter(Boolean).join(" · ")}
                     </span>
                   </span>
                   <span className="text-caption font-bold text-muted-foreground tabular-nums whitespace-nowrap">
-                    {shortDate(new Date(d.occurred_at))}, {formatClock(d.occurred_at)}
+                    {t("dateTime", { date: shortDate(new Date(d.occurred_at)), time: formatClock(d.occurred_at) })}
                   </span>
                 </li>
               );
             })}
-            {!mine.length && <li className="px-3.5 py-4 text-caption text-muted-foreground">No doses logged in the last 30 days.</li>}
+            {!mine.length && <li className="px-3.5 py-4 text-caption text-muted-foreground">{t("noDoses")}</li>}
           </ol>
         </section>
       </div>

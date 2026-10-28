@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { shortDate } from "@/lib/dates";
 import { formatHour } from "@/lib/prefs";
+import { useTranslations } from "next-intl";
 
 // DESIGN 6: tokens only. CSS variables resolve per theme (light, dark, night).
 const AXIS = { fontSize: 12, fill: "var(--chart-axis)", fontWeight: 700 } as const;
@@ -63,13 +64,14 @@ export function MoodLine({
   height?: number;
 }) {
   const lastWithValue = [...data].reverse().find((d) => d.avg !== null);
+  const t = useTranslations("chart");
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 22, right: 12, bottom: 0, left: -18 }}>
         <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
         <XAxis dataKey="day" ticks={edgeTicks(data.map((d) => d.day))} tickFormatter={dayLabel} tick={AXIS} axisLine={{ stroke: "var(--chart-baseline)" }} tickLine={false} interval="preserveStartEnd" />
         <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={AXIS} axisLine={false} tickLine={false} width={40} />
-        <Tooltip content={<TooltipBox unit={(v) => `Mood ${v}`} />} cursor={{ stroke: "var(--chart-axis)", strokeDasharray: "2 3" }} />
+        <Tooltip content={<TooltipBox unit={(v) => t("moodValue", { value: v })} />} cursor={{ stroke: "var(--chart-axis)", strokeDasharray: "2 3" }} />
         {markerLines(markers, data.map((d) => d.day))}
         {averages.map((a) => (
           <ReferenceLine
@@ -83,7 +85,7 @@ export function MoodLine({
         <Line
           type="monotone"
           dataKey="avg"
-          name="Mood"
+          name={t("mood")}
           stroke="var(--chart-mood)"
           strokeWidth={2.5}
           connectNulls
@@ -114,6 +116,7 @@ export function DailyBars({
   unit?: (v: number) => string;
   height?: number;
 }) {
+  const t = useTranslations("chart");
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 22, right: 12, bottom: 0, left: -18 }} barCategoryGap={2}>
@@ -126,7 +129,7 @@ export function DailyBars({
             label={{ value: b.label, position: "insideTop", fill: "var(--chart-band-ink)", fontSize: 12, fontWeight: 800 }} />
         ))}
         {markerLines(markers, data.map((d) => d.day))}
-        <Bar dataKey="value" name="Count" fill={color} radius={[2, 2, 0, 0]} maxBarSize={10} isAnimationActive={false} />
+        <Bar dataKey="value" name={t("count")} fill={color} radius={[2, 2, 0, 0]} maxBarSize={10} isAnimationActive={false} />
         {average && <Line type="monotone" dataKey="avg" stroke="var(--foreground-2)" strokeDasharray="2 3" dot={false} isAnimationActive={false} />}
       </BarChart>
     </ResponsiveContainer>

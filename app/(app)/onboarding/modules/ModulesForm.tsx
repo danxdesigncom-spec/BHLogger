@@ -1,15 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 import { saveModules } from "./actions";
 
-const ALL_MODULES = [
-  { id: "bathroom",   label: "Bathroom" },
-  { id: "eating",     label: "Eating" },
-  { id: "activity",   label: "Activity" },
-  { id: "mood",       label: "Mood" },
-  { id: "medication", label: "Medications" },
-];
+const ALL_MODULES = ["bathroom", "eating", "activity", "mood", "medication"] as const;
 
 interface Props {
   profileId: string;
@@ -18,12 +13,6 @@ interface Props {
   step: number;
   totalSteps: number;
 }
-
-const STAGE_LABELS = {
-  baby: "babies",
-  child: "children",
-  teen_adult: "teens and adults",
-};
 
 export function ModulesForm({
   profileId,
@@ -34,6 +23,7 @@ export function ModulesForm({
 }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initialModules));
   const [, action, pending] = useActionState(saveModules, null);
+  const t = useTranslations();
 
   const progress = Math.round((step / totalSteps) * 100);
 
@@ -55,19 +45,19 @@ export function ModulesForm({
 
       {/* Progress */}
       <div className="pt-6 space-y-2">
-        <span className="text-[13px] font-extrabold text-muted-foreground">
-          Step {step} of {totalSteps}
+        <span className="text-caption font-extrabold text-muted-foreground">
+          {t("onboarding.stepOf", { step, total: totalSteps })}
         </span>
         <div
           role="progressbar"
-          aria-label="Setup progress"
+          aria-label={t("onboarding.progress")}
           aria-valuemin={1}
           aria-valuemax={totalSteps}
           aria-valuenow={step}
-          className="h-2 rounded-full bg-[var(--color-border)]"
+          className="h-2 rounded-full bg-secondary"
         >
           <div
-            className="h-2 rounded-full bg-[var(--color-profile)]"
+            className="h-2 rounded-full bg-profile"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -75,47 +65,45 @@ export function ModulesForm({
 
       {/* Heading */}
       <div className="pt-5 space-y-1">
-        <h1 className="font-display text-[30px] font-semibold leading-tight">
-          What do you track?
+        <h1 className="font-display text-display-2">
+          {t("onboarding.whatTrack")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Pre-checked for {STAGE_LABELS[careStage]}. You can change these anytime.
+        <p className="text-body font-normal text-muted-foreground">
+          {t("onboarding.prechecked", { stage: careStage })}
         </p>
       </div>
 
 
       {/* Module list */}
       <div className="flex flex-col gap-3 pt-5 flex-1">
-        {ALL_MODULES.map(({ id, label }) => {
+        {ALL_MODULES.map((id) => {
           const checked = selected.has(id);
           return (
             <label
               key={id}
               className={`min-h-[60px] flex items-center gap-3 px-4 rounded-[20px] border-[1.5px] cursor-pointer transition-colors ${
-                checked
-                  ? "border-[var(--color-profile)] bg-[var(--color-profile-tint)]"
-                  : "border-[var(--color-border)] bg-white"
+                checked ? "border-profile bg-profile-tint" : "border-border bg-card"
               }`}
             >
               <input
                 type="checkbox"
                 checked={checked}
                 onChange={() => toggle(id)}
-                className="w-[22px] h-[22px] accent-[var(--color-profile)]"
+                className="w-[22px] h-[22px] accent-[var(--profile)]"
               />
-              <span className="text-base font-extrabold">{label}</span>
+              <span className="text-body font-extrabold">{id === "medication" ? t("modules.medications") : t(`modules.${id}`)}</span>
             </label>
           );
         })}
       </div>
 
-      <footer className="pb-7 pt-4 flex-none">
+      <footer className="pt-4 flex-none" style={{ paddingBottom: "calc(28px + env(safe-area-inset-bottom, 0px))" }}>
         <button
           type="submit"
           disabled={pending}
-          className="w-full min-h-[52px] flex items-center justify-center rounded-full bg-foreground text-background text-[17px] font-extrabold disabled:opacity-60"
+          className="w-full h-button flex items-center justify-center rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60"
         >
-          Continue
+          {t("onboarding.continue")}
         </button>
       </footer>
     </form>
