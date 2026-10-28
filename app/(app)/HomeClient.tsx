@@ -17,6 +17,8 @@ import { Banners, type BannerItem } from "@/components/home/Banners";
 import { InstallPrompt } from "@/components/home/InstallPrompt";
 import { QuickTaps } from "@/components/home/QuickTaps";
 import { RunningTimers } from "@/components/home/RunningTimers";
+import { useDayMoodBanner } from "@/components/home/DayMoodPrompt";
+import { useFollowupBanners } from "@/components/home/FollowupPrompt";
 import { useQuickLog } from "@/components/log/useQuickLog";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useLatestEntry, useMedications, useProfileSettings } from "@/lib/data/hooks";
@@ -50,6 +52,8 @@ export function HomeClient() {
   const isBaby = stage === "baby";
   const enabled = new Set(activeProfile?.enabledModules ?? []);
   const other = profiles.find((p) => p.id !== activeProfileId);
+  const followupBanners = useFollowupBanners(activeProfileId, enabled.has("medication"));
+  const dayMoodBanner = useDayMoodBanner(activeProfile, enabled.has("mood"), quick.save);
 
   const bathroom = useLatestEntry(activeProfileId, "bathroom");
   const eating = useLatestEntry(activeProfileId, "eating");
@@ -142,6 +146,9 @@ export function HomeClient() {
       action: { label: h("logFeed"), onClick: () => setOpenSheet("eating") },
     });
   }
+
+  banners.push(...followupBanners);
+  if (dayMoodBanner) banners.push(dayMoodBanner);
 
   const nothingYet = [bathroom, eating, mood, activity].every((q) => q.isFetched && !q.data);
   const canLog = currentMember.role !== "viewer";

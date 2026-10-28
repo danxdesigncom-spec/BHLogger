@@ -86,10 +86,10 @@ export function isNoticeColor(color: string | undefined, ageDays: number | null)
 
 // ─── Eating ──────────────────────────────────────────────────────────────────
 
-export type EatingMethod = "breast" | "bottle" | "meal" | "snack" | "drink";
+export type EatingMethod = "breast" | "bottle" | "meal" | "snack" | "drink" | "tube";
 
 export function eatingMethods(stage: CareStage, feedingMethods: string[], ageMonths: number | null): EatingMethod[] {
-  const allowed: EatingMethod[] = ["breast", "bottle", "meal", "snack", "drink"];
+  const allowed: EatingMethod[] = ["breast", "bottle", "meal", "snack", "drink", "tube"];
   const fromProfile = feedingMethods.filter((m): m is EatingMethod => (allowed as string[]).includes(m));
   if (fromProfile.length > 0) return fromProfile;
   if (stage === "baby") {
@@ -105,7 +105,16 @@ export function eatingMethodLabel(method: string, stage: CareStage): string {
 
 export const BREAST_SIDES = set("breastSide", ["left", "right", "both"] as const);
 export const BREAST_DURATIONS = [5, 10, 15, 20, 30] as const;
+/** MOOD-04: how long a behavior lasted. */
+export const BEHAVIOR_DURATIONS = [1, 5, 15, 30, 60] as const;
+
+export function durationLabel(min: number): string {
+  return min === 60 ? t("options.duration.60") : t("options.durationMin", { count: min });
+}
 export const BOTTLE_CONTENTS = set("bottleContents", ["breast_milk", "formula", "other"] as const);
+export const TUBE_DELIVERY = set("tubeDelivery", ["bolus", "continuous"] as const);
+export const TUBE_ML_CHIPS = [60, 120, 180, 240, 360, 480] as const;
+export const FLUSH_ML_CHIPS = [10, 20, 30, 60] as const;
 
 export const OZ_CHIPS = [1, 2, 3, 4, 5, 6, 8] as const;
 export const ML_CHIPS = [30, 60, 90, 120, 150, 180, 240] as const;

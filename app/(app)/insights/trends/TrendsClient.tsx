@@ -200,6 +200,11 @@ export function TrendsClient() {
                 <LabeledBars data={eat.portions} highlight={[...eat.portions].sort((a, b) => (a.value ?? 0) - (b.value ?? 0))[0]?.label} domain={[0, 100]} format={(v) => t("pctValue", { value: v })} />
               </ChartCard>
             )}
+            {show("eating") && eat.hasTube && (
+              <ChartCard kicker={t("tube")} icon={MODULE_ICONS.eating} inkClass="text-eating-ink" headline={eat.tubeHeadline} caption={t("tubeCaption")} table={eat.tubeTable} ariaRange={rangeText}>
+                <DailyBars data={eat.tube} color="var(--chart-5)" unit={(v) => tr("eating.ml", { n: v })} />
+              </ChartCard>
+            )}
             {show("eating") && eat.reactions.length > 0 && (
               <ChartCard kicker={t("reactions")} icon={MODULE_ICONS.eating} inkClass="text-eating-ink" headline={t("reactionsLogged", { count: eat.reactions.reduce((s, r) => s + r.value, 0) })} table={{ columns: [t("reaction"), t("times")], rows: eat.reactions.map((r) => [r.label, r.value]) }} ariaRange={rangeText}>
                 <TopBars data={eat.reactions} color="var(--chart-highlight)" />

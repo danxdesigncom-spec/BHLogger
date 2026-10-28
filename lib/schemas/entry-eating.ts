@@ -48,12 +48,22 @@ const DrinkSchema = z.object({
   amount_ml: z.number().positive().optional(),
 });
 
+// EAT-10: tube feeding. The PRD gives these volumes in ml, so they're shown in ml whatever the household unit.
+const TubeSchema = z.object({
+  method: z.literal("tube"),
+  formula_id: z.string().optional(),
+  amount_ml: z.number().positive().max(5000),
+  delivery: z.enum(["bolus", "continuous"]).optional(),
+  flush_ml: z.number().positive().max(1000).optional(),
+});
+
 export const EatingDataSchema = z.discriminatedUnion("method", [
   BreastSchema,
   BottleSchema,
   MealSchema,
   SnackSchema,
   DrinkSchema,
+  TubeSchema,
 ]);
 
 export type EatingData = z.infer<typeof EatingDataSchema>;

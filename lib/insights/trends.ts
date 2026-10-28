@@ -153,8 +153,18 @@ export function eatingTrend(inRange: InsightEntry[], days: string[], unit: "ml" 
   const drinks = countDaily(inRange, days, (e) => e.type === "eating" && dataOf(e).method === "drink");
   const reactions = eating.flatMap((e) => ((dataOf(e).reactions as string[] | undefined) ?? []).map((r) => ({ r, at: e.occurred_at })));
   const lowest = [...portions].sort((a, b) => (a.value ?? 0) - (b.value ?? 0))[0];
+  // EAT-10: daily tube totals, always in ml.
+  const isTube = (e: InsightEntry) => e.type === "eating" && dataOf(e).method === "tube";
+  const tube = sumDaily(inRange, days, isTube, (e) => Number(dataOf(e).amount_ml) || 0);
+  const flush = sumDaily(inRange, days, isTube, (e) => Number(dataOf(e).flush_ml) || 0);
+  const hasTube = inRange.some(isTube);
+  const tubeDays = tube.filter((d) => d.value > 0);
 
   return {
+    hasTube,
+    tube: tube.map((d) => ({ day: d.day, value: d.value })),
+    tubeHeadline: tubeDays.length ? T("tubePerDay", { amount: t("eating.ml", { n: Math.round(mean(tubeDays.map((d) => d.value))!) }) }) : "",
+    tubeTable: { columns: [T("day"), T("formulaCol"), T("flushCol")], rows: tube.map((d, i) => [d8(d.day), d.value, flush[i].value]) },
     hasFeeds,
     feeds: feeds.map((f) => ({ day: f.day, value: f.count })),
     volume: volume.map((v) => ({ day: v.day, value: unit === "oz" ? Math.round((v.value / 29.5735) * 10) / 10 : v.value })),

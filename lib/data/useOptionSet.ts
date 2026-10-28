@@ -4,7 +4,7 @@ import { useOptions, useProfileSettings } from "./hooks";
 import type { Option } from "@/lib/options";
 
 /** SET-04: built-in options minus the ones hidden for this profile, plus custom (non-archived) options. */
-export function useOptionSet(profileId: string | null, module: "activity" | "feeling" | "behavior" | "prn_reason", builtIn: Option[]) {
+export function useOptionSet(profileId: string | null, module: "activity" | "feeling" | "behavior" | "prn_reason" | "food" | "formula", builtIn: Option[]) {
   const custom = useOptions(profileId, module);
   const settings = useProfileSettings(profileId) as { hidden_options?: Record<string, string[]> };
   const hidden = new Set(settings.hidden_options?.[module] ?? []);

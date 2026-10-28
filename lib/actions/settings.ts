@@ -30,7 +30,7 @@ const ProfileSchema = z
     dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
     care_stage: z.enum(["baby", "child", "teen_adult"]).optional(),
     toileting: z.enum(["diapers", "training", "toilet"]).optional(),
-    feeding_methods: z.array(z.enum(["breast", "bottle", "meal", "snack", "drink"])).max(5).optional(),
+    feeding_methods: z.array(z.enum(["breast", "bottle", "meal", "snack", "drink", "tube"])).max(6).optional(),
     enabled_modules: z.array(z.enum(["bathroom", "eating", "activity", "mood", "medication"])).max(5).optional(),
     care_card: z.record(z.unknown()).optional(),
     archived: z.boolean().optional(),

@@ -17,11 +17,11 @@ import { ACTIVITY_LIBRARY, behaviors, FEELINGS, PRN_REASONS, type Option } from 
 import { moveTile, orderTiles, type TileModule } from "@/lib/home/tiles";
 
 const COLORS = ["violet", "teal", "rose", "amber", "blue"] as const;
-const METHODS = ["breast", "bottle", "meal", "snack", "drink"] as const;
+const METHODS = ["breast", "bottle", "meal", "snack", "drink", "tube"] as const;
 const input = "w-full h-button rounded-lg border border-input bg-card px-4 text-[16px] font-bold text-foreground placeholder:font-normal placeholder:text-muted-foreground";
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
-type OptModule = "activity" | "feeling" | "behavior" | "prn_reason";
+type OptModule = "activity" | "feeling" | "behavior" | "prn_reason" | "food" | "formula";
 
 function OptionsEditor({ profileId, module, builtIn, canEdit }: { profileId: string; module: OptModule; builtIn: Option[]; canEdit: boolean }) {
   const repo = useRepo();
@@ -165,6 +165,8 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
     feeling: FEELINGS[stage],
     behavior: behaviors(stage),
     prn_reason: [...PRN_REASONS],
+    food: [],
+    formula: [],
   };
 
   return (
@@ -278,6 +280,8 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
               { value: "feeling", label: t("feelings") },
               ...(stage !== "baby" ? [{ value: "behavior" as const, label: t("behaviors") }] : []),
               { value: "prn_reason", label: t("prnReasons") },
+              { value: "food", label: t("foods") },
+              ...(methods.includes("tube") ? [{ value: "formula" as const, label: t("formulas") }] : []),
             ]}
           />
           <OptionsEditor key={optModule} profileId={profile.id} module={optModule} builtIn={builtIns[optModule]} canEdit={canEdit} />

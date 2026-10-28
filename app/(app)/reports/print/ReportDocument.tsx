@@ -109,6 +109,8 @@ export function ReportDocument() {
   const meals = inRange.filter((e) => e.type === "eating" && ["meal", "snack"].includes(String(dataOf(e).method)) && dataOf(e).portion_pct !== undefined);
   const halfOrMore = meals.filter((e) => Number(dataOf(e).portion_pct) >= 50).length;
   const feeds = inRange.filter((e) => e.type === "eating" && ["breast", "bottle"].includes(String(dataOf(e).method)));
+  const tubeFeeds = inRange.filter((e) => e.type === "eating" && dataOf(e).method === "tube");
+  const tubeMl = tubeFeeds.reduce((s, e) => s + (Number(dataOf(e).amount_ml) || 0), 0);
   const card = profile.careCard as { allergies?: string[]; conditions?: string[]; communication_notes?: string; calming_strategies?: string[]; doctor?: { name?: string } };
   const flagged = flaggedEvents(inRange, { from, to, bmAlertDays: settings.bm_alert_days, medName, describe: (e) => `${entryTitle(e, ctx)}${entryDetail(e) ? `, ${entryDetail(e).toLowerCase()}` : ""}` });
 
@@ -216,7 +218,9 @@ export function ReportDocument() {
                   show("bathroom") && { label: t("bathroom"), value: t("bmsCount", { count: bath.series.reduce((s, b) => s + b.value, 0) }), note: bath.headline },
                   show("mood") && { label: t("mood"), value: mood.daily.some((d) => d.avg !== null) ? t("moodAverage", { avg: (mood.daily.filter((d) => d.avg !== null).reduce((s, d) => s + d.avg!, 0) / mood.daily.filter((d) => d.avg !== null).length).toFixed(1) }) : "—", note: mood.averages.length ? t("beforeAfter", { before: mood.averages[0].value.toFixed(1), after: mood.averages[1].value.toFixed(1) }) : t("logsCount", { count: mood.logCount }) },
                   show("mood") && stage !== "baby" && { label: t("behaviors"), value: `${events.length}`, note: beh.headline },
-                  show("eating") && (feeds.length && stage === "baby"
+                  show("eating") && (tubeFeeds.length
+                    ? { label: t("tube"), value: t("tubePerDay", { amount: tr("eating.ml", { n: Math.round(tubeMl / days.length) }) }), note: t("tubeFeeds", { count: tubeFeeds.length }) }
+                    : feeds.length && stage === "baby"
                     ? { label: t("feeding"), value: t("feedsCount", { count: feeds.length }), note: t("aboutPerDay", { count: Math.round(feeds.length / days.length) }) }
                     : { label: t("eating"), value: t("mealsCount", { count: meals.length }), note: meals.length ? t("halfOrMore", { count: halfOrMore, total: meals.length }) : t("noMeals") }),
                 ].filter(Boolean).slice(0, 4).map((b) => b && (

@@ -392,7 +392,24 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
     favorite(ids.maya, "Bottle 4 oz", "eating", { method: "bottle", contents: "formula", amount_ml: 120 }, 2),
   ];
 
-  return { household, members, profiles, medications, medicationChanges, entries, appointments, options: [], favorites };
+  // EAT-08: each child's foods list holds what the story's meals used. EAT-09: Maya's first taste of each is an introduction.
+  const foodLabel = (key: string) => key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
+  const eatingOf = (profileId: string) => entries.filter((e) => e.profile_id === profileId && e.type === "eating");
+  const options: OptionRow[] = [ids.leo, ids.maya].flatMap((profileId) =>
+    [...new Set(eatingOf(profileId).flatMap((e) => (e.data as { food_ids?: string[] }).food_ids ?? []))].sort().map((key, i) => ({
+      id: uuid(), household_id: ids.household, profile_id: profileId, module: "food", key, label: foodLabel(key),
+      icon: null, sort_order: i, archived: false, created_at: created,
+    }) as OptionRow),
+  );
+  const tasted = new Set<string>();
+  for (const e of eatingOf(ids.maya).sort((a, b) => a.occurred_at.localeCompare(b.occurred_at))) {
+    const d = e.data as { food_ids?: string[]; new_food?: boolean };
+    const foods = d.food_ids ?? [];
+    if (foods.some((f) => !tasted.has(f))) d.new_food = true;
+    foods.forEach((f) => tasted.add(f));
+  }
+
+  return { household, members, profiles, medications, medicationChanges, entries, appointments, options, favorites };
 }
 
 /** The mockup story's moment: Mon, Oct 26, 2026 at 7:05 PM, 25 minutes before Melatonin is due. */

@@ -7,7 +7,7 @@ import type { ModuleFormContext } from "../LogSheet";
 import { FaceScale, Group, RadioChips, Segmented, ToggleChips } from "../controls";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useOptionSet } from "@/lib/data/useOptionSet";
-import { behaviors as behaviorOptions, FEELINGS, moodLabels, SEVERITIES } from "@/lib/options";
+import { BEHAVIOR_DURATIONS, behaviors as behaviorOptions, durationLabel, FEELINGS, moodLabels, SEVERITIES } from "@/lib/options";
 
 type Severity = "mild" | "moderate" | "severe";
 
@@ -41,6 +41,12 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
     setBehaviors((xs) => (xs.some((b) => b.key === key) ? xs.filter((b) => b.key !== key) : [...xs, { key }]));
   const setSeverity = (key: string, severity: Severity) =>
     setBehaviors((xs) => xs.map((b) => (b.key === key ? { ...b, severity } : b)));
+  const setDuration = (key: string, duration: number) =>
+    setBehaviors((xs) => xs.map((b) => {
+      if (b.key !== key) return b;
+      const { duration_min, ...rest } = b;
+      return duration_min === duration ? rest : { ...rest, duration_min: duration };
+    }));
 
   return (
     <div className="space-y-4">
@@ -75,6 +81,13 @@ export function MoodSheet({ ctx, scope: scopeProp, initial }: { ctx: ModuleFormC
                 value={b.severity ?? null}
                 onChange={(s) => setSeverity(b.key, s)}
                 options={SEVERITIES.map((s) => ({ value: s.key, label: s.label }))}
+              />
+              <span className="text-label text-muted-foreground">{m("howLongShort")}</span>
+              <RadioChips
+                label={m("howLong", { name: behaviorList.find((x) => x.key === b.key)?.label ?? "" })}
+                value={b.duration_min ?? null}
+                onChange={(d) => setDuration(b.key, d)}
+                options={BEHAVIOR_DURATIONS.map((d) => ({ value: d, label: durationLabel(d) }))}
               />
             </div>
           ))}

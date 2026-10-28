@@ -68,6 +68,13 @@ export function todayCards(opts: {
         caption: ml ? L("fromBottles", { amount: formatVolume(ml, volumeUnit) }) : L("breastfed"),
         footnote: L("lastAt", { time: clock(last.occurred_at) }),
       });
+    } else if (eat.some((e) => dataOf(e).method === "tube") && !eat.some((e) => dataOf(e).method === "meal")) {
+      const tube = eat.filter((e) => dataOf(e).method === "tube");
+      const ml = tube.reduce((s, e) => s + (Number(dataOf(e).amount_ml) || 0), 0);
+      cards.push({
+        module: "eating", label: t("options.feedingPlural.tube"), value: L("tubeTotal", { amount: t("eating.ml", { n: ml }) }),
+        caption: L("tubeFeeds", { count: tube.length }),
+      });
     } else {
       const meals = eat.filter((e) => dataOf(e).method === "meal");
       const parts = MEAL_TYPES.map((m) => meals.find((e) => dataOf(e).meal_type === m.key))

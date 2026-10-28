@@ -108,7 +108,7 @@ export async function addAppointment(input: { profileId: string; date: string; p
 export async function addOption(input: { profileId: string; module: string; label: string; icon: string | null }): Promise<Result> {
   const parsed = z.object({
     profileId: z.string().uuid(),
-    module: z.enum(["activity", "food", "feeling", "behavior", "prn_reason"]),
+    module: z.enum(["activity", "food", "formula", "feeling", "behavior", "prn_reason"]),
     label: z.string().trim().min(1).max(40),
     icon: z.string().max(40).nullable(),
   }).safeParse(input);

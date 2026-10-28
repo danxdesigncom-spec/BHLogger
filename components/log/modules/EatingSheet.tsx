@@ -6,11 +6,13 @@ import { useTranslations } from "next-intl";
 import type { ModuleFormContext } from "../LogSheet";
 import { Group, Notice, OptionTiles, RadioChips, Stepper, ToggleChips } from "../controls";
 import { TimerStart } from "../TimerStart";
+import { PersonalListPicker } from "./FoodPicker";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useLatestEntry } from "@/lib/data/hooks";
 import {
   ageInMonths, BOTTLE_CONTENTS, BREAST_DURATIONS, BREAST_SIDES, DRINKS, eatingMethodLabel, eatingMethods, FOOD_GROUPS,
-  formatVolume, labelFor, mealTypeForHour, MEAL_TYPES, ML_CHIPS, mlToOz, OZ_CHIPS, ozToMl, PORTIONS, REACTIONS, URGENT_REACTION,
+  FLUSH_ML_CHIPS, formatVolume, labelFor, mealTypeForHour, MEAL_TYPES, ML_CHIPS, mlToOz, OZ_CHIPS, ozToMl, PORTIONS, REACTIONS, TUBE_DELIVERY,
+  TUBE_ML_CHIPS, URGENT_REACTION,
   type EatingMethod,
 } from "@/lib/options";
 
@@ -54,6 +56,8 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
   const last = useLatestEntry(profileId, "eating");
   const lastBottle = useLatestEntry(profileId, "eating", { method: "bottle" });
   const lastBreast = useLatestEntry(profileId, "eating", { method: "breast" });
+  const lastTube = useLatestEntry(profileId, "eating", { method: "tube" });
+  const lastTubeData = lastTube.data?.data as D | undefined;
 
   const lastMethod = (last.data?.data as D | undefined)?.method as EatingMethod | undefined;
   const lastSide = (lastBreast.data?.data as D | undefined)?.side as string | undefined;
@@ -64,6 +68,7 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
   const init = (initial ?? {}) as {
     method?: EatingMethod; side?: string; duration_min?: number; contents?: string; amount_ml?: number;
     meal_type?: "breakfast" | "lunch" | "dinner"; portion_pct?: number; food_groups?: string[]; reactions?: string[];
+    food_ids?: string[]; new_food?: boolean; formula_id?: string; delivery?: string; flush_ml?: number;
   };
   const editing = !!initial;
   const [method, setMethod] = useState<EatingMethod>(init.method ?? methods[0]);
@@ -79,12 +84,23 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
   const [drinkMl, setDrinkMl] = useState<number | null>(init.method === "drink" ? init.amount_ml ?? null : null);
   const [groups, setGroups] = useState<string[]>(init.food_groups ?? []);
   const [reactions, setReactions] = useState<string[]>(init.reactions ?? []);
+  const [foods, setFoods] = useState<string[]>(init.food_ids ?? []);
+  const [newFood, setNewFood] = useState(init.new_food ?? false);
+  const [formula, setFormula] = useState<string | null>(init.method === "tube" ? init.formula_id ?? null : null);
+  const [tubeMl, setTubeMl] = useState<number | null>(init.method === "tube" ? init.amount_ml ?? null : null);
+  const [delivery, setDelivery] = useState<string | null>(init.method === "tube" ? init.delivery ?? null : null);
+  const [flush, setFlush] = useState<number | null>(init.method === "tube" ? init.flush_ml ?? null : editing ? null : -1);
 
   // QL-06: preselect last-used method, breast start side and bottle amount once they load.
   const effMethod = touchedMethod ? method : lastMethod && methods.includes(lastMethod) ? lastMethod : method;
   const effSide = touchedSide ? side : startSide;
   const effContents = contents ?? ((lastBottleData?.contents as string | undefined) ?? "formula");
   const effAmount = amountMl ?? lastAmountMl ?? (unit === "oz" ? ozToMl(4) : 120);
+  // EAT-10 + QL-06: the last tube feed's formula, amount, delivery and flush are the defaults. flush -1 = not touched yet.
+  const effFormula = formula ?? ((lastTubeData?.formula_id as string | undefined) ?? null);
+  const effTubeMl = tubeMl ?? (typeof lastTubeData?.amount_ml === "number" ? lastTubeData.amount_ml : 120);
+  const effDelivery = delivery ?? ((lastTubeData?.delivery as string | undefined) ?? "bolus");
+  const effFlush = flush === -1 ? (typeof lastTubeData?.flush_ml === "number" ? lastTubeData.flush_ml : null) : flush;
 
   useEffect(() => {
     let data: D;
@@ -98,6 +114,10 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
         data = { method: "bottle", contents: effContents, amount_ml: effAmount };
         summary = e("bottleAmount", { amount: formatVolume(effAmount, unit) });
         break;
+      case "tube":
+        data = { method: "tube", amount_ml: effTubeMl, delivery: effDelivery, ...(effFormula ? { formula_id: effFormula } : {}), ...(effFlush ? { flush_ml: effFlush } : {}) };
+        summary = e("tubeSummary", { amount: e("ml", { n: effTubeMl }) });
+        break;
       case "drink":
         data = { method: "drink", contents: drink, ...(drinkMl ? { amount_ml: drinkMl } : {}) };
         summary = DRINKS.find((d) => d.key === drink)?.label ?? e("drink");
@@ -106,14 +126,14 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
         const isMeal = effMethod === "meal";
         data = {
           method: effMethod, ...(isMeal ? { meal_type: mealType } : {}), ...(portion !== null ? { portion_pct: portion } : {}),
-          food_groups: groups, food_ids: [], new_food: false, reactions,
+          food_groups: groups, food_ids: foods, new_food: newFood, reactions,
         };
         summary = isMeal ? (stage === "baby" ? e("solids") : MEAL_TYPES.find((m) => m.key === mealType)!.label) : e("snack");
       }
     }
     ctx.setData(data, summary, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effMethod, effSide, duration, effContents, effAmount, mealType, portion, drink, drinkMl, groups, reactions, unit, stage]);
+  }, [effMethod, effSide, duration, effContents, effAmount, mealType, portion, drink, drinkMl, groups, reactions, foods, newFood, effFormula, effTubeMl, effDelivery, effFlush, unit, stage]);
 
   const amountChips = unit === "oz" ? OZ_CHIPS.map((oz) => ({ ml: ozToMl(oz), label: e("oz", { n: oz }) })) : ML_CHIPS.map((ml) => ({ ml, label: e("ml", { n: ml }) }));
   const step = unit === "oz" ? ozToMl(0.5) : 10;
@@ -211,6 +231,55 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
         </Group>
       )}
 
+      {isMealLike && (
+        <PersonalListPicker
+          profileId={profileId}
+          module="food"
+          selected={foods}
+          onChange={setFoods}
+          label={e("foods")}
+          addLabel={e("addFood")}
+          nameLabel={e("foodName")}
+        />
+      )}
+
+      {effMethod === "tube" && (
+        <>
+          <PersonalListPicker
+            profileId={profileId}
+            module="formula"
+            multiple={false}
+            selected={effFormula ? [effFormula] : []}
+            onChange={(keys) => setFormula(keys[0] ?? "")}
+            label={e("formula")}
+            addLabel={e("addFormula")}
+            nameLabel={e("formulaName")}
+          />
+          <Group label={e("tubeAmount")}>
+            <Stepper
+              display={e("ml", { n: effTubeMl })}
+              onDecrease={() => setTubeMl(Math.max(10, effTubeMl - 10))}
+              onIncrease={() => setTubeMl(Math.min(2000, effTubeMl + 10))}
+              canDecrease={effTubeMl > 10}
+              decreaseLabel={e("lessFormula")}
+              increaseLabel={e("moreFormula")}
+            />
+            <RadioChips label={e("tubeAmountLabel")} value={effTubeMl} onChange={setTubeMl} options={TUBE_ML_CHIPS.map((ml) => ({ value: ml, label: e("ml", { n: ml }) }))} />
+          </Group>
+          <Group label={e("delivery")}>
+            <RadioChips label={e("deliveryLabel")} value={effDelivery} onChange={setDelivery} options={TUBE_DELIVERY.map((d) => ({ value: d.key, label: d.label }))} />
+          </Group>
+          <Group label={e("flush")} hint={t("common.optional")}>
+            <RadioChips
+              label={e("flushLabel")}
+              value={effFlush}
+              onChange={(v) => setFlush(v === effFlush ? null : v)}
+              options={FLUSH_ML_CHIPS.map((ml) => ({ value: ml, label: e("ml", { n: ml }) }))}
+            />
+          </Group>
+        </>
+      )}
+
       {effMethod === "drink" && (
         <>
           <Group label={e("what")}>
@@ -230,6 +299,13 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
       {ctx.detailsEl && isMealLike &&
         createPortal(
           <>
+            <label className="flex items-center justify-between gap-3 min-h-touch-min">
+              <span className="flex flex-col">
+                <span className="text-body font-extrabold">{e("newFood")}</span>
+                <span className="text-caption text-muted-foreground">{e("newFoodHint")}</span>
+              </span>
+              <input type="checkbox" role="switch" checked={newFood} onChange={(ev) => setNewFood(ev.target.checked)} className="switch" />
+            </label>
             <Group label={e("foodGroups")}>
               <ToggleChips
                 options={FOOD_GROUPS.map((g) => ({ value: g.key, label: g.label }))}

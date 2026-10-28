@@ -15,7 +15,7 @@ import { MAX_FAVORITES } from "@/lib/favorites";
 import { clearAllTimers } from "@/lib/timers";
 
 const DEMO_DB = "bl-demo";
-const DATA_VERSION = 6;
+const DATA_VERSION = 7;
 
 class DemoDb extends Dexie {
   entries!: Table<LocalEntry, string>;
@@ -62,6 +62,7 @@ function openDb(): Promise<DemoDb> {
         await db.medicationChanges.bulkPut(data.medicationChanges);
         await db.appointments.bulkPut(data.appointments);
         await db.favorites.bulkPut(data.favorites);
+        await db.options.bulkPut(data.options);
         await db.profileSettings.bulkPut(data.profiles.map((p) => ({ profile_id: p.id, settings: p.settings as Record<string, unknown> })));
         await db.meta.put({ key: "version", value: DATA_VERSION });
         await db.meta.put({ key: "day", value: today });

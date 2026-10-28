@@ -142,7 +142,8 @@
       "meal": "Meal",
       "snack": "Snack",
       "drink": "Drink",
-      "solids": "Solids"
+      "solids": "Solids",
+      "tube": "Tube"
     },
     "breastSide": {
       "left": "Left",
@@ -404,7 +405,12 @@
       "bottle": "Bottle",
       "meal": "Meals",
       "snack": "Snacks",
-      "drink": "Drinks"
+      "drink": "Drinks",
+      "tube": "Tube feeding"
+    },
+    "tubeDelivery": {
+      "bolus": "Bolus",
+      "continuous": "Continuous or pump"
     }
   },
   "summary": {
@@ -434,7 +440,9 @@
     "minutes": "{count} min",
     "ninetyPlus": "90+ min",
     "statusWhen": "{label} · {when}",
-    "yesterdayAt": "Yesterday {time}"
+    "yesterdayAt": "Yesterday {time}",
+    "tube": "Tube · {amount}",
+    "flush": "flush {amount}"
   },
   "meds": {
     "schedule": {
@@ -718,7 +726,9 @@
       "severityAt": "{severity} · {time}",
       "openTrends": "Open trends",
       "newPattern": "New pattern: {block} is hardest",
-      "seeNoticed": "See what we noticed this month"
+      "seeNoticed": "See what we noticed this month",
+      "tubeTotal": "{amount}",
+      "tubeFeeds": "{count, plural, one {# tube feed} other {# tube feeds}}"
     },
     "trends": {
       "range": "Date range",
@@ -851,7 +861,12 @@
       "feelingsCaption": "{count} mood logs",
       "wetHeadline": "About {count} wet diapers a day",
       "followupCaption": "Did it help: {summary}",
-      "pctValue": "{value}%"
+      "pctValue": "{value}%",
+      "tube": "Tube feeding",
+      "tubePerDay": "About {amount} a day by tube",
+      "tubeCaption": "Formula per day, in ml",
+      "formulaCol": "Formula (ml)",
+      "flushCol": "Flush (ml)"
     },
     "patterns": {
       "notProof": "Patterns aren't proof of cause. Share them with your care team.",
@@ -1072,7 +1087,10 @@
       "nothingFlagged": "Nothing flagged in this period.",
       "patternsTitle": "Patterns the app noticed",
       "questionsTitle": "Questions for this visit",
-      "footer": "Made with Behavior Logger from caregiver entries. Not a medical record or diagnosis."
+      "footer": "Made with Behavior Logger from caregiver entries. Not a medical record or diagnosis.",
+      "tube": "Tube feeding",
+      "tubePerDay": "{amount} a day",
+      "tubeFeeds": "{count, plural, one {# feed} other {# feeds}} in the period"
     }
   },
   "toast": {
@@ -1185,7 +1203,24 @@
     "cupAria": "{label}, {amount}",
     "foodGroups": "Food groups",
     "anyReaction": "Any reaction?",
-    "call911": "If this is happening now, call 911."
+    "call911": "If this is happening now, call 911.",
+    "foods": "Foods",
+    "addFood": "Add food",
+    "foodName": "Food name",
+    "newFood": "New food",
+    "newFoodHint": "First time trying something on this list",
+    "tubeSummary": "Tube · {amount}",
+    "formula": "Formula",
+    "addFormula": "Add formula",
+    "formulaName": "Formula name",
+    "tubeAmount": "How much?",
+    "tubeAmountLabel": "Formula amount",
+    "lessFormula": "Less formula",
+    "moreFormula": "More formula",
+    "delivery": "How was it given?",
+    "deliveryLabel": "Delivery",
+    "flush": "Water flush",
+    "flushLabel": "Water flush amount"
   },
   "moodSheet": {
     "dayQuestion": "How was today overall?",
@@ -1195,7 +1230,9 @@
     "feelings": "Feelings",
     "behaviors": "Notable behaviors",
     "intensity": "{name} intensity",
-    "energy": "Energy"
+    "energy": "Energy",
+    "howLong": "How long the {name} lasted",
+    "howLongShort": "How long?"
   },
   "activitySheet": {
     "fallback": "Activity",
@@ -1420,7 +1457,9 @@
     "moveUp": "Move {name} up",
     "moveDown": "Move {name} down",
     "movedUp": "{name} moved up on Home",
-    "movedDown": "{name} moved down on Home"
+    "movedDown": "{name} moved down on Home",
+    "foods": "Foods",
+    "formulas": "Tube formulas"
   },
   "caregivers": {
     "manageTitle": "Manage caregiver",
@@ -1611,5 +1650,13 @@
     "discardBody": "The {name} timer stops and nothing is saved.",
     "keepRunning": "Keep it running",
     "discard": "Discard"
+  },
+  "dayMood": {
+    "forName": "for {name} · one tap saves it"
+  },
+  "followup": {
+    "question": "Did {name} help?",
+    "given": "Given {time}",
+    "givenFor": "Given {time} for {reason}"
   }
 }

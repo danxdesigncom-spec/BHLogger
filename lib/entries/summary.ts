@@ -4,6 +4,7 @@ import {
   activityLabel, behaviorLabel, BM_FLAGS, BM_SIZES, BOTTLE_CONTENTS, BREAST_SIDES, BRISTOL, bathroomKindLabel, DOSE_OUTCOMES,
   DRINKS, enjoymentLabel, feelingLabel, FOOD_GROUPS, formatDose, formatVolume, humanize, INFANT_CONSISTENCY, labelFor,
   MEAL_TYPES, moodLabels, portionLabel, PRN_REASONS, REACTIONS, SEVERITIES, STOOL_COLORS, type BathroomKind, type Option,
+  TUBE_DELIVERY, durationLabel,
 } from "@/lib/options";
 import { t } from "@/lib/i18n";
 
@@ -55,6 +56,7 @@ export function entryShortLabel(e: EntryLike, ctx: SummaryContext): string {
       if (m === "drink") return labelFor(DRINKS, str(d.contents) ?? "other");
       if (m === "meal") return d.portion_pct !== undefined ? t("summary.ate", { portion: lower(portionLabel(Number(d.portion_pct))) }) : labelFor(MEAL_TYPES, str(d.meal_type) ?? "meal");
       if (m === "snack") return t("summary.snack");
+      if (m === "tube") return t("summary.tube", { amount: t("eating.ml", { n: num(d.amount_ml) ?? 0 }) });
       return t("summary.eating");
     }
     case "activity":
@@ -102,6 +104,7 @@ export function entryTitle(e: EntryLike, ctx: SummaryContext): string {
         const drink = labelFor(DRINKS, str(d.contents) ?? "other");
         return num(d.amount_ml) ? t("summary.drinkAmount", { drink, amount: formatVolume(num(d.amount_ml)!, ctx.volumeUnit) }) : drink;
       }
+      if (m === "tube") return t("summary.tube", { amount: t("eating.ml", { n: num(d.amount_ml) ?? 0 }) });
       return t("summary.eating");
     }
     case "activity": {
@@ -143,10 +146,15 @@ export function entryDetail(e: EntryLike): string {
       if (m === "breast" && num(d.duration_min)) parts.push(t("summary.minutes", { count: num(d.duration_min)! }));
       if (m === "bottle" && d.contents) parts.push(labelFor(BOTTLE_CONTENTS, String(d.contents)));
       if (m === "meal" || m === "snack") {
-        const foods = arr(d.food_ids).map((f) => humanize(String(f)));
+        const foods = arr(d.food_ids).map((f) => humanize(String(f).replace(/^opt_/, "")));
         const groups = arr(d.food_groups).map((g) => labelFor(FOOD_GROUPS, String(g)));
         const list = foods.length ? foods : groups;
         if (list.length) parts.push(sentenceList(list));
+      }
+      if (m === "tube") {
+        if (d.formula_id) parts.push(humanize(String(d.formula_id).replace(/^opt_/, "")));
+        if (d.delivery) parts.push(labelFor(TUBE_DELIVERY, String(d.delivery)));
+        if (num(d.flush_ml)) parts.push(t("summary.flush", { amount: t("eating.ml", { n: num(d.flush_ml)! }) }));
       }
       const reactions = arr(d.reactions).map((r) => labelFor(REACTIONS, String(r)));
       if (reactions.length) parts.push(reactions.join(", "));
@@ -158,6 +166,7 @@ export function entryDetail(e: EntryLike): string {
     case "mood": {
       const b = arr(d.behaviors)[0] as D | undefined;
       if (b?.severity) parts.push(labelFor(SEVERITIES, String(b.severity)));
+      if (num(b?.duration_min)) parts.push(durationLabel(num(b!.duration_min)!));
       const feelings = arr(d.feelings).map((f) => feelingLabel(String(f)));
       if (feelings.length) parts.push(feelings.join(", "));
       break;
