@@ -61,16 +61,15 @@ export default function InsightsTodayPage() {
               <Link
                 key={c.module}
                 href={`/insights/trends?module=${TREND_MODULE[c.module]}`}
-                aria-label={`${c.label}: ${c.value} ${c.caption}${c.footnote ? `. ${c.footnote}` : ""}. Open trends`}
                 className={`min-h-[150px] flex flex-col justify-between gap-2 p-4 rounded-card text-foreground ${CARD_BG[c.module]}`}
               >
                 <span className={`flex items-center gap-1.5 text-label font-extrabold ${CARD_INK[c.module]} [&_svg]:w-4 [&_svg]:h-4`}>
                   {c.module === "behaviors" ? MODULE_ICONS.mood : MODULE_ICONS[c.module]}
                   {c.label}
-                </span>
+                </span>{" "}
                 <span className="flex flex-col gap-0.5">
-                  <span className="font-display text-display-2">{c.value}</span>
-                  <span className="text-label font-bold text-foreground-2">{c.caption}</span>
+                  <span className="font-display text-display-2">{c.value}</span>{" "}
+                  <span className="text-label font-bold text-foreground-2">{c.caption}</span>{" "}
                   {c.sparkline && c.sparkline.length > 1 && <Sparkline values={c.sparkline} />}
                   {c.footnote && (
                     <span className={c.alert ? "self-start mt-1 px-2 py-0.5 rounded-full bg-card text-caption font-extrabold text-warning-ink" : "text-caption text-foreground-2"}>

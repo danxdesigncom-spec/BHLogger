@@ -18,6 +18,15 @@ import { ymdLocal } from "@/lib/insights/core";
 const MODULES = ["all", "mood", "bathroom", "behaviors", "eating", "activity", "medication"] as const;
 type Mod = (typeof MODULES)[number];
 
+// Sequential, one hue, three steps: lower mood is deeper. Each step keeps text at 4.5:1 or better in
+// light and dark themes, and every cell prints its value, so color is never the only cue.
+function heatStyle(avg: number | null): React.CSSProperties {
+  if (avg === null) return { background: "var(--secondary)", color: "var(--muted-foreground)" };
+  if (avg < 2.5) return { background: "var(--chart-mood)", color: "var(--primary-foreground)" };
+  if (avg < 3.5) return { background: "color-mix(in oklab, var(--chart-mood) 30%, var(--card))", color: "var(--foreground)" };
+  return { background: "color-mix(in oklab, var(--chart-mood) 10%, var(--card))", color: "var(--foreground)" };
+}
+
 function Heatmap({ rows }: { rows: { block: string; cells: { weekday: string; avg: number | null; n: number }[] }[] }) {
   return (
     <div className="overflow-x-auto">
@@ -36,11 +45,7 @@ function Heatmap({ rows }: { rows: { block: string; cells: { weekday: string; av
                 <td
                   key={c.weekday}
                   className="h-8 rounded-md text-center font-extrabold"
-                  style={{
-                    // Sequential, one hue: lower mood = deeper tint. Values are printed, so color is never the only cue.
-                    background: c.avg === null ? "var(--secondary)" : `color-mix(in oklab, var(--chart-mood) ${Math.round(((5 - c.avg) / 4) * 70 + 8)}%, var(--card))`,
-                    color: c.avg !== null && c.avg <= 2.2 ? "var(--card)" : "var(--foreground)",
-                  }}
+                  style={heatStyle(c.avg)}
                   aria-label={`${r.block}, ${c.weekday}: ${c.avg ?? "no logs"}`}
                 >
                   {c.avg ?? "·"}
@@ -142,7 +147,7 @@ export function TrendsClient() {
                 icon={MODULE_ICONS.mood}
                 inkClass="text-mood-ink"
                 headline="When the day goes better or harder"
-                caption="Average mood per 3-hour block and weekday · darker is lower"
+                caption="Average mood per 3-hour block and weekday · deeper color is lower (under 2.5, 2.5 to 3.4, 3.5 and up)"
                 ariaRange={rangeText}
               >
                 <Heatmap rows={mood.heatmap} />

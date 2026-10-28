@@ -151,9 +151,7 @@ export function HomeClient() {
           onClick={() => setSwitcherOpen(true)}
           className="min-h-touch flex items-center gap-2 py-1.5 pl-1.5 pr-3.5 rounded-full bg-card shadow-raised"
         >
-          <span aria-hidden="true" data-profile-color={activeProfile?.color} className="w-9 h-9 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5">
-            {activeProfile?.initials}
-          </span>
+          <span aria-hidden="true" data-profile-color={activeProfile?.color} data-initial={activeProfile?.initials} className="w-9 h-9 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5 before:content-[attr(data-initial)]" />
           <span className="text-body-lg">{activeProfile?.name}</span>
           <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
         </button>
@@ -210,14 +208,13 @@ export function HomeClient() {
           {enabled.has("medication") && (
             <Link
               href="/meds"
-              aria-label={`Medication. ${medStatus}`}
               className="col-span-2 flex items-center gap-3.5 min-h-20 p-4 rounded-tile bg-medication text-foreground"
             >
               <span className="w-11 h-11 flex-none rounded-full bg-card text-medication-ink flex items-center justify-center [&_svg]:w-[22px] [&_svg]:h-[22px]">
                 {MODULE_ICONS.medication}
               </span>
               <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-                <span className="font-display text-title-3">Medication</span>
+                <span className="font-display text-title-3">Medication</span>{" "}
                 <span className={notLogged.length ? "self-start px-2.5 py-0.5 rounded-full bg-card text-caption font-extrabold text-warning-ink" : "text-label font-bold text-foreground-2"}>
                   {medStatus}
                 </span>

@@ -21,9 +21,7 @@ export function AppHeader({ title, children }: { title: string; children?: React
             onClick={() => setOpen(true)}
             className="min-h-touch-min flex items-center gap-2 py-1.5 pl-1.5 pr-3 rounded-full bg-card shadow-raised"
           >
-            <span aria-hidden="true" className="w-8 h-8 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-body-md">
-              {activeProfile?.initials}
-            </span>
+            <span aria-hidden="true" data-initial={activeProfile?.initials} className="w-8 h-8 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-body-md before:content-[attr(data-initial)]" />
             <span className="text-body font-extrabold">{activeProfile?.name}</span>
             <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
           </button>

@@ -2,7 +2,7 @@
 
 import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer,
-  Scatter, ScatterChart, Tooltip, XAxis, YAxis,
+  Tooltip, XAxis, YAxis,
 } from "recharts";
 import { shortDate } from "@/lib/dates";
 import { formatHour } from "@/lib/prefs";
@@ -179,31 +179,35 @@ export function TopBars({ data, color = "var(--chart-4)", height }: { data: { la
   );
 }
 
-/** Dose times by day (DSH-07). y = hour of day. */
+/** Dose times by day (DSH-07), drawn as plain SVG: x = day, y = hour of day. The card's label and table carry the data. */
 export function DoseTimes({ points, days, height = 170 }: { points: { day: string; hour: number; name: string }[]; days: string[]; height?: number }) {
+  const W = 340;
+  const H = height;
+  const pad = { l: 44, r: 8, t: 8, b: 22 };
   const index = new Map(days.map((d, i) => [d, i]));
-  const data = points.map((p) => ({ x: index.get(p.day) ?? 0, y: Math.round(p.hour * 10) / 10, name: p.name, day: p.day }));
-  const hourLabel = formatHour;
+  const x = (i: number) => pad.l + (days.length > 1 ? (i / (days.length - 1)) * (W - pad.l - pad.r) : (W - pad.l - pad.r) / 2);
+  const y = (h: number) => pad.t + (h / 24) * (H - pad.t - pad.b);
+  const ticks = [0, Math.floor((days.length - 1) / 2), days.length - 1].filter((v, i, a) => a.indexOf(v) === i);
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: -10 }}>
-        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
-        <XAxis type="number" dataKey="x" domain={[0, Math.max(0, days.length - 1)]} ticks={[0, Math.floor((days.length - 1) / 2), days.length - 1]} tickFormatter={(i: number) => (days[i] ? dayLabel(days[i]) : "")} tick={AXIS} axisLine={{ stroke: "var(--chart-baseline)" }} tickLine={false} />
-        <YAxis type="number" dataKey="y" domain={[0, 24]} ticks={[6, 12, 18]} tickFormatter={hourLabel} reversed tick={AXIS} axisLine={false} tickLine={false} width={48} />
-        <Tooltip
-          cursor={false}
-          content={({ active, payload }) =>
-            active && payload?.length ? (
-              <div className="rounded-lg bg-toast text-toast-foreground px-3 py-2 shadow-toast text-caption">
-                <p className="font-extrabold">{String(payload[0].payload.name)}</p>
-                <p>{dayLabel(String(payload[0].payload.day))}, {hourLabel(Number(payload[0].payload.y))}</p>
-              </div>
-            ) : null
-          }
-        />
-        <Scatter data={data} fill="var(--chart-3)" isAnimationActive={false} />
-      </ScatterChart>
-    </ResponsiveContainer>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} aria-hidden="true" preserveAspectRatio="none">
+      {[6, 12, 18].map((h) => (
+        <g key={h}>
+          <line x1={pad.l} x2={W - pad.r} y1={y(h)} y2={y(h)} stroke="var(--chart-grid)" />
+          <text x={pad.l - 6} y={y(h) + 4} textAnchor="end" fontSize={12} fontWeight={700} fill="var(--chart-axis)">{formatHour(h)}</text>
+        </g>
+      ))}
+      <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} stroke="var(--chart-baseline)" />
+      {ticks.map((i) => (
+        <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === days.length - 1 ? "end" : "middle"} fontSize={12} fontWeight={700} fill="var(--chart-axis)">
+          {days[i] ? dayLabel(days[i]) : ""}
+        </text>
+      ))}
+      {points.map((p, i) => (
+        <circle key={i} cx={x(index.get(p.day) ?? 0)} cy={y(p.hour)} r={4.5} fill="var(--chart-3)" stroke="var(--card)" strokeWidth={1.5}>
+          <title>{`${p.name}, ${dayLabel(p.day)}, ${formatHour(p.hour)}`}</title>
+        </circle>
+      ))}
+    </svg>
   );
 }
 

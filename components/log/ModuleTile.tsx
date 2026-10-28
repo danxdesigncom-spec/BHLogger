@@ -33,14 +33,13 @@ export function ModuleTile({ module, label, icon, status, alertPill, onClick }: 
     <button
       type="button"
       onClick={onClick}
-      aria-label={[label, alertPill ?? status].filter(Boolean).join(". ")}
       className={`flex flex-col items-start justify-between gap-3 min-h-[124px] p-4 rounded-tile text-left text-foreground transition-opacity active:opacity-75 ${BG[module]}`}
     >
       <span className={`w-11 h-11 rounded-full bg-card flex items-center justify-center ${INK[module]}`}>
         {icon}
       </span>
       <span className="flex flex-col items-start gap-1">
-        <span className="font-display text-title-3">{label}</span>
+        <span className="font-display text-title-3">{label}</span>{" "}
         {alertPill ? (
           <span className="px-2.5 py-0.5 rounded-full bg-card text-caption font-extrabold text-warning-ink">{alertPill}</span>
         ) : status ? (
