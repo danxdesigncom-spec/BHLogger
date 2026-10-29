@@ -16,6 +16,7 @@ import { exitDemoMode } from "@/app/auth/demo/actions";
 import { updateProfile } from "@/lib/actions/settings";
 import { clearDemoData } from "@/lib/data/demo-repo";
 import { clearLocalData } from "@/lib/data/outbox";
+import { useOnClient } from "@/lib/use-on-client";
 
 function Row({ href, children, onClick }: { href?: string; children: React.ReactNode; onClick?: () => void }) {
   const cls = "w-full min-h-[60px] flex items-center gap-3 px-3.5 py-2 text-left";
@@ -40,6 +41,8 @@ export default function MorePage() {
   const router = useRouter();
   const t = useTranslations("more");
   const tc = useTranslations("common");
+  // Ages depend on the viewer's date, which the server can't know, so they appear after hydration.
+  const onClient = useOnClient();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [busy, startTransition] = useTransition();
   const isAdmin = currentMember.role === "admin";
@@ -73,7 +76,7 @@ export default function MorePage() {
                 <Avatar profile={p} />
                 <span className="flex-1 min-w-0">
                   <span className="block text-body-md">{p.name}</span>
-                  <span className="block text-caption text-muted-foreground">{[ageLabel(p.dob), careStageLabel(p.careStage)].filter(Boolean).join(" · ")}</span>
+                  <span className="block text-caption text-muted-foreground">{[onClient ? ageLabel(p.dob) : null, careStageLabel(p.careStage)].filter(Boolean).join(" · ")}</span>
                 </span>
                 <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
               </Row>

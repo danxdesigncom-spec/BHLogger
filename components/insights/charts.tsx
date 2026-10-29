@@ -272,7 +272,7 @@ export function FoodSplit({ rows, hidden = 0 }: { rows: { label: string; logs: n
           const neither = r.logs - r.accepted - r.refused;
           const seg = (n: number, color: string) => (n > 0 ? <span style={{ flexGrow: n, background: color }} className="h-full first:rounded-l-full last:rounded-r-full" /> : null);
           return (
-            <li key={r.label} className={i === split ? "pt-2.5 border-t border-dashed border-divider" : undefined}>
+            <li key={`${i}-${r.label}`} className={i === split ? "pt-2.5 border-t border-dashed border-divider" : undefined}>
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-label font-extrabold text-foreground truncate">{r.label}</span>
                 <span className="flex-none text-micro font-bold text-foreground-2 tabular-nums">

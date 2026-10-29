@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Droplet, Moon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -43,6 +43,7 @@ export function HomeClient() {
   const setOpenSheet = (m: ModuleType | null) => router.replace(m ? `/?log=${m}` : "/", { scroll: false });
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const switcherPill = useRef<HTMLButtonElement>(null);
   const { showToast, toastElement } = useUndoToast();
   const quick = useQuickLog(showToast);
   const settings = useProfileSettings(activeProfileId);
@@ -168,6 +169,7 @@ export function HomeClient() {
     <>
       <header className="flex items-center justify-between gap-3 px-5 pt-[18px] pb-1">
         <button
+          ref={switcherPill}
           type="button"
           aria-label={t("common.switchProfile", { name: activeProfile?.name ?? "" })}
           onClick={() => setSwitcherOpen(true)}
@@ -247,7 +249,7 @@ export function HomeClient() {
         )}
       </div>
 
-      <ProfileSwitcherSheet open={switcherOpen} onClose={() => setSwitcherOpen(false)} />
+      <ProfileSwitcherSheet open={switcherOpen} onClose={() => setSwitcherOpen(false)} opener={switcherPill} />
 
       <LogSheet module="bathroom" moduleLabel={tileLabels.bathroom} detailsHint={toileting === "diapers" ? h("hintDiaper") : h("hintToilet")} open={openSheet === "bathroom"} onClose={() => setOpenSheet(null)} onSaved={showToast}>
         {(c) => <BathroomSheet ctx={c} />}

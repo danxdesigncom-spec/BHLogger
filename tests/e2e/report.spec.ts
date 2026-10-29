@@ -1,12 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { enterDemo } from "./helpers";
+import { enterDemo, STORY } from "./helpers";
 
 // AT-13: a 30-day Doctor visit report includes the header, medications, summaries, charts with
 // markers and flagged events, and prints on Letter in 3 pages or fewer.
 test.describe("Doctor report (AT-13)", () => {
   test("prints a 30-day Doctor visit report on Letter in 3 pages or fewer", async ({ page, browserName }) => {
     test.skip(browserName !== "chromium", "PDF printing is Chromium-only in Playwright");
-    await enterDemo(page);
+    // At the story's moment the report has the mockup's patterns and flagged events, whatever the real time.
+    await enterDemo(page, { at: STORY });
     await page.goto("/reports");
     await page.getByRole("radio", { name: "30 days" }).click();
     await page.getByRole("radio", { name: "Doctor visit" }).click();

@@ -50,9 +50,13 @@ export function cardFieldText(raw: unknown, field: CardField): string {
   }
 }
 
-/** A tel: link for a typed phone number, keeping digits and a leading +. Null when there's nothing to dial. */
+/**
+ * A tel: link for a typed phone number, keeping digits and a leading +. An extension ("ext 12", "x12")
+ * is dropped rather than run into the number. Null when there's nothing to dial.
+ */
 export function telHref(phone: string | undefined): string | null {
   if (!phone) return null;
-  const digits = phone.trim().replace(/(?!^\+)[^\d]/g, "");
+  const main = phone.trim().split(/\s*(?:ext\.?|extension|x|#)\s*\d/i)[0];
+  const digits = main.replace(/(?!^\+)[^\d]/g, "");
   return digits.replace(/\D/g, "").length >= 3 ? `tel:${digits}` : null;
 }

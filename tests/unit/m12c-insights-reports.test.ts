@@ -8,6 +8,7 @@ import { DEFAULT_CARD_FIELDS, parseCardFields, reportHref } from "@/lib/reports/
 import { cardFieldText, isCardEmpty, readCareCard, telHref } from "@/lib/carecard";
 import { entryDetail } from "@/lib/entries/summary";
 import { weekdayName } from "@/lib/dates";
+import { safeNext } from "@/lib/auth/safe-next";
 import { generateHouseholdData, SEED_IDS, storyAnchor } from "@/lib/demo/generate";
 
 // M12c: food insights (DSH-09), Add to report (DSH-12), PAT-04 to PAT-07, care card fields (RPT-09)
@@ -211,7 +212,20 @@ describe("RPT-09 and ACC-12 care card", () => {
     expect(isCardEmpty(readCareCard({ allergies: "Peanuts" }))).toBe(true);
     expect(telHref("312-555-0101")).toBe("tel:3125550101");
     expect(telHref("+1 (312) 555-0100")).toBe("tel:+13125550100");
+    expect(telHref("312-555-0101 ext. 12")).toBe("tel:3125550101");
+    expect(telHref("312.555.0101 x4")).toBe("tel:3125550101");
     expect(telHref("ab")).toBeNull();
     expect(telHref(undefined)).toBeNull();
+  });
+});
+
+describe("sign-in redirect", () => {
+  it("only follows paths on this site", () => {
+    expect(safeNext("/invite/abc?x=1")).toBe("/invite/abc?x=1");
+    expect(safeNext(undefined)).toBe("/");
+    for (const bad of ["https://evil.example", "//evil.example", "/\\evil.example", "@evil.example", "evil.example", "/ok\u0000", "javascript:alert(1)"]) {
+      expect(safeNext(bad)).toBe("/");
+    }
+    expect(new URL(safeNext("@evil.example"), "http://localhost:3000").origin).toBe("http://localhost:3000");
   });
 });

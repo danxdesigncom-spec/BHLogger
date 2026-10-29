@@ -18,6 +18,7 @@ import {
 import { reportItems, removeReportItem, type ReportItem } from "@/lib/report-items";
 import { cardFieldText } from "@/lib/carecard";
 import { addDays, fromYmd, shortDate, ymd } from "@/lib/dates";
+import { useOnClient } from "@/lib/use-on-client";
 
 type RangeKey = "7" | "30" | "90" | "custom" | "appointment";
 
@@ -27,6 +28,8 @@ export default function ReportsPage() {
   const qc = useQueryClient();
   const t = useTranslations("reports.builder");
   const tc = useTranslations("common");
+  // The ranges come from the viewer's own date, which the server can't know, so the builder renders on the client.
+  const onClient = useOnClient();
   const [profileId, setProfileId] = useState(activeProfile?.id ?? profiles[0]?.id ?? "");
   const profile = profiles.find((p) => p.id === profileId);
   const appointments = useAppointments(profileId || null);
@@ -111,6 +114,18 @@ export default function ReportsPage() {
       setMessage(t("shareFallback"));
     }
   };
+
+  if (!onClient) {
+    return (
+      <>
+        <AppHeader title={t("title")} />
+        <div className="px-5 pt-2 pb-6 space-y-5" aria-busy="true">
+          <p className="text-label font-normal text-muted-foreground -mt-2">{t("subtitle")}</p>
+          <div className="h-64 rounded-card bg-muted animate-pulse" />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

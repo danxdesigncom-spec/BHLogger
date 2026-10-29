@@ -7,7 +7,7 @@ import { DailyBars, DoseTimes, FoodSplit, LabeledBars, MoodHeatmap, MoodLine, Ne
 import type { TableData } from "./ChartCard";
 import { MODULE_ICONS } from "@/components/log/LogSheet";
 import type { InsightEntry } from "@/lib/insights/core";
-import { foodIntroductions, foodStats, rankFoods } from "@/lib/insights/foods";
+import { FOOD_RULES, foodIntroductions, foodStats, rankFoods } from "@/lib/insights/foods";
 import { activityTrend, bathroomTrend, behaviorTrend, eatingTrend, medsTrend, moodTrend } from "@/lib/insights/trends";
 import type { MedicationRow } from "@/lib/data/types";
 import { bathroomTileLabel, labelFor, REACTIONS } from "@/lib/options";
@@ -127,7 +127,7 @@ export function buildTrendCards(x: TrendInput): TrendCard[] {
     foods.ranked.length > 0 && {
       ...eatCard, id: "eating.foods", kicker: T("foods"),
       headline: foodsHeadline(foods, x.foodLabel),
-      caption: T("foodsCaption", { min: 3 }),
+      caption: T("foodsCaption", { min: FOOD_RULES.MIN_LOGS }),
       table: {
         columns: [T("food"), T("logs"), T("ateCol"), T("refusedCol")],
         rows: foods.ranked.map((f) => [x.foodLabel(f.key), f.logs, f.accepted, f.refused]),

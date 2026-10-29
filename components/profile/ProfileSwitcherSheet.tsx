@@ -1,19 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Check, IdCard, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useHousehold } from "@/lib/context/household-provider";
 import { ageLabel, careStageLabel } from "@/lib/options";
 import { CareCardView } from "./CareCardView";
 
-export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ProfileSwitcherSheet({ open, onClose, opener }: { open: boolean; onClose: () => void; opener?: RefObject<HTMLElement | null> }) {
   const { profiles, activeProfileId, setActiveProfile, currentMember } = useHousehold();
   const t = useTranslations("profiles");
   // ACC-12: the care card opens inside this sheet, so it's 2 taps from any tab screen.
   const [cardFor, setCardFor] = useState<string | null>(null);
   const cardProfile = profiles.find((p) => p.id === cardFor);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const sheetRef = useRef<HTMLElement>(null);
+  const backTo = useRef<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -25,12 +28,29 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Move focus into the sheet when it opens and give it back to the pill that opened it when it closes.
+  // Safari doesn't focus a button on click, so the caller passes its pill rather than relying on activeElement.
+  useEffect(() => {
+    if (!open) return;
+    const back = opener?.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    titleRef.current?.focus();
+    return () => back?.focus();
+  }, [open, opener]);
+
+  // Coming back from a care card, focus that person's Care card button again.
+  useEffect(() => {
+    if (cardFor || !backTo.current) return;
+    sheetRef.current?.querySelector<HTMLElement>(`[data-card-for="${backTo.current}"]`)?.focus();
+    backTo.current = null;
+  }, [cardFor]);
+
   if (!open) return null;
 
   return (
     <>
       <div aria-hidden="true" className="fixed inset-0 z-40 bg-[var(--overlay)] animate-fade-in" onClick={onClose} />
       <section
+        ref={sheetRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="switch-title"
@@ -39,10 +59,18 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
       >
         <div aria-hidden="true" className="w-10 h-[5px] mx-auto mt-2.5 rounded-full bg-grabber" />
         {cardProfile ? (
-          <CareCardView profile={cardProfile} canEdit={currentMember.role === "admin"} onBack={() => setCardFor(null)} onClose={onClose} />
+          <CareCardView
+            profile={cardProfile}
+            canEdit={currentMember.role === "admin"}
+            onBack={() => {
+              backTo.current = cardProfile.id;
+              setCardFor(null);
+            }}
+            onClose={onClose}
+          />
         ) : (
           <>
-            <h2 id="switch-title" className="font-display text-title-1 px-5 pt-4 pb-3">{t("switchTitle")}</h2>
+            <h2 id="switch-title" ref={titleRef} tabIndex={-1} className="font-display text-title-1 px-5 pt-4 pb-3 outline-none">{t("switchTitle")}</h2>
             <ul className="px-4 space-y-2">
               {profiles.map((p) => {
                 const active = p.id === activeProfileId;
@@ -69,6 +97,7 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
                     </button>
                     <button
                       type="button"
+                      data-card-for={p.id}
                       onClick={() => setCardFor(p.id)}
                       aria-label={t("careCardFor", { name: p.name })}
                       className="w-16 min-h-16 flex-none flex flex-col items-center justify-center gap-0.5 rounded-xl bg-secondary text-micro font-extrabold text-foreground-2"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, use } from "react";
+import { useActionState } from "react";
 import { sendMagicLink } from "./actions";
 import { Mail, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,13 +8,13 @@ import { enterDemoMode } from "../demo/actions";
 import { DEMO_ENABLED } from "@/lib/demo";
 
 interface Props {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  /** Where to go after signing in, from `?next=`. */
+  next?: string;
+  /** An error passed back from the auth callback, from `?error=`. */
+  callbackError?: string;
 }
 
-export function LoginForm({ searchParams }: Props) {
-  const params = use(searchParams);
-  const next = params.next ?? "/";
-  const callbackError = params.error;
+export function LoginForm({ next = "/", callbackError }: Props) {
 
   const [state, action, pending] = useActionState(sendMagicLink, null);
   const t = useTranslations("auth");

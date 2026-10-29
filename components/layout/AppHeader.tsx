@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useHousehold } from "@/lib/context/household-provider";
@@ -10,6 +10,7 @@ import { ProfileSwitcherSheet } from "@/components/profile/ProfileSwitcherSheet"
 export function AppHeader({ title, children }: { title: string; children?: ReactNode }) {
   const { activeProfile, profiles } = useHousehold();
   const [open, setOpen] = useState(false);
+  const pill = useRef<HTMLButtonElement>(null);
   const t = useTranslations("common");
 
   return (
@@ -18,6 +19,7 @@ export function AppHeader({ title, children }: { title: string; children?: React
         <h1 className="font-display text-display-2">{title}</h1>
         {profiles.length > 0 && (
           <button
+            ref={pill}
             type="button"
             aria-label={t("switchProfile", { name: activeProfile?.name ?? "" })}
             onClick={() => setOpen(true)}
@@ -30,7 +32,7 @@ export function AppHeader({ title, children }: { title: string; children?: React
         )}
       </div>
       {children}
-      <ProfileSwitcherSheet open={open} onClose={() => setOpen(false)} />
+      <ProfileSwitcherSheet open={open} onClose={() => setOpen(false)} opener={pill} />
     </header>
   );
 }

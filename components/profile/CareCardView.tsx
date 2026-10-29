@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { AlertTriangle, ChevronLeft, Pencil, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ProfileSummary } from "@/lib/context/household-provider";
@@ -38,6 +39,8 @@ export function CareCardView({ profile, canEdit, onBack, onClose }: { profile: P
   const t = useTranslations("careCard");
   const card = readCareCard(profile.careCard);
   const empty = isCardEmpty(card);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => titleRef.current?.focus(), []);
 
   return (
     <div data-profile-color={profile.color} className="px-5 pt-3 space-y-4 max-h-[78vh] overflow-y-auto">
@@ -45,7 +48,7 @@ export function CareCardView({ profile, canEdit, onBack, onClose }: { profile: P
         <button type="button" onClick={onBack} aria-label={t("back")} className="w-11 h-11 flex-none rounded-full flex items-center justify-center text-foreground">
           <ChevronLeft size={22} strokeWidth={2} aria-hidden="true" />
         </button>
-        <h2 id="switch-title" className="font-display text-title-2 flex-1">{t("title", { name: profile.name })}</h2>
+        <h2 id="switch-title" ref={titleRef} tabIndex={-1} className="font-display text-title-2 flex-1 outline-none">{t("title", { name: profile.name })}</h2>
       </div>
 
       {empty ? (

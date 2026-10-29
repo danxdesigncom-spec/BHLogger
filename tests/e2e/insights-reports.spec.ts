@@ -101,6 +101,7 @@ test.describe("Insights and reports (M12c)", () => {
     await page.getByRole("button", { name: /^Switch profile/ }).click();
     await page.getByRole("button", { name: "Care card: Leo" }).click();
     const sheet = page.getByRole("dialog", { name: "Leo's care card" });
+    await expect(sheet.getByRole("heading", { name: "Leo's care card" })).toBeFocused();
     await expect(sheet).toContainText("Peanuts");
     await expect(sheet).toContainText("Mild asthma");
     await expect(sheet.getByRole("link", { name: "Call Mom" })).toHaveAttribute("href", "tel:3125550101");
@@ -108,5 +109,8 @@ test.describe("Insights and reports (M12c)", () => {
 
     await sheet.getByRole("button", { name: "Back to profiles" }).click();
     await expect(page.getByRole("dialog", { name: "Switch profile" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Care card: Leo" })).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: /^Switch profile/ })).toBeFocused();
   });
 });

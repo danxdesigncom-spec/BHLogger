@@ -23,20 +23,25 @@ import { flaggedEvents } from "@/lib/reports/flagged";
 import { parseCardFields, savedQuestions, TEMPLATES, type SectionKey, type TemplateKey } from "@/lib/reports/templates";
 import { chartItemId, patternItemId, reportItems, type ReportItem } from "@/lib/report-items";
 import { fromYmd, longDate, shortDate } from "@/lib/dates";
+import { useOnClient } from "@/lib/use-on-client";
 import type { MedicationChangeRow } from "@/lib/data/types";
 
 type Translate = (key: string, values?: Record<string, string | number>) => string;
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * DESIGN 7: charts and short blocks never split across pages. Table sections (`split`) may break between
+ * rows, with the header row repeated, and the heading stays with the first rows.
+ */
+function Section({ title, children, split }: { title: string; children: ReactNode; split?: boolean }) {
   return (
-    <section className="report-section space-y-2">
-      <h2 className="text-[18px] leading-tight font-extrabold font-sans">{title}</h2>
+    <section className={`${split ? "" : "report-section "}space-y-2`}>
+      <h2 className="text-[18px] leading-tight font-extrabold font-sans break-after-avoid">{title}</h2>
       {children}
     </section>
   );
 }
 
-function Table({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
+function Table({ columns, rows, nowrap = [] }: { columns: string[]; rows: ReactNode[][]; nowrap?: number[] }) {
   return (
     <table className="w-full text-[14px] leading-[1.45] tabular-nums border-collapse">
       <thead>
@@ -47,7 +52,7 @@ function Table({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
       <tbody>
         {rows.map((r, i) => (
           <tr key={i} className="border-b border-border">
-            {r.map((v, j) => <td key={j} className="py-1.5 pr-3 align-top">{v}</td>)}
+            {r.map((v, j) => <td key={j} className={`py-1.5 pr-3 align-top${nowrap.includes(j) ? " whitespace-nowrap" : ""}`}>{v}</td>)}
           </tr>
         ))}
       </tbody>
@@ -85,6 +90,7 @@ export function ReportDocument() {
   const optionLabel = useOptionLabels(profile?.id ?? null);
   const customActivities = useOptions(profile?.id ?? null, "activity");
   const cardFields = parseCardFields(params.get("cc"));
+  const onClient = useOnClient();
 
   const entries = useEntries({ profileId: profile?.id, from: new Date(from.getTime() - 15 * 86_400_000).toISOString(), to: to.toISOString() }, !!profile);
   const meds = useMedications(profile?.id ?? null);
@@ -96,7 +102,8 @@ export function ReportDocument() {
     if (profile) setItems(reportItems(profile.id));
   }, [profile]);
 
-  if (!profile) return null;
+  // The header's age and "prepared on" date come from the viewer's own date, so the report renders on the client.
+  if (!profile || !onClient) return null;
   const loading = entries.isLoading || meds.isLoading;
   const show = (s: SectionKey) => sections.has(s);
   const stage = profile.careStage;
@@ -205,7 +212,7 @@ export function ReportDocument() {
             )}
 
             {show("meds") && (
-              <Section title={t("currentMeds")}>
+              <Section split title={t("currentMeds")}>
                 <Table
                   columns={[t("colMedication"), t("colDose"), t("colSchedule"), t("colStarted"), t("colGiven")]}
                   rows={(meds.data ?? []).filter((m) => m.active).map((m) => {
@@ -263,13 +270,13 @@ export function ReportDocument() {
             )}
 
             {show("mood") && behaviorRows.length > 0 && (
-              <Section title={t("behaviors")}>
+              <Section split title={t("behaviors")}>
                 <Table columns={[t("colBehavior"), t("colIntensity"), t("colTimeOfDay"), t("colTimes")]} rows={behaviorRows} />
               </Section>
             )}
 
             {show("eating") && meals.length > 0 && (
-              <Section title={t("eating")}>
+              <Section split title={t("eating")}>
                 {(foods.best || foods.refused || intros.length > 0) && (
                   <p className="text-[13px]">
                     {[
@@ -290,7 +297,7 @@ export function ReportDocument() {
             )}
 
             {show("activity") && (
-              <Section title={t("activities")}>
+              <Section split title={t("activities")}>
                 <Table
                   columns={[t("colActivity"), t("colTimes"), t("colEnjoyment"), t("colMinutes")]}
                   rows={activityStats(inRange).slice(0, 8).map((a) => [activityLabel(a.key), a.count, a.enjoyment ? t("enjoymentOf", { score: a.enjoyment.toFixed(1) }) : t("notRated"), a.minutes || "—"])}
@@ -299,11 +306,11 @@ export function ReportDocument() {
             )}
 
             {show("flagged") && (
-              <Section title={t("flaggedTitle")}>
+              <Section split title={t("flaggedTitle")}>
                 {flagged.length ? (
                   <>
                     {/* RPT-03: keep a 30-day report within 3 pages; the full list is in the CSV export. */}
-                    <Table columns={[t("colWhen"), t("colWhat"), t("colBy")]} rows={flagged.slice(0, 12).map((f) => [f.when, f.what, f.by])} />
+                    <Table columns={[t("colWhen"), t("colWhat"), t("colBy")]} rows={flagged.slice(0, 12).map((f) => [f.when, f.what, f.by])} nowrap={[0, 2]} />
                     {flagged.length > 12 && <p className="text-[13px]">{t("flaggedMore", { count: flagged.length - 12 })}</p>}
                   </>
                 ) : (
@@ -342,7 +349,7 @@ export function ReportDocument() {
             )}
 
             {show("questions") && questions.length > 0 && (
-              <Section title={t("questionsTitle")}>
+              <Section split title={t("questionsTitle")}>
                 <ol className="list-decimal pl-5 text-[14px] leading-[1.45] space-y-4">
                   {questions.map((q) => (
                     <li key={q} className="report-section">
