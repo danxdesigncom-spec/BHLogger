@@ -287,7 +287,7 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
           <OptionsEditor key={optModule} profileId={profile.id} module={optModule} builtIn={builtIns[optModule]} canEdit={canEdit} />
         </section>
 
-        <section aria-labelledby="card-h" className="space-y-3">
+        <section id="care-card" aria-labelledby="card-h" className="space-y-3 scroll-mt-4">
           <h2 id="card-h" className="font-display text-title-5">{t("careCard")}</h2>
           <p className="text-caption text-muted-foreground">{t("careCardHint")}</p>
           <fieldset disabled={!canEdit || busy} className="space-y-3">
@@ -321,7 +321,7 @@ export default function ProfileSettingsPage({ params }: { params: Promise<{ id: 
                         allergies: list(allergies), conditions: list(conditions), calming_strategies: list(calming),
                         communication_notes: notes.trim() || undefined,
                         doctor: doctor.name || doctor.phone ? { name: doctor.name.trim(), phone: doctor.phone.trim() } : undefined,
-                        emergency_contacts: contact.name ? [{ name: contact.name.trim(), phone: contact.phone.trim() }] : [],
+                        emergency_contacts: contact.name ? [{ name: contact.name.trim(), phone: contact.phone.trim(), ...(card.emergency_contacts?.[0]?.relationship ? { relationship: card.emergency_contacts[0].relationship } : {}) }] : [],
                       },
                     },
                     t("cardSaved"),

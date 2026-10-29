@@ -1,18 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { Check, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, IdCard, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useHousehold } from "@/lib/context/household-provider";
 import { ageLabel, careStageLabel } from "@/lib/options";
+import { CareCardView } from "./CareCardView";
 
 export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { profiles, activeProfileId, setActiveProfile, currentMember } = useHousehold();
   const t = useTranslations("profiles");
+  // ACC-12: the care card opens inside this sheet, so it's 2 taps from any tab screen.
+  const [cardFor, setCardFor] = useState<string | null>(null);
+  const cardProfile = profiles.find((p) => p.id === cardFor);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setCardFor(null);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -31,45 +38,60 @@ export function ProfileSwitcherSheet({ open, onClose }: { open: boolean; onClose
         style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))" }}
       >
         <div aria-hidden="true" className="w-10 h-[5px] mx-auto mt-2.5 rounded-full bg-grabber" />
-        <h2 id="switch-title" className="font-display text-title-1 px-5 pt-4 pb-3">{t("switchTitle")}</h2>
-        <ul className="px-4 space-y-2">
-          {profiles.map((p) => {
-            const active = p.id === activeProfileId;
-            const age = ageLabel(p.dob);
-            return (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => {
-                    setActiveProfile(p.id);
-                    onClose();
-                  }}
-                  className={`w-full flex items-center gap-3.5 px-3.5 min-h-16 rounded-xl border-2 text-left ${active ? "bg-profile-tint border-profile" : "bg-secondary border-transparent"}`}
-                >
-                  <span aria-hidden="true" data-profile-color={p.color} className="w-9 h-9 flex-none rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5">
-                    {p.initials}
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-body-lg">{p.name}</span>
-                    <span className="block text-caption text-muted-foreground">{[careStageLabel(p.careStage), age].filter(Boolean).join(" · ")}</span>
-                  </span>
-                  {active && <Check size={20} strokeWidth={2.5} className="flex-none text-profile" aria-hidden="true" />}
-                </button>
-              </li>
-            );
-          })}
-          {currentMember.role === "admin" && (
-            <li>
-              <Link href="/profiles/new" onClick={onClose} className="w-full flex items-center gap-3.5 px-3.5 min-h-16 rounded-xl text-profile-ink text-body-md">
-                <span className="w-9 h-9 flex-none rounded-full border-[1.5px] border-dashed border-dashed-line flex items-center justify-center">
-                  <Plus size={18} strokeWidth={2} aria-hidden="true" />
-                </span>
-                {t("addPerson")}
-              </Link>
-            </li>
-          )}
-        </ul>
+        {cardProfile ? (
+          <CareCardView profile={cardProfile} canEdit={currentMember.role === "admin"} onBack={() => setCardFor(null)} onClose={onClose} />
+        ) : (
+          <>
+            <h2 id="switch-title" className="font-display text-title-1 px-5 pt-4 pb-3">{t("switchTitle")}</h2>
+            <ul className="px-4 space-y-2">
+              {profiles.map((p) => {
+                const active = p.id === activeProfileId;
+                const age = ageLabel(p.dob);
+                return (
+                  <li key={p.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => {
+                        setActiveProfile(p.id);
+                        onClose();
+                      }}
+                      className={`flex-1 min-w-0 flex items-center gap-3.5 px-3.5 min-h-16 rounded-xl border-2 text-left ${active ? "bg-profile-tint border-profile" : "bg-secondary border-transparent"}`}
+                    >
+                      <span aria-hidden="true" data-profile-color={p.color} className="w-9 h-9 flex-none rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5">
+                        {p.initials}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-body-lg">{p.name}</span>
+                        <span className="block text-caption text-muted-foreground">{[careStageLabel(p.careStage), age].filter(Boolean).join(" · ")}</span>
+                      </span>
+                      {active && <Check size={20} strokeWidth={2.5} className="flex-none text-profile" aria-hidden="true" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCardFor(p.id)}
+                      aria-label={t("careCardFor", { name: p.name })}
+                      className="w-16 min-h-16 flex-none flex flex-col items-center justify-center gap-0.5 rounded-xl bg-secondary text-micro font-extrabold text-foreground-2"
+                    >
+                      <IdCard size={20} strokeWidth={2} aria-hidden="true" />
+                      {t("careCard")}
+                    </button>
+                  </li>
+                );
+              })}
+              {currentMember.role === "admin" && (
+                <li>
+                  <Link href="/profiles/new" onClick={onClose} className="w-full flex items-center gap-3.5 px-3.5 min-h-16 rounded-xl text-profile-ink text-body-md">
+                    <span className="w-9 h-9 flex-none rounded-full border-[1.5px] border-dashed border-dashed-line flex items-center justify-center">
+                      <Plus size={18} strokeWidth={2} aria-hidden="true" />
+                    </span>
+                    {t("addPerson")}
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </>
+        )}
       </section>
     </>
   );

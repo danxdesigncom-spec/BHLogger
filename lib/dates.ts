@@ -42,6 +42,12 @@ export function shortDate(d: Date): string {
   return d.toLocaleDateString(dateLocale(), { month: "short", day: "numeric" });
 }
 
+/** Weekday name for 0 (Sunday) to 6, "long" ("Monday") or "short" ("Mon"). */
+export function weekdayName(weekday: number, style: "long" | "short" = "long"): string {
+  // Jan 4, 1970 was a Sunday.
+  return new Date(1970, 0, 4 + weekday).toLocaleDateString(dateLocale(), { weekday: style });
+}
+
 /** "Oct 26, 2026". */
 export function longDate(d: Date): string {
   return d.toLocaleDateString(dateLocale(), { month: "short", day: "numeric", year: "numeric" });

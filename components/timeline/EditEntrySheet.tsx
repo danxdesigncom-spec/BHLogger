@@ -17,6 +17,7 @@ import { useHousehold } from "@/lib/context/household-provider";
 import { useMedications, useRevisions } from "@/lib/data/hooks";
 import { useRepo } from "@/lib/data/repo-context";
 import type { LocalEntry } from "@/lib/data/types";
+import { useOptionLabels } from "@/lib/data/useOptionSet";
 import { entryDetail, entryTitle, formatClock, type SummaryContext } from "@/lib/entries/summary";
 import { bathroomTileLabel, humanize } from "@/lib/options";
 import { describeRevision } from "@/lib/timeline";
@@ -49,6 +50,7 @@ export function EditEntrySheet({
   const profile = profiles.find((p) => p.id === entry.profile_id);
   const meds = useMedications(entry.profile_id);
   const revisions = useRevisions(entry.id);
+  const optionLabel = useOptionLabels(entry.profile_id);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   const canEdit = currentMember.role === "admin" || (currentMember.role === "caregiver" && entry.logged_by === currentMember.userId);
@@ -81,6 +83,7 @@ export function EditEntrySheet({
   const summaryCtx: SummaryContext = {
     careStage: stage, toileting, volumeUnit: householdSettings.volume_unit,
     medicationName: (id) => meds.data?.find((m) => m.id === id)?.name,
+    optionLabel,
   };
   const med = entry.type === "medication" ? meds.data?.find((m) => m.id === (entry.data as { medication_id?: string }).medication_id) : undefined;
   const heading =
@@ -162,7 +165,7 @@ export function EditEntrySheet({
                   [te("person"), profile?.name ?? ""],
                   [te("when"), formatDateTime(entry.occurred_at)],
                   [te("what"), entryTitle(entry, summaryCtx)],
-                  [te("details"), entryDetail(entry) || "—"],
+                  [te("details"), entryDetail(entry, summaryCtx) || "—"],
                   [te("note"), entry.note || "—"],
                   [te("forDoctor"), entry.flagged_for_doctor ? t("common.yes") : t("common.no")],
                 ].map(([k, v]) => (

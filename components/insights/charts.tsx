@@ -214,6 +214,145 @@ export function DoseTimes({ points, days, height = 170 }: { points: { day: strin
   );
 }
 
+// Sequential, one hue, three steps: lower mood is deeper. Each step keeps text at 4.5:1 or better in
+// light and dark themes, and every cell prints its value, so color is never the only cue.
+function heatStyle(avg: number | null): React.CSSProperties {
+  if (avg === null) return { background: "var(--secondary)", color: "var(--muted-foreground)" };
+  if (avg < 2.5) return { background: "var(--chart-mood)", color: "var(--primary-foreground)" };
+  if (avg < 3.5) return { background: "color-mix(in oklab, var(--chart-mood) 30%, var(--card))", color: "var(--foreground)" };
+  return { background: "color-mix(in oklab, var(--chart-mood) 10%, var(--card))", color: "var(--foreground)" };
+}
+
+/** DSH-05: average mood by time block (rows) and weekday (columns). */
+export function MoodHeatmap({ rows }: { rows: { block: string; cells: { weekday: string; avg: number | null; n: number }[] }[] }) {
+  const t = useTranslations("insights.trends");
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full table-fixed border-separate border-spacing-[3px] text-micro tabular-nums">
+        <thead>
+          <tr>
+            <th scope="col" className="w-[58px]"><span className="sr-only">{t("timeOfDay")}</span></th>
+            {rows[0]?.cells.map((c) => <th key={c.weekday} scope="col" className="font-extrabold text-muted-foreground">{c.weekday}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.block}>
+              <th scope="row" className="w-[58px] text-left font-extrabold text-muted-foreground whitespace-nowrap">{r.block}</th>
+              {r.cells.map((c) => (
+                <td
+                  key={c.weekday}
+                  className="h-8 rounded-md text-center font-extrabold"
+                  style={heatStyle(c.avg)}
+                  aria-label={t("heatCell", { block: r.block, weekday: c.weekday, value: c.avg ?? t("noLogs") })}
+                >
+                  {c.avg ?? "·"}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * DSH-09: one row per food, a 100% bar split into ate it (blue), in between (grid gray) and refused
+ * (amber), with a 2px surface gap between segments. The counts are printed beside each name, so the
+ * colors are never the only cue.
+ */
+export function FoodSplit({ rows, hidden = 0 }: { rows: { label: string; logs: number; accepted: number; refused: number }[]; hidden?: number }) {
+  const t = useTranslations("insights.trends");
+  const split = rows.length > 8 || hidden > 0 ? Math.ceil(rows.length / 2) : -1;
+  return (
+    <div className="space-y-2.5">
+      <ul className="space-y-2.5">
+        {rows.map((r, i) => {
+          const neither = r.logs - r.accepted - r.refused;
+          const seg = (n: number, color: string) => (n > 0 ? <span style={{ flexGrow: n, background: color }} className="h-full first:rounded-l-full last:rounded-r-full" /> : null);
+          return (
+            <li key={r.label} className={i === split ? "pt-2.5 border-t border-dashed border-divider" : undefined}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-label font-extrabold text-foreground truncate">{r.label}</span>
+                <span className="flex-none text-micro font-bold text-foreground-2 tabular-nums">
+                  {t("foodCounts", { accepted: r.accepted, refused: r.refused, logs: r.logs })}
+                </span>
+              </div>
+              <div className="mt-1 h-2 flex gap-[2px]">
+                {seg(r.accepted, "var(--chart-1)")}
+                {seg(neither, "var(--chart-grid)")}
+                {seg(r.refused, "var(--chart-highlight)")}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {hidden > 0 && <p className="text-micro font-bold text-muted-foreground">{t("foodsHidden", { count: hidden })}</p>}
+      <p className="flex flex-wrap gap-x-3 gap-y-1 text-micro font-bold text-foreground-2">
+        <span className="flex items-center gap-1"><span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-[var(--chart-1)]" />{t("legendAte")}</span>
+        <span className="flex items-center gap-1"><span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-[var(--chart-grid)] border border-border" />{t("legendSome")}</span>
+        <span className="flex items-center gap-1"><span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-[var(--chart-highlight)]" />{t("legendRefused")}</span>
+      </p>
+    </div>
+  );
+}
+
+/**
+ * DSH-09 / EAT-09: new-food markers on the range's time axis, numbered, with a key underneath.
+ * Plain SVG like DoseTimes; the card's table carries the same data.
+ */
+export function NewFoodStrip({ days, items }: { days: string[]; items: { day: string; label: string; note: string }[] }) {
+  const W = 340;
+  const pad = { l: 12, r: 12, t: 12, b: 22 };
+  const index = new Map(days.map((d, i) => [d, i]));
+  const x = (i: number) => pad.l + (days.length > 1 ? (i / (days.length - 1)) * (W - pad.l - pad.r) : (W - pad.l - pad.r) / 2);
+  const ticks = [0, Math.floor((days.length - 1) / 2), days.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+  // Markers closer than a circle's width stack into lanes so their numbers stay readable.
+  const LANE = 22;
+  const laneEnds: number[] = [];
+  const placed = items.map((it) => {
+    const cx = x(index.get(it.day) ?? 0);
+    let lane = laneEnds.findIndex((end) => cx - end >= 20);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = cx;
+    return { cx, lane };
+  });
+  const H = 64 + Math.max(0, laneEnds.length - 1) * LANE;
+  return (
+    <div className="space-y-2">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} aria-hidden="true" preserveAspectRatio="none">
+        <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} stroke="var(--chart-baseline)" />
+        {ticks.map((i) => (
+          <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === days.length - 1 ? "end" : "middle"} fontSize={12} fontWeight={700} fill="var(--chart-axis)">
+            {days[i] ? dayLabel(days[i]) : ""}
+          </text>
+        ))}
+        {items.map((it, n) => {
+          const { cx, lane } = placed[n];
+          const cy = pad.t + lane * LANE;
+          return (
+            <g key={`${it.day}-${n}`}>
+              <line x1={cx} x2={cx} y1={cy + 9} y2={H - pad.b} stroke="var(--chart-5)" strokeWidth={1.5} strokeDasharray="4 3" />
+              <circle cx={cx} cy={cy} r={9} fill="var(--chart-5)" stroke="var(--card)" strokeWidth={2} />
+              <text x={cx} y={cy + 4} textAnchor="middle" fontSize={11} fontWeight={800} fill="var(--card)">{n + 1}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <ol className="space-y-1">
+        {items.map((it, n) => (
+          <li key={`${it.day}-${n}`} className="flex items-baseline gap-2 text-label">
+            <span aria-hidden="true" className="w-5 h-5 flex-none rounded-full bg-[var(--chart-5)] text-card text-micro font-extrabold flex items-center justify-center">{n + 1}</span>
+            <span className="font-extrabold text-foreground">{it.label}</span>
+            <span className="text-foreground-2">{it.note}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 /** Tiny mood line for the Today card. */
 export function Sparkline({ values }: { values: number[] }) {
   if (values.length < 2) return null;

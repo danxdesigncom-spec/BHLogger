@@ -3,10 +3,13 @@ import { enterDemo, logSheet, STORY, switchTo } from "./helpers";
 
 // M12a: quick taps (QL-09), "Same as last time" (QL-10), timers (QL-11) and tile order (QL-12), in demo mode.
 const LEO = "a1000000-0000-0000-0000-000000000008";
+// Early on the story day, Leo is under his 3-day BM alert, so the Bathroom tile shows the latest entry.
+// Without a pinned clock these checks depended on the time of day the suite ran.
+const EARLY = new Date(2026, 9, 26, 6, 30);
 
 test.describe("Quick logging (M12a)", () => {
   test("QL-09: a quick tap logs in one tap with Undo", async ({ page }) => {
-    await enterDemo(page);
+    await enterDemo(page, { at: EARLY });
     await switchTo(page, "Leo");
     const quick = page.getByRole("region", { name: "Quick taps" });
     await quick.getByRole("button", { name: "Pee", exact: true }).click();
@@ -47,7 +50,7 @@ test.describe("Quick logging (M12a)", () => {
   });
 
   test("QL-10: Same as last time repeats the last entry now", async ({ page }) => {
-    await enterDemo(page);
+    await enterDemo(page, { at: EARLY });
     await switchTo(page, "Leo");
     await page.getByRole("button", { name: /^Bathroom / }).click();
     await logSheet(page).getByRole("button", { name: /^Same as last time · / }).click();

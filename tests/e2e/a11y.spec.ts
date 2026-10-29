@@ -21,6 +21,16 @@ for (const theme of ["light", "dark"] as const) {
           failures.push(`${path} [${v.impact}] ${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`);
         }
       }
+      // ACC-12: the care card sheet, opened from the profile switcher.
+      await page.goto("/timeline");
+      await page.getByRole("button", { name: /^Switch profile/ }).click();
+      await page.getByRole("button", { name: "Care card: Leo" }).click();
+      await expect(page.getByRole("dialog", { name: "Leo's care card" })).toBeVisible();
+      await page.waitForTimeout(500);
+      const card = await new AxeBuilder({ page }).include('[role="dialog"]').withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+      for (const v of card.violations.filter((x) => x.impact === "critical" || x.impact === "serious")) {
+        failures.push(`care card [${v.impact}] ${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`);
+      }
       expect(failures, failures.join("\n")).toEqual([]);
     });
   });

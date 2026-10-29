@@ -6,17 +6,22 @@ import { useSearchParams } from "next/navigation";
 import { ChevronLeft, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DailyBars, MoodLine } from "@/components/insights/charts";
+import { buildTrendCards } from "@/components/insights/trendCards";
 import { useHousehold } from "@/lib/context/household-provider";
-import { useEntries, useMedicationChanges, useMedications, useProfileSettings } from "@/lib/data/hooks";
+import { useEntries, useMedicationChanges, useMedications, useOptions, useProfileSettings } from "@/lib/data/hooks";
+import { useOptionLabels } from "@/lib/data/useOptionSet";
 import { entryDetail, entryTitle, type SummaryContext } from "@/lib/entries/summary";
 import { activityStats, blockOf, behaviorEvents, dataOf, eachDay, localParts, tally } from "@/lib/insights/core";
+import { foodIntroductions, foodStats, rankFoods } from "@/lib/insights/foods";
 import { bathroomTrend, behaviorTrend, moodTrend } from "@/lib/insights/trends";
-import { beforeAfterChange, hardestTimeOfDay, latestChange, moodAndBms, notProof } from "@/lib/insights/patterns";
+import { notProof } from "@/lib/insights/patterns";
+import { reportPatterns } from "@/lib/reports/patterns";
+import { cardFieldText } from "@/lib/carecard";
 import { adherence, describeSchedule } from "@/lib/meds/schedule";
 import { activityLabel, ageLabel, behaviorLabel, formatDose, humanize, labelFor, medFormLabel, moodLabels, PRN_REASONS, SEVERITIES } from "@/lib/options";
 import { flaggedEvents } from "@/lib/reports/flagged";
-import { savedQuestions, TEMPLATES, type SectionKey, type TemplateKey } from "@/lib/reports/templates";
-import { reportItems, type ReportItem } from "@/lib/report-items";
+import { parseCardFields, savedQuestions, TEMPLATES, type SectionKey, type TemplateKey } from "@/lib/reports/templates";
+import { chartItemId, patternItemId, reportItems, type ReportItem } from "@/lib/report-items";
 import { fromYmd, longDate, shortDate } from "@/lib/dates";
 import type { MedicationChangeRow } from "@/lib/data/types";
 
@@ -77,6 +82,9 @@ export function ReportDocument() {
   const from = useMemo(() => fromYmd(fromStr), [fromStr]);
   const to = useMemo(() => new Date(`${toStr}T23:59:59.999`), [toStr]);
   const settings = useProfileSettings(profile?.id ?? null);
+  const optionLabel = useOptionLabels(profile?.id ?? null);
+  const customActivities = useOptions(profile?.id ?? null, "activity");
+  const cardFields = parseCardFields(params.get("cc"));
 
   const entries = useEntries({ profileId: profile?.id, from: new Date(from.getTime() - 15 * 86_400_000).toISOString(), to: to.toISOString() }, !!profile);
   const meds = useMedications(profile?.id ?? null);
@@ -85,17 +93,19 @@ export function ReportDocument() {
   const [items, setItems] = useState<ReportItem[]>([]);
   useEffect(() => {
     if (profile) setQuestions(savedQuestions(profile.id));
-    setItems(reportItems());
+    if (profile) setItems(reportItems(profile.id));
   }, [profile]);
 
   if (!profile) return null;
   const loading = entries.isLoading || meds.isLoading;
+  const show = (s: SectionKey) => sections.has(s);
   const stage = profile.careStage;
   const days = eachDay(from, to);
   const all = entries.data ?? [];
   const inRange = all.filter((e) => e.occurred_at >= from.toISOString() && e.occurred_at <= to.toISOString());
   const medName = (id: string) => meds.data?.find((m) => m.id === id)?.name ?? t("medication");
-  const ctx: SummaryContext = { careStage: stage, toileting: profile.toileting, volumeUnit: householdSettings.volume_unit, medicationName: medName };
+  const ctx: SummaryContext = { careStage: stage, toileting: profile.toileting, volumeUnit: householdSettings.volume_unit, medicationName: medName, optionLabel };
+  const activityName = (key: string) => activityLabel(key, (customActivities.data ?? []).map((o) => ({ key: o.key, label: o.label })));
   const changesInRange = (changes.data ?? []).filter((c) => c.effective_at >= fromStr && c.effective_at <= toStr);
   const markers = changesInRange.map((c) => ({
     day: c.effective_at,
@@ -111,22 +121,29 @@ export function ReportDocument() {
   const feeds = inRange.filter((e) => e.type === "eating" && ["breast", "bottle"].includes(String(dataOf(e).method)));
   const tubeFeeds = inRange.filter((e) => e.type === "eating" && dataOf(e).method === "tube");
   const tubeMl = tubeFeeds.reduce((s, e) => s + (Number(dataOf(e).amount_ml) || 0), 0);
-  const card = profile.careCard as { allergies?: string[]; conditions?: string[]; communication_notes?: string; calming_strategies?: string[]; doctor?: { name?: string } };
-  const flagged = flaggedEvents(inRange, { from, to, bmAlertDays: settings.bm_alert_days, medName, describe: (e) => `${entryTitle(e, ctx)}${entryDetail(e) ? `, ${entryDetail(e).toLowerCase()}` : ""}` });
+  const doctorName = cardFieldText(profile.careCard, "doctor") ? (profile.careCard as { doctor?: { name?: string } }).doctor?.name : undefined;
+  const cardRows = cardFields.map((f) => ({ field: f, text: cardFieldText(profile.careCard, f) })).filter((r) => r.text || r.field === "allergies");
+  const flagged = flaggedEvents(inRange, { from, to, bmAlertDays: settings.bm_alert_days, medName, describe: (e) => `${entryTitle(e, ctx)}${entryDetail(e, ctx) ? `, ${entryDetail(e, ctx).toLowerCase()}` : ""}` });
 
-  const pat01 = hardestTimeOfDay(inRange.filter((e) => new Date(e.occurred_at) >= new Date(to.getTime() - 30 * 86_400_000)));
-  const pat02 = moodAndBms(inRange, from, to);
-  const change = latestChange((changes.data ?? []).filter((c) => c.change_type !== "started" || c.effective_at >= fromStr), to);
-  const pat03 = change ? beforeAfterChange(all, change, to) : null;
-  const patternLines: string[] = [];
-  if (pat03?.status === "ready") patternLines.push(t("patChange", { after: pat03.after.mood?.toFixed(1) ?? "", name: medName(change!.medication_id).toLowerCase(), date: shortDate(fromYmd(change!.effective_at)), before: pat03.before.mood?.toFixed(1) ?? "", days: pat03.window }));
-  if (pat01.status === "ready") {
-    const others = pat01.blocks.filter((b) => b.key !== pat01.hardest.key && b.avg !== null);
-    const avgOthers = others.reduce((s, b) => s + (b.avg ?? 0), 0) / Math.max(1, others.length);
-    patternLines.push(t("patTime", { block: pat01.hardest.label, avg: pat01.hardest.avg?.toFixed(1) ?? "", others: avgOthers.toFixed(1) }));
-  }
-  if (pat02.status === "ready") patternLines.push(t("patBm", { without: pat02.without.toFixed(1), with: pat02.with.toFixed(1) }));
-  for (const i of items) if (!patternLines.some((l) => l.startsWith(i.title.slice(0, 20)))) patternLines.push(t("item", { title: i.title }));
+  // S17: every pattern that met its threshold; with the Patterns section off, only the ones added from Insights (DSH-12).
+  const found = reportPatterns({
+    inRange, all, from, to, fromYmd: fromStr, name: profile.name, changes: changes.data ?? [],
+    prnMeds: (meds.data ?? []).filter((m) => m.kind === "prn").map((m) => ({ id: m.id, name: m.name })), medName, activityName,
+  });
+  const patternLines = found.filter((p) => show("patterns") || items.some((i) => i.id === patternItemId(p.id))).map((p) => p.line);
+  const missingPatterns = items.filter((i) => i.kind === "pattern" && !found.some((p) => patternItemId(p.id) === i.id));
+
+  // DSH-12: charts added from Trends, drawn for this report's range. Mood and bathroom charts already have sections.
+  const builtIn = new Set([show("mood") && chartItemId("mood.daily"), show("bathroom") && chartItemId("bathroom.bms")].filter(Boolean));
+  const chartItems = items.filter((i) => i.kind === "chart" && !builtIn.has(i.id));
+  const trendCards = chartItems.length
+    ? buildTrendCards({
+        inRange, previous: [], days, from, to, markers, meds: meds.data ?? [], stage, toileting: profile.toileting,
+        bmAlertDays: settings.bm_alert_days, volumeUnit: householdSettings.volume_unit, foodLabel: (k) => optionLabel("food", k), now: new Date(),
+      })
+    : [];
+  const foods = rankFoods(foodStats(inRange));
+  const intros = foodIntroductions(inRange);
 
   const behaviorRows = tally(events.map((b) => b.key)).map((row) => {
     const mine = events.filter((b) => b.key === row.key);
@@ -137,7 +154,6 @@ export function ReportDocument() {
   const [lowMood, , , , highMood] = moodLabels(stage);
 
   const title = TEMPLATES[template]?.title ?? t("fallbackTitle");
-  const show = (s: SectionKey) => sections.has(s);
   const age = ageLabel(profile.dob);
 
   return (
@@ -165,8 +181,8 @@ export function ReportDocument() {
             {[age ? t("age", { age }) : null, profile.dob ? t("born", { date: longDate(fromYmd(profile.dob)) }) : null, t("period", { from: shortDate(from), to: longDate(to), days: days.length })].filter(Boolean).join(" · ")}
           </p>
           <p className="text-[14px] text-foreground-2">
-            {card.doctor?.name
-              ? t("preparedByFor", { name: currentMember.displayName, date: longDate(new Date()), doctor: card.doctor.name })
+            {doctorName
+              ? t("preparedByFor", { name: currentMember.displayName, date: longDate(new Date()), doctor: doctorName })
               : t("preparedBy", { name: currentMember.displayName, date: longDate(new Date()) })}
           </p>
         </section>
@@ -175,18 +191,17 @@ export function ReportDocument() {
           <p className="text-[14px] text-foreground-2">{tc("loading")}</p>
         ) : (
           <>
-            {show("carecard") && (
-              <section className="report-section grid grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <h2 className="text-[18px] font-extrabold font-sans">{t("allergies")}</h2>
-                  <p className="text-[14px]">{card.allergies?.length ? card.allergies.join(", ") : t("noneRecorded")}</p>
-                  {!!card.conditions?.length && <p className="text-[14px] text-foreground-2">{t("conditions", { list: card.conditions.join(", ") })}</p>}
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-[18px] font-extrabold font-sans">{t("careNotes")}</h2>
-                  <p className="text-[14px]">{[card.communication_notes, card.calming_strategies?.length ? t("calmsWith", { list: card.calming_strategies.join(", ").toLowerCase() }) : null].filter(Boolean).join(" ") || t("noneRecorded")}</p>
-                </div>
-              </section>
+            {show("carecard") && cardRows.length > 0 && (
+              <Section title={t("careCardTitle")}>
+                <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-[14px] leading-[1.45]">
+                  {cardRows.map((r) => (
+                    <div key={r.field} className="contents">
+                      <dt className="font-extrabold">{t(`cardField.${r.field}`)}</dt>
+                      <dd>{r.text || t("noneRecorded")}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Section>
             )}
 
             {show("meds") && (
@@ -255,6 +270,15 @@ export function ReportDocument() {
 
             {show("eating") && meals.length > 0 && (
               <Section title={t("eating")}>
+                {(foods.best || foods.refused || intros.length > 0) && (
+                  <p className="text-[13px]">
+                    {[
+                      foods.best && t("foodsBest", { food: optionLabel("food", foods.best.key).toLowerCase(), accepted: foods.best.accepted, logs: foods.best.logs }),
+                      foods.refused && t("foodsRefused", { food: optionLabel("food", foods.refused.key).toLowerCase(), refused: foods.refused.refused, logs: foods.refused.logs }),
+                      intros.length > 0 && t("newFoods", { list: intros.map((i) => t("newFood", { food: i.foods.map((f) => optionLabel("food", f)).join(", ") || t("unnamedFood"), date: shortDate(fromYmd(i.day)) })).join("; ") }),
+                    ].filter(Boolean).join(" ")}
+                  </p>
+                )}
                 <Table
                   columns={[t("colMeal"), t("colLogged"), t("colHalf")]}
                   rows={["breakfast", "lunch", "dinner", "snack"].map((k) => {
@@ -288,9 +312,31 @@ export function ReportDocument() {
               </Section>
             )}
 
-            {show("patterns") && patternLines.length > 0 && (
+            {chartItems.length > 0 && (
+              <>
+                {chartItems.map((i) => {
+                  const card = trendCards.find((c) => chartItemId(c.id) === i.id);
+                  return (
+                    <Section key={i.id} title={i.title}>
+                      {card ? (
+                        <>
+                          <p className="text-[14px] font-bold">{card.headline}</p>
+                          <div role="img" aria-label={card.headline}>{card.chart(true)}</div>
+                          {card.caption && <p className="text-[13px]">{card.caption}</p>}
+                        </>
+                      ) : (
+                        <p className="text-[14px]">{t("noChartData")}</p>
+                      )}
+                    </Section>
+                  );
+                })}
+              </>
+            )}
+
+            {(patternLines.length > 0 || missingPatterns.length > 0) && (
               <Section title={t("patternsTitle")}>
-                <ul className="list-disc pl-5 text-[14px] leading-[1.45] space-y-1">{patternLines.map((l) => <li key={l}>{l}</li>)}</ul>
+                {patternLines.length > 0 && <ul className="list-disc pl-5 text-[14px] leading-[1.45] space-y-1">{patternLines.map((l) => <li key={l}>{l}</li>)}</ul>}
+                {missingPatterns.length > 0 && <p className="text-[13px]">{t("patternsNotMet", { list: missingPatterns.map((i) => i.title).join(", ") })}</p>}
                 <p className="text-[13px] font-bold">{notProof()}</p>
               </Section>
             )}

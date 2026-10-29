@@ -8,6 +8,7 @@ import { EntryRow } from "@/components/timeline/EntryRow";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useMedications } from "@/lib/data/hooks";
 import { useRepo } from "@/lib/data/repo-context";
+import { useOptionLabels } from "@/lib/data/useOptionSet";
 import type { SummaryContext } from "@/lib/entries/summary";
 
 export default function RecentlyDeletedPage() {
@@ -18,9 +19,11 @@ export default function RecentlyDeletedPage() {
   const since = useMemo(() => new Date(Date.now() - 30 * 86_400_000).toISOString(), []);
   const deleted = useEntries({ profileId: activeProfile?.id, deleted: "only" }, !!activeProfile);
   const meds = useMedications(activeProfile?.id ?? null);
+  const optionLabel = useOptionLabels(activeProfile?.id ?? null);
   const ctx: SummaryContext = {
     careStage: activeProfile?.careStage ?? "child", toileting: activeProfile?.toileting ?? "toilet", volumeUnit: householdSettings.volume_unit,
     medicationName: (id) => meds.data?.find((m) => m.id === id)?.name,
+    optionLabel,
   };
   const rows = (deleted.data ?? []).filter((e) => (e.deleted_at ?? "") >= since);
   const canRestore = (loggedBy: string) => currentMember.role === "admin" || (currentMember.role === "caregiver" && loggedBy === currentMember.userId);

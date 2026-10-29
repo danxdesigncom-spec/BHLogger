@@ -11,7 +11,7 @@ const KNOWN = new Set(["bathroom", "eating", "activity", "mood", "medication"]);
 
 export function EntryRow({ entry, ctx, onOpen, action }: { entry: LocalEntry; ctx: SummaryContext; onOpen?: () => void; action?: React.ReactNode }) {
   const mod = (KNOWN.has(entry.type) ? entry.type : null) as ModuleType | null;
-  const detail = entryDetail(entry);
+  const detail = entryDetail(entry, ctx);
   const t = useTranslations("entry");
   const body = (
     <>

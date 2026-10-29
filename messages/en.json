@@ -866,7 +866,29 @@
       "tubePerDay": "About {amount} a day by tube",
       "tubeCaption": "Formula per day, in ml",
       "formulaCol": "Formula (ml)",
-      "flushCol": "Flush (ml)"
+      "flushCol": "Flush (ml)",
+      "foods": "Foods",
+      "foodsHeadline": "Eats {best} best; refused {refused} most ({times} of {logs} times)",
+      "foodsHeadlineNoRefused": "Eats {best} best, and nothing was refused",
+      "foodsCaption": "Foods logged {min} or more times. Ate: half or more. Refused: a quarter or less, or marked refused.",
+      "foodCounts": "Ate {accepted} · refused {refused} · of {logs}",
+      "foodsHidden": "{count, plural, one {# more food} other {# more foods}} in the table",
+      "legendAte": "Ate half or more",
+      "legendSome": "Some",
+      "legendRefused": "Refused",
+      "food": "Food",
+      "ateCol": "Ate",
+      "refusedCol": "Refused",
+      "newFoods": "New foods",
+      "newFoodsHeadline": "{count, plural, one {# new food} other {# new foods}} in {days} days",
+      "newFoodsCaption": "Meals and snacks marked New food.",
+      "howItWent": "How it went",
+      "unnamedFood": "New food",
+      "introAte": "ate half or more",
+      "introRefused": "refused",
+      "introSome": "ate some",
+      "foodsHeadlineRefusedOnly": "Refused {refused} most ({times} of {logs} times)",
+      "foodsHeadlineMixed": "{count, plural, one {# food} other {# foods}} logged, none clearly eaten or refused"
     },
     "patterns": {
       "notProof": "Patterns aren't proof of cause. Share them with your care team.",
@@ -903,7 +925,38 @@
       "up": "up",
       "down": "down",
       "sinceShort": "Since {change}",
-      "progressOf": "{progress} of {goal}"
+      "progressOf": "{progress} of {goal}",
+      "addToReportLabel": "Add to report: {title}",
+      "inReportLabel": "In report: {title}",
+      "lastDays": "Last {days} days",
+      "activities": "Activities and mood",
+      "pat04Need": "Needs one activity logged {times} times with a mood log in the 2 hours after",
+      "pat04Headline": "Mood after {activity} averaged {avg}, compared with {overall} overall",
+      "pat04Meta": "{last} · {times} times · {logs} mood logs",
+      "pat04How": "For each activity we averaged the mood logged in the {hours} hours after it ended, counting each time once, and compared that with the average of all mood logs. An activity needs {min} times with a mood log afterwards ({checked, plural, one {# activity had} other {# activities had}} enough). It's shown when it's at least {lift} points above the overall average.",
+      "overall": "Overall",
+      "pat04None": "No activity stood out: mood after each one was less than {lift} points above the overall average ({overall}).",
+      "pat04NoneMeta": "{last} · {checked, plural, one {# activity} other {# activities}} with enough logs",
+      "weekday": "Day of the week",
+      "pat05Need": "Needs {weeks} weeks of mood logs on every day of the week",
+      "pat05Headline": "{hardest} is usually the hardest day ({hardestAvg}), {best} the best ({bestAvg})",
+      "pat05Meta": "{last} · {days} days with mood logs",
+      "pat05How": "We averaged each day's mood (a day-level rating counts when there is one) and grouped the days by weekday. Every weekday needs {weeks} logged days. It's shown when the best and hardest days are at least {gap} points apart.",
+      "pat05None": "Mood was about the same on every day of the week ({low} to {high}).",
+      "eatingAndMood": "Eating and mood",
+      "pat06Need": "Needs {days} low-mood days and {days} other days, each with a meal or snack portion",
+      "pat06Headline": "On low-mood days, {name} ate about {low}% of meals and snacks, compared with {other}% on other days",
+      "pat06Meta": "{low} low-mood days, {other} other days",
+      "pat06How": "For the last {days} days we averaged the portion eaten at meals and snacks each day, then compared days whose average mood was {mood} or lower with the rest. Each group needs {min} days. It's shown when the gap is at least {gap} percentage points.",
+      "pat06None": "No clear difference in how much was eaten on low-mood days ({low}%) and other days ({other}%).",
+      "lowMoodDays": "Low-mood days",
+      "otherDays": "Other days",
+      "prnTiming": "When {name} is given",
+      "pat07Need": "Needs {doses} doses of {name}",
+      "pat07Headline": "{block} is when it's given most often",
+      "pat07HeadlineReason": "{block} is when it's given most often, usually for {reason}",
+      "pat07Meta": "{last} · {doses} doses, {count} in that block",
+      "pat07How": "We grouped as-needed doses that were given, fully or partly, into 3-hour blocks by the time they were logged, and counted the reasons. This needs {min} doses."
     }
   },
   "modules": {
@@ -999,7 +1052,20 @@
       "preview": "Preview PDF",
       "exportCsv": "Export CSV",
       "share": "Share",
-      "perModule": "Export one CSV per module"
+      "perModule": "Export one CSV per module",
+      "cardFields": "Care card in the report",
+      "cardFieldsHint": "Choose what prints from {name}'s care card. Remembered on this device.",
+      "field": {
+        "allergies": "Allergies",
+        "conditions": "Conditions",
+        "communication": "Communication notes",
+        "calming": "What helps calm",
+        "contacts": "Emergency contacts",
+        "doctor": "Doctor"
+      },
+      "fieldEmpty": "None recorded",
+      "chartItem": "{title} chart",
+      "fromInsightsHint": "Charts print for this report's dates. Patterns print when they meet their thresholds."
     },
     "doc": {
       "changeDose": "{name} dose changed from {from} to {to} on {date}",
@@ -1014,7 +1080,6 @@
       "patChange": "Mood averaged {after} after the {name} change on {date}, compared with {before} in the {days} days before.",
       "patTime": "{block} is usually the hardest time (average mood {avg}, compared with about {others} at other times).",
       "patBm": "On days with no BM, mood averaged {without}, compared with {with} on days with one.",
-      "item": "{title}.",
       "fallbackTitle": "Care report",
       "back": "Back to Reports",
       "print": "Print or save as PDF",
@@ -1024,11 +1089,7 @@
       "period": "Report period {from} to {to} ({days} days)",
       "preparedBy": "Prepared by {name} on {date}",
       "preparedByFor": "Prepared by {name} on {date} for {doctor}",
-      "allergies": "Allergies",
       "noneRecorded": "None recorded",
-      "conditions": "Conditions: {list}",
-      "careNotes": "Care notes",
-      "calmsWith": "Calms with {list}.",
       "currentMeds": "Current medications",
       "colMedication": "Medication",
       "colDose": "Dose",
@@ -1090,7 +1151,28 @@
       "footer": "Made with Behavior Logger from caregiver entries. Not a medical record or diagnosis.",
       "tube": "Tube feeding",
       "tubePerDay": "{amount} a day",
-      "tubeFeeds": "{count, plural, one {# feed} other {# feeds}} in the period"
+      "tubeFeeds": "{count, plural, one {# feed} other {# feeds}} in the period",
+      "careCardTitle": "Allergies and care notes",
+      "cardField": {
+        "allergies": "Allergies",
+        "conditions": "Conditions",
+        "communication": "Communication",
+        "calming": "What helps calm",
+        "contacts": "Emergency contacts",
+        "doctor": "Doctor"
+      },
+      "foodsBest": "Ate {food} best ({accepted} of {logs} times).",
+      "foodsRefused": "Refused {food} most often ({refused} of {logs} times).",
+      "newFoods": "New foods: {list}.",
+      "newFood": "{food} ({date})",
+      "unnamedFood": "unnamed food",
+      "noChartData": "Nothing logged for this chart in this period.",
+      "patternsNotMet": "Added from Insights, but not enough data in this period: {list}.",
+      "patActivity": "Mood after {activity} averaged {avg}, compared with {overall} overall ({times} times).",
+      "patWeekday": "{hardest} was usually the hardest day ({hardestAvg}) and {best} the best ({bestAvg}).",
+      "patEating": "On low-mood days {name} ate about {low}% of meals and snacks, compared with {other}% on other days.",
+      "patPrn": "{block} is when {name} was given most often ({count} of {doses} doses).",
+      "patPrnReason": "{block} is when {name} was given most often ({count} of {doses} doses), usually for {reason}."
     }
   },
   "toast": {
@@ -1104,7 +1186,9 @@
   },
   "profiles": {
     "switchTitle": "Switch profile",
-    "addPerson": "Add a person"
+    "addPerson": "Add a person",
+    "careCard": "Care card",
+    "careCardFor": "Care card: {name}"
   },
   "install": {
     "label": "Add to Home Screen",
@@ -1658,5 +1742,22 @@
     "question": "Did {name} help?",
     "given": "Given {time}",
     "givenFor": "Given {time} for {reason}"
+  },
+  "careCard": {
+    "title": "{name}'s care card",
+    "back": "Back to profiles",
+    "empty": "Nothing on {name}'s care card yet.",
+    "allergies": "Allergies",
+    "noneRecorded": "None recorded",
+    "conditions": "Conditions",
+    "communication": "Communication",
+    "calming": "What helps calm",
+    "contacts": "Contacts",
+    "emergency": "Emergency contact",
+    "doctor": "Doctor",
+    "call": "Call {name}",
+    "callShort": "Call",
+    "edit": "Edit care card",
+    "personWithRole": "{name} ({role})"
   }
 }

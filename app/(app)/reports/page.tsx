@@ -11,8 +11,12 @@ import { useHousehold } from "@/lib/context/household-provider";
 import { useAppointments, useEntries } from "@/lib/data/hooks";
 import { useRepo } from "@/lib/data/repo-context";
 import { entriesToCsv, downloadText } from "@/lib/reports/csv";
-import { reportHref, saveQuestions, savedQuestions, SECTIONS, TEMPLATES, type SectionKey, type TemplateKey } from "@/lib/reports/templates";
+import {
+  CARD_FIELDS, reportHref, saveCardFields, savedCardFields, saveQuestions, savedQuestions, SECTIONS, TEMPLATES,
+  type CardField, type SectionKey, type TemplateKey,
+} from "@/lib/reports/templates";
 import { reportItems, removeReportItem, type ReportItem } from "@/lib/report-items";
+import { cardFieldText } from "@/lib/carecard";
 import { addDays, fromYmd, shortDate, ymd } from "@/lib/dates";
 
 type RangeKey = "7" | "30" | "90" | "custom" | "appointment";
@@ -35,12 +39,16 @@ export default function ReportsPage() {
   const [questions, setQuestions] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [items, setItems] = useState<ReportItem[]>([]);
+  const [cardFields, setCardFields] = useState<CardField[]>([]);
   const [appt, setAppt] = useState({ date: today, provider: "" });
   const [addingAppt, setAddingAppt] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => setQuestions(savedQuestions(profileId)), [profileId]);
-  useEffect(() => setItems(reportItems()), []);
+  useEffect(() => {
+    setQuestions(savedQuestions(profileId));
+    setItems(reportItems(profileId));
+    setCardFields(savedCardFields(profileId));
+  }, [profileId]);
 
   const lastAppt = (appointments.data ?? []).filter((a) => a.date < today).at(-1);
   const nextAppt = (appointments.data ?? []).find((a) => a.date >= today);
@@ -61,6 +69,11 @@ export default function ReportsPage() {
   const toggle = (s: SectionKey) => {
     setSections((xs) => (xs.includes(s) ? xs.filter((x) => x !== s) : [...xs, s]));
     setTemplate("custom");
+  };
+  const toggleField = (f: CardField) => {
+    const next = cardFields.includes(f) ? cardFields.filter((x) => x !== f) : CARD_FIELDS.filter((x) => x === f || cardFields.includes(x));
+    setCardFields(next);
+    saveCardFields(profileId, next);
   };
   const updateQuestions = (qs: string[]) => {
     setQuestions(qs);
@@ -175,15 +188,39 @@ export default function ReportsPage() {
           </div>
         </Group>
 
+        {sections.includes("carecard") && profile && (
+          <Group label={t("cardFields")}>
+            <p className="text-caption text-muted-foreground -mt-1">{t("cardFieldsHint", { name: profile.name })}</p>
+            <div className="rounded-card bg-card shadow-card divide-y divide-divider">
+              {CARD_FIELDS.map((f) => {
+                const preview = cardFieldText(profile.careCard, f);
+                return (
+                  <label key={f} className="flex items-center justify-between gap-3 min-h-[56px] px-4 py-2 cursor-pointer">
+                    <span className="min-w-0 flex flex-col">
+                      <span id={`cf-${f}`} className="text-body font-extrabold">{t(`field.${f}`)}</span>
+                      <span className="text-caption text-muted-foreground truncate">{preview || t("fieldEmpty")}</span>
+                    </span>
+                    <input type="checkbox" role="switch" aria-labelledby={`cf-${f}`} checked={cardFields.includes(f)} onChange={() => toggleField(f)} className="switch flex-none" />
+                  </label>
+                );
+              })}
+            </div>
+          </Group>
+        )}
+
         {items.length > 0 && (
           <Group label={t("fromInsights")}>
+            <p className="text-caption text-muted-foreground -mt-1">{t("fromInsightsHint")}</p>
             <ul className="space-y-2">
               {items.map((i) => (
-                <li key={i.id} className="flex items-start gap-2 p-3 rounded-lg bg-card shadow-card">
-                  <Check size={16} strokeWidth={2.5} className="flex-none mt-0.5 text-profile" aria-hidden="true" />
-                  <span className="flex-1 text-label font-bold">{i.title}</span>
-                  <button type="button" aria-label={t("remove", { title: i.title })} onClick={() => { removeReportItem(i.id); setItems(reportItems()); }} className="w-8 h-8 flex-none rounded-full flex items-center justify-center text-muted-foreground">
-                    <X size={16} strokeWidth={2} aria-hidden="true" />
+                <li key={i.id} className="flex items-start gap-2 pl-3 pr-1 py-1 rounded-lg bg-card shadow-card">
+                  <Check size={16} strokeWidth={2.5} className="flex-none mt-3.5 text-profile" aria-hidden="true" />
+                  <span className="flex-1 min-w-0 py-2.5 flex flex-col">
+                    <span className="text-label font-extrabold">{i.kind === "chart" ? t("chartItem", { title: i.title }) : i.title}</span>
+                    <span className="text-caption text-muted-foreground">{i.detail}</span>
+                  </span>
+                  <button type="button" aria-label={t("remove", { title: i.title })} onClick={() => { removeReportItem(profileId, i.id); setItems(reportItems(profileId)); }} className="w-11 h-11 flex-none rounded-full flex items-center justify-center text-muted-foreground">
+                    <X size={18} strokeWidth={2} aria-hidden="true" />
                   </button>
                 </li>
               ))}
@@ -197,7 +234,7 @@ export default function ReportsPage() {
               {questions.map((q, i) => (
                 <li key={i} className="flex items-start gap-2 p-3 rounded-lg bg-card shadow-card">
                   <span className="flex-1 text-body">{q}</span>
-                  <button type="button" aria-label={t("removeQuestion", { n: i + 1 })} onClick={() => updateQuestions(questions.filter((_, j) => j !== i))} className="w-8 h-8 flex-none rounded-full flex items-center justify-center text-muted-foreground">
+                  <button type="button" aria-label={t("removeQuestion", { n: i + 1 })} onClick={() => updateQuestions(questions.filter((_, j) => j !== i))} className="w-11 h-11 -my-2 -mr-1 flex-none rounded-full flex items-center justify-center text-muted-foreground">
                     <X size={16} strokeWidth={2} aria-hidden="true" />
                   </button>
                 </li>
@@ -217,7 +254,7 @@ export default function ReportsPage() {
 
         <div className="space-y-2.5 pt-1">
           <Link
-            href={reportHref({ profileId, from, to, template, sections })}
+            href={reportHref({ profileId, from, to, template, sections, cardFields })}
             className="w-full h-button flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground text-body-lg"
           >
             <FileText size={20} strokeWidth={2} aria-hidden="true" /> {t("preview")}

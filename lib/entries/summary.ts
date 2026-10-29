@@ -14,6 +14,8 @@ export interface SummaryContext {
   volumeUnit: "ml" | "oz";
   medicationName?: (id: string) => string | undefined;
   customActivities?: Option[];
+  /** Names from the profile's foods and formulas lists (EAT-08, EAT-10). */
+  optionLabel?: (module: "food" | "formula", key: string) => string;
 }
 
 interface EntryLike {
@@ -129,8 +131,9 @@ export function entryTitle(e: EntryLike, ctx: SummaryContext): string {
 }
 
 /** Timeline detail line: "7.5 mL · as needed, fever", "Brown · type 4, smooth". */
-export function entryDetail(e: EntryLike): string {
+export function entryDetail(e: EntryLike, ctx?: Pick<SummaryContext, "optionLabel">): string {
   const d = (e.data ?? {}) as D;
+  const option = (module: "food" | "formula", key: string) => ctx?.optionLabel?.(module, key) ?? humanize(key.replace(/^opt_/, ""));
   const parts: string[] = [];
   switch (e.type) {
     case "bathroom": {
@@ -146,13 +149,13 @@ export function entryDetail(e: EntryLike): string {
       if (m === "breast" && num(d.duration_min)) parts.push(t("summary.minutes", { count: num(d.duration_min)! }));
       if (m === "bottle" && d.contents) parts.push(labelFor(BOTTLE_CONTENTS, String(d.contents)));
       if (m === "meal" || m === "snack") {
-        const foods = arr(d.food_ids).map((f) => humanize(String(f).replace(/^opt_/, "")));
+        const foods = arr(d.food_ids).map((f) => option("food", String(f)));
         const groups = arr(d.food_groups).map((g) => labelFor(FOOD_GROUPS, String(g)));
         const list = foods.length ? foods : groups;
         if (list.length) parts.push(sentenceList(list));
       }
       if (m === "tube") {
-        if (d.formula_id) parts.push(humanize(String(d.formula_id).replace(/^opt_/, "")));
+        if (d.formula_id) parts.push(option("formula", String(d.formula_id)));
         if (d.delivery) parts.push(labelFor(TUBE_DELIVERY, String(d.delivery)));
         if (num(d.flush_ml)) parts.push(t("summary.flush", { amount: t("eating.ml", { n: num(d.flush_ml)! }) }));
       }

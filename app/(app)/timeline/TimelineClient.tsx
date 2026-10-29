@@ -14,6 +14,7 @@ import { UndoToast, type ToastEntry } from "@/components/log/UndoToast";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useEntries, useEntry, useMedications } from "@/lib/data/hooks";
 import { useRepo } from "@/lib/data/repo-context";
+import { useOptionLabels } from "@/lib/data/useOptionSet";
 import type { LocalEntry } from "@/lib/data/types";
 import { entryShortLabel, type SummaryContext } from "@/lib/entries/summary";
 import { bathroomTileLabel } from "@/lib/options";
@@ -41,6 +42,7 @@ export function TimelineClient() {
   const types = filter === "all" ? undefined : [filter];
   const entries = useEntries({ profileId: activeProfile?.id, from, types }, !!activeProfile);
   const meds = useMedications(activeProfile?.id ?? null);
+  const optionLabel = useOptionLabels(activeProfile?.id ?? null);
   const listed = (entries.data ?? []).find((e) => e.id === entryId);
   const direct = useEntry(entryId && !listed ? entryId : null);
   const editing = listed ?? direct.data ?? null;
@@ -49,6 +51,7 @@ export function TimelineClient() {
   const ctx: SummaryContext = {
     careStage: stage, toileting: activeProfile?.toileting ?? "toilet", volumeUnit: householdSettings.volume_unit,
     medicationName: (id) => meds.data?.find((m) => m.id === id)?.name,
+    optionLabel,
   };
   const groups = groupByDay(entries.data ?? []);
   const scheduledMeds = filter === "all" || filter === "medication" ? (meds.data ?? []) : [];
