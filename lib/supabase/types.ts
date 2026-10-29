@@ -195,7 +195,7 @@ export interface Database {
           data: Json;
           note: string | null;
           flagged_for_doctor: boolean;
-          logged_by: string;
+          logged_by: string | null; // null once that user deleted their account (SET-07)
           logged_by_name: string;
           logged_by_initials: string;
           created_at: string;
@@ -214,7 +214,7 @@ export interface Database {
           data?: Json;
           note?: string | null;
           flagged_for_doctor?: boolean;
-          logged_by: string;
+          logged_by: string | null;
           logged_by_name: string;
           logged_by_initials: string;
           created_at?: string;
@@ -248,7 +248,7 @@ export interface Database {
           id: string;
           entry_id: string;
           household_id: string;
-          changed_by: string;
+          changed_by: string | null; // null once that user deleted their account (SET-07)
           changed_at: string;
           before: Json;
           after: Json;
@@ -257,7 +257,7 @@ export interface Database {
           id?: string;
           entry_id: string;
           household_id: string;
-          changed_by: string;
+          changed_by: string | null;
           changed_at?: string;
           before: Json;
           after: Json;
@@ -345,7 +345,7 @@ export interface Database {
           effective_at: string;
           before: Json;
           after: Json;
-          changed_by: string;
+          changed_by: string | null; // null once that user deleted their account (SET-07)
           created_at: string;
         };
         Insert: {
@@ -356,7 +356,7 @@ export interface Database {
           effective_at: string;
           before: Json;
           after: Json;
-          changed_by: string;
+          changed_by: string | null;
           created_at?: string;
         };
         Update: Record<string, never>;
@@ -469,7 +469,7 @@ export interface Database {
         Row: {
           id: string;
           household_id: string;
-          user_id: string;
+          user_id: string | null; // null once that user deleted their account (SET-07)
           action: string;
           target: string | null;
           at: string;
@@ -477,7 +477,7 @@ export interface Database {
         Insert: {
           id?: string;
           household_id: string;
-          user_id: string;
+          user_id: string | null;
           action: string;
           target?: string | null;
           at?: string;
@@ -517,6 +517,14 @@ export interface Database {
       accept_invite: {
         Args: { p_token: string; p_display_name: string; p_initials: string };
         Returns: void;
+      };
+      delete_profile: {
+        Args: { p_profile_id: string };
+        Returns: void;
+      };
+      delete_my_account: {
+        Args: Record<string, never>;
+        Returns: "household_deleted" | "left_household" | "no_household";
       };
       get_invite_preview: {
         Args: { p_token: string };

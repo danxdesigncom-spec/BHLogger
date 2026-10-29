@@ -26,7 +26,7 @@ export default function RecentlyDeletedPage() {
     optionLabel,
   };
   const rows = (deleted.data ?? []).filter((e) => (e.deleted_at ?? "") >= since);
-  const canRestore = (loggedBy: string) => currentMember.role === "admin" || (currentMember.role === "caregiver" && loggedBy === currentMember.userId);
+  const canRestore = (loggedBy: string | null) => currentMember.role === "admin" || (currentMember.role === "caregiver" && loggedBy === currentMember.userId);
 
   return (
     <>

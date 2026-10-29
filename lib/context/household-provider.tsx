@@ -75,9 +75,11 @@ export function HouseholdProvider({
   setLocale(settings.locale);
   setDateLocale(settings.locale);
 
-  const [activeProfileId, setActiveProfileIdState] = useState<string | null>(
+  const [chosenProfileId, setActiveProfileIdState] = useState<string | null>(
     initialActiveProfileId ?? profiles[0]?.id ?? null,
   );
+  // A profile that was archived or deleted (SET-07) since it was chosen falls back to the first one left.
+  const activeProfileId = profiles.some((p) => p.id === chosenProfileId) ? chosenProfileId : (profiles[0]?.id ?? null);
 
   const setActiveProfile = useCallback((id: string) => {
     setActiveProfileIdState(id);

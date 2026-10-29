@@ -123,5 +123,6 @@ export function createLiveRepo(actor: Actor, householdId: string): Repo {
     removeFavorite: (id) => favoriteActions.removeFavorite(id),
     reorderFavorites: (profileId, ids) => favoriteActions.reorderFavorites(profileId, ids),
     pendingCount: () => outbox.pendingCount(),
+    forgetProfile: (profileId) => outbox.forgetProfile(profileId),
   };
 }

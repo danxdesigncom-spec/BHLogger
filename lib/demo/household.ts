@@ -25,10 +25,11 @@ export function demoHousehold(overrides: DemoOverrides = {}): {
     accessFrom: m.access_from,
   }));
 
-  const all = data.profiles.map((p) => {
+  const all = data.profiles.flatMap((p) => {
     const o = overrides.profiles?.[p.id] ?? {};
-    const { archived, ...fields } = o as { archived?: boolean } & Record<string, unknown>;
-    return { summary: toProfileSummary({ ...p, ...fields } as typeof p), archived: !!archived };
+    const { archived, deleted, ...fields } = o as { archived?: boolean; deleted?: boolean } & Record<string, unknown>;
+    // SET-07 in the demo: a deleted profile stays out until the demo is exited.
+    return deleted ? [] : [{ summary: toProfileSummary({ ...p, ...fields } as typeof p), archived: !!archived }];
   });
 
   return {

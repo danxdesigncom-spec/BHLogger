@@ -7,7 +7,7 @@ import { validateEntryData } from "@/lib/schemas/entry";
 import type { Json } from "@/lib/supabase/types";
 import { t } from "@/lib/i18n";
 
-type Result = { success: true } | { error: string };
+type Result = { success: true } | { error: string; gone?: true };
 
 const SaveEntrySchema = z.object({
   id: z.string().uuid(),
@@ -71,7 +71,11 @@ export async function saveEntry(input: SaveEntryInput): Promise<Result> {
     },
     { onConflict: "id", ignoreDuplicates: true },
   );
-  return error ? { error: error.message } : { success: true };
+  if (!error) return { success: true };
+  // SET-07: the profile was deleted on another device (or this person lost access to it), so the outbox can drop it.
+  // Only a clean "no such profile" answer drops it; if the check itself fails, the entry stays queued.
+  const { data: still, error: checkError } = await supabase.from("profiles").select("id").eq("id", parsed.data.profileId).maybeSingle();
+  return still || checkError ? { error: error.message } : { error: t("errors.profileGone"), gone: true };
 }
 
 const UpdateEntrySchema = z.object({

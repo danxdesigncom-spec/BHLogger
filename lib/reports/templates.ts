@@ -78,6 +78,16 @@ export function savedQuestions(profileId: string): string[] {
   }
 }
 
+/** SET-07: a deleted profile's saved care card choices and questions leave this device. */
+export function forgetSavedReport(profileId: string): void {
+  try {
+    localStorage.removeItem(CKEY(profileId));
+    localStorage.removeItem(QKEY(profileId));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 export function saveQuestions(profileId: string, qs: string[]): void {
   try {
     localStorage.setItem(QKEY(profileId), JSON.stringify(qs));

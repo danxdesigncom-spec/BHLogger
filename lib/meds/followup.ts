@@ -6,7 +6,7 @@ export const FOLLOWUP_UNTIL_MIN = 240;
 interface DoseLike {
   id: string;
   occurred_at: string;
-  logged_by: string;
+  logged_by: string | null;
   deleted_at?: string | null;
   data: unknown;
 }

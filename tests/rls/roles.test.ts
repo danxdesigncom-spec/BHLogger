@@ -73,4 +73,38 @@ describe.skipIf(!enabled)("RLS role enforcement (AT-09)", () => {
     const { data } = await dad.client.from("audit_events").select("id").limit(1);
     expect(data ?? []).toEqual([]);
   });
+
+  // SET-07 (needs migrations 20261029000004 and 20261029000005). These leave the seed story as it was.
+  it("a caregiver can't delete a profile", async () => {
+    const { error } = await dad.client.rpc("delete_profile", { p_profile_id: LEO });
+    expect(error?.message).toContain("admin_only");
+    const { data } = await mom.client.from("profiles").select("id").eq("id", LEO);
+    expect(data).toHaveLength(1);
+  });
+
+  it("an admin can delete a profile, and everything logged for it goes with it (positive control)", async () => {
+    const id = crypto.randomUUID();
+    const { error: createError } = await mom.client.from("profiles").insert({ id, household_id: HOUSEHOLD, name: "RLS test", color: "blue", care_stage: "child" });
+    expect(createError).toBeNull();
+    const entry = crypto.randomUUID();
+    await mom.client.from("entries").insert({
+      id: entry, household_id: HOUSEHOLD, profile_id: id, type: "mood", occurred_at: new Date().toISOString(), tz: "UTC",
+      data: { scope: "moment", level: 3, feelings: [], behaviors: [] }, logged_by: mom.userId, logged_by_name: "Mom", logged_by_initials: "MR",
+    });
+
+    const { error } = await mom.client.rpc("delete_profile", { p_profile_id: id });
+    expect(error).toBeNull();
+    expect((await mom.client.from("profiles").select("id").eq("id", id)).data).toEqual([]);
+    expect((await mom.client.from("entries").select("id").eq("id", entry)).data).toEqual([]);
+    const { data: audit } = await mom.client.from("audit_events").select("action").eq("target", id);
+    expect(audit).toEqual([{ action: "profile.deleted" }]);
+  });
+
+  it("the only admin can't delete their account while other members remain", async () => {
+    // If this ever succeeds, Mom has left the seed household: run `pnpm db:seed` to restore it.
+    const { error } = await mom.client.rpc("delete_my_account");
+    expect(error?.message).toContain("last_admin");
+    const { data } = await mom.client.from("household_members").select("id").eq("user_id", mom.userId);
+    expect(data).toHaveLength(1);
+  });
 });

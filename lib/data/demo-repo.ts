@@ -285,5 +285,21 @@ export function createDemoRepo(actor: Actor): Repo {
     async pendingCount() {
       return 0;
     },
+
+    async forgetProfile(profileId) {
+      const db = await openDb();
+      const entryIds = await db.entries.where("profile_id").equals(profileId).primaryKeys();
+      const medIds = await db.medications.where("profile_id").equals(profileId).primaryKeys();
+      await db.transaction("rw", [db.entries, db.revisions, db.medications, db.medicationChanges, db.appointments, db.options, db.profileSettings, db.favorites], async () => {
+        await db.entries.bulkDelete(entryIds);
+        await db.revisions.where("entry_id").anyOf(entryIds).delete();
+        await db.medications.bulkDelete(medIds);
+        await db.medicationChanges.where("medication_id").anyOf(medIds).delete();
+        await db.appointments.where("profile_id").equals(profileId).delete();
+        await db.options.where("profile_id").equals(profileId).delete();
+        await db.profileSettings.delete(profileId);
+        await db.favorites.where("profile_id").equals(profileId).delete();
+      });
+    },
   };
 }

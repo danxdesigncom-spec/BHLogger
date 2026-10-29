@@ -49,3 +49,8 @@ export function addReportItem(item: ReportItem): void {
 export function removeReportItem(profileId: string, id: string): void {
   writeAll(readAll().filter((i) => !(i.profileId === profileId && i.id === id)));
 }
+
+/** SET-07: a deleted profile's items leave this device. */
+export function forgetReportItems(profileId: string): void {
+  writeAll(readAll().filter((i) => i.profileId !== profileId));
+}

@@ -1507,11 +1507,35 @@
       "archiveBody": "Archived profiles leave the switcher. Their data stays in exports, and you can restore them from More.",
       "archive": "Archive",
       "deleteTitle": "Delete permanently",
-      "deleteBody": "Permanently deleting a profile or the whole account isn’t switched on yet. Export your data first; until then, archiving hides a profile everywhere.",
+      "deleteBody": "Deleting can’t be undone. Export your data first if you might need it. Deleted data is erased from the app right away, and from backups as they age out within 30 days.",
       "confirmTitle": "Archive {name}?",
       "confirmBody": "{name} leaves the switcher for every caregiver. Nothing is deleted, and an admin can restore the profile from More.",
       "keep": "Keep",
-      "archivedMessage": "{name} archived."
+      "archivedMessage": "{name} archived.",
+      "deletePeople": "Delete a person",
+      "archivedTag": "Archived",
+      "deletePerson": "Delete",
+      "deletePersonLabel": "Delete {name}",
+      "lastPerson": "{name} is the only person here. To delete {name} too, delete your account.",
+      "deletePersonTitle": "Delete {name} permanently?",
+      "deletePersonBody": "This deletes {name}’s profile and everything logged for {name} ({count, plural, =0 {no entries yet} one {# entry} other {# entries}}), plus medications, appointments, quick taps and the care card. Every caregiver loses it, and it can’t be undone.",
+      "understand": "I understand this can’t be undone",
+      "keepPerson": "Keep {name}",
+      "deletePersonConfirm": "Delete {name}",
+      "deletedPerson": "{name} was deleted.",
+      "deleteAccountTitle": "Delete your account",
+      "account": {
+        "sole": "You’re the only member, so this also deletes {household} and everything in it: {people}, and every entry, medication and appointment.",
+        "last_admin": "{household} has other caregivers, and you’re its only admin. Make one of them an admin first in More → Caregivers, then you can delete your account.",
+        "leave": "You leave {household} and your sign-in is deleted. Entries you logged stay in the household record, labeled with your name.",
+        "demo": "This is the demo. Deleting clears its sample data from this browser and leaves the demo."
+      },
+      "deleteAccount": "Delete my account",
+      "deleteAccountConfirmTitle": "Delete your account?",
+      "deleteDemo": "Delete demo data",
+      "deleteDemoTitle": "Delete the demo data?",
+      "accountUnsynced": "{count, plural, one {# entry on this phone hasn’t synced and will be lost.} other {# entries on this phone haven’t synced and will be lost.}}",
+      "keepAccount": "Keep my account"
     }
   },
   "profileSettings": {
@@ -1637,7 +1661,13 @@
     "invalidMedication": "Invalid medication.",
     "invalidFavorite": "That quick tap can’t be saved.",
     "tooManyFavorites": "You can keep up to {max} quick taps. Remove one first.",
-    "medicationInactive": "That medication isn’t active any more."
+    "medicationInactive": "That medication isn’t active any more.",
+    "lastProfile": "The last person can’t be deleted on their own. Delete your account to delete everything.",
+    "profileGone": "This person was deleted.",
+    "profileNotDeleted": "Couldn’t delete this person. Check your connection and try again.",
+    "lastAdminAccount": "Make another caregiver an admin before deleting your account.",
+    "accountNotDeleted": "Couldn’t delete your account. Check your connection and try again.",
+    "accountPartlyDeleted": "Your household data was deleted, but your sign-in couldn’t be removed. Try again to finish."
   },
   "auth": {
     "metaTitle": "Sign in",
@@ -1649,7 +1679,8 @@
     "emailPlaceholder": "you@example.com",
     "sending": "Sending",
     "send": "Send magic link",
-    "demo": "Continue without saving"
+    "demo": "Continue without saving",
+    "accountDeleted": "Your account was deleted."
   },
   "invite": {
     "metaTitle": "You've been invited",

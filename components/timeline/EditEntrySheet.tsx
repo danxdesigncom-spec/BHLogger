@@ -91,7 +91,7 @@ export function EditEntrySheet({
     : entry.type === "bathroom" ? te("entry", { name: bathroomTileLabel(stage, toileting) })
     : entry.type === "eating" && stage === "baby" ? te("entry", { name: t("modules.feeding") })
     : te("entry", { name: t.has(`modules.${entry.type}`) ? t(`modules.${entry.type}`) : humanize(entry.type) });
-  const userName = (id: string) => members.find((m) => m.userId === id)?.displayName ?? te("someone");
+  const userName = (id: string | null) => members.find((m) => m.userId === id)?.displayName ?? te("someone");
 
   const save = async () => {
     const occurredAt = new Date(when);

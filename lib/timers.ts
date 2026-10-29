@@ -42,6 +42,11 @@ export async function clearTimer(key: string): Promise<void> {
   await store().timers.delete(key);
 }
 
+/** SET-07: a deleted profile's running timers leave this device. */
+export async function clearTimersFor(profileId: string): Promise<void> {
+  await store().timers.filter((t) => t.profileId === profileId).delete();
+}
+
 /** Sign-out and leaving demo mode: nothing about a running timer stays on the device. */
 export async function clearAllTimers(): Promise<void> {
   db?.close();

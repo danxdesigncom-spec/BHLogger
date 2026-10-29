@@ -11,11 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; deleted?: string }>;
 }) {
   // Resolve the params here and pass plain strings: handing the promise to a client component makes
   // Next.js warn about synchronous access when React serializes it.
-  const { error, next } = await searchParams;
+  const { error, next, deleted } = await searchParams;
   const t = await getTranslations();
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-5">
@@ -28,6 +28,11 @@ export default async function LoginPage({
             {t("auth.subtitle")}
           </p>
         </div>
+        {deleted === "1" && (
+          <p role="status" className="rounded-card bg-card p-4 shadow-card text-center text-body font-bold">
+            {t("auth.accountDeleted")}
+          </p>
+        )}
         <LoginForm next={safeNext(next)} callbackError={typeof error === "string" ? error : undefined} />
       </div>
     </main>

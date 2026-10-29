@@ -93,6 +93,13 @@ class Outbox {
     return this.store.pending.count();
   }
 
+  /** SET-07: a deleted profile's queued and cached entries leave this device. */
+  async forgetProfile(profileId: string): Promise<void> {
+    await this.store.pending.filter((r) => r.entry.profile_id === profileId).delete();
+    await this.store.cache.where("profile_id").equals(profileId).delete();
+    this.emit();
+  }
+
   async mergePending(rows: LocalEntry[], q: EntryQuery): Promise<LocalEntry[]> {
     return mergeEntries(await this.pendingEntries(), rows, q);
   }
@@ -127,7 +134,8 @@ class Outbox {
         try {
           const result = await saveEntryAction(row.payload);
           if ("error" in result) {
-            await this.store.pending.update(row.id, { attempts: row.attempts + 1, lastError: result.error });
+            if (result.gone) await this.store.pending.delete(row.id);
+            else await this.store.pending.update(row.id, { attempts: row.attempts + 1, lastError: result.error });
             continue;
           }
           await this.store.pending.delete(row.id);
@@ -155,11 +163,19 @@ function isNetworkError(msg: string) {
 
 export const outbox = new Outbox();
 
-/** Sign-out: drop this device's cached entries and app-shell caches so no health data stays behind. */
+/**
+ * Sign-out and account deletion: drop this device's cached entries, app-shell caches and the app's
+ * localStorage (questions typed for a visit, report choices, dismissed banners) so no health data stays behind.
+ */
 export async function clearLocalData(): Promise<void> {
   outbox.close();
   await Dexie.delete("bl-outbox");
   await clearAllTimers();
+  try {
+    for (const key of Object.keys(localStorage)) if (key.startsWith("bl-")) localStorage.removeItem(key);
+  } catch {
+    /* storage unavailable */
+  }
   if (typeof caches !== "undefined") {
     for (const key of await caches.keys()) await caches.delete(key);
   }

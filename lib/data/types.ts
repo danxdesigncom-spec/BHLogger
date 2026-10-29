@@ -66,7 +66,8 @@ export interface MedicationInput {
   effectiveFrom?: string;
 }
 
-export type Result = { success: true } | { error: string };
+/** `gone`: the entry's profile was deleted (SET-07) or is no longer visible, so retrying can't succeed. */
+export type Result = { success: true } | { error: string; gone?: true };
 
 export interface Actor {
   userId: string;
@@ -101,6 +102,8 @@ export interface Repo {
   reorderFavorites(profileId: string, ids: string[]): Promise<Result>;
   /** Pending outbox count, for the offline banner (M8). */
   pendingCount(): Promise<number>;
+  /** SET-07: drop what this device keeps for a deleted profile (queued and cached entries, demo data). */
+  forgetProfile(profileId: string): Promise<void>;
 }
 
 export function matchesData(data: Json, match?: Record<string, string>): boolean {
