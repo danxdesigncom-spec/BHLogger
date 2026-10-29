@@ -1616,7 +1616,6 @@
     "saving": "Saving",
     "inviteTitle": "Invite a caregiver",
     "inviteSubtitle": "They get their own sign-in",
-    "inviteSent": "Invite sent!",
     "email": "Their email",
     "emailPlaceholder": "name@email.com",
     "roleInvite": {
@@ -1628,7 +1627,9 @@
     "copied": "Copied!",
     "copyLink": "Copy link",
     "sendInvite": "Send invite",
-    "sending": "Sending"
+    "sending": "Sending",
+    "inviteEmailed": "Invite emailed to {email}. You can also send them this link:",
+    "inviteNotEmailed": "The invite is ready, but the email to {email} couldn’t be sent. Copy this link and send it to them:"
   },
   "errors": {
     "invalidEntry": "Invalid entry.",

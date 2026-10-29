@@ -34,7 +34,7 @@ export function InviteSheet({ householdId, profiles }: Props) {
   const [copied, setCopied] = useState(false);
   const [state, action, pending] = useActionState(sendInvite, null);
   const stateError = state && 'error' in state ? state.error : undefined;
-  const stateSuccess = state && 'success' in state;
+  const sent = state && "success" in state ? state : null;
 
   const toggleProfile = (id: string) =>
     setSelectedProfiles((prev) => {
@@ -44,21 +44,25 @@ export function InviteSheet({ householdId, profiles }: Props) {
     });
 
   const handleCopy = async () => {
-    const fd = new FormData();
-    fd.append("householdId", householdId);
-    fd.append("role", role);
-    fd.append("profileIds", JSON.stringify(Array.from(selectedProfiles)));
-    fd.append("email", "");
-    const result = await copyInviteLink(fd);
-    if ("inviteUrl" in result) {
-      try {
-        await navigator.clipboard.writeText(result.inviteUrl);
-      } catch {
-        // fallback: select text
-      }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+    // After Send invite, copy that invite's link rather than making a second invite.
+    let url = sent?.inviteUrl;
+    if (!url) {
+      const fd = new FormData();
+      fd.append("householdId", householdId);
+      fd.append("role", role);
+      fd.append("profileIds", JSON.stringify(Array.from(selectedProfiles)));
+      fd.append("email", "");
+      const result = await copyInviteLink(fd);
+      if (!("inviteUrl" in result)) return;
+      url = result.inviteUrl;
     }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // The link is shown on screen to copy by hand.
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
@@ -110,10 +114,11 @@ export function InviteSheet({ householdId, profiles }: Props) {
               {stateError}
             </p>
           )}
-          {stateSuccess && (
-            <p role="status" className="rounded-lg bg-success px-4 py-3 text-label font-bold text-success-ink">
-              {t("inviteSent")}
-            </p>
+          {sent && (
+            <div role="status" className={`rounded-lg px-4 py-3 space-y-1.5 text-label font-bold ${sent.emailed ? "bg-success text-success-ink" : "border border-warning-border bg-warning text-warning-ink"}`}>
+              <p>{sent.emailed ? t("inviteEmailed", { email: sent.email }) : t("inviteNotEmailed", { email: sent.email })}</p>
+              <p className="font-normal break-all select-all">{sent.inviteUrl}</p>
+            </div>
           )}
 
           {/* Email */}

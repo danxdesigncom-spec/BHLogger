@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Role } from "@/lib/supabase/types";
@@ -14,7 +15,7 @@ export interface CreateInviteInput {
 
 export async function createInvite(
   input: CreateInviteInput,
-): Promise<{ token: string; inviteUrl: string } | { error: string }> {
+): Promise<{ token: string; inviteUrl: string; emailed: boolean } | { error: string }> {
   const supabase = await createClient();
 
   // Fetch the caller's member row id (needed for created_by)
@@ -54,19 +55,36 @@ export async function createInvite(
 
   const inviteUrl = `${origin}/invite/${data.token}`;
 
-  // Send email via Supabase Auth admin (uses project's configured SMTP / magic-link sender).
-  // Falls back silently — the Copy link button always works.
-  const { error: emailError } = await supabase.auth.admin
-    ? // admin client not available from anon key — email is sent via Supabase
-      // transactional emails configured in the dashboard (Auth > Email Templates).
-      // For now the invite link is returned to the caller; the UI shows Copy link.
-      { error: null }
-    : { error: null };
-
-  void emailError; // intentionally unused — email delivery is best-effort
+  // ACC-07 (M3 decision A1a): Supabase's own email takes the invite link to them. Copy link always works too.
+  const emailed = input.email.trim() ? await emailInvite(input.email.trim(), inviteUrl) : false;
 
   revalidatePath("/more");
-  return { token: data.token, inviteUrl };
+  return { token: data.token, inviteUrl, emailed };
+}
+
+/**
+ * Sends the invite link with Supabase Auth's email: its "Invite user" email to a new address, or its
+ * sign-in email to someone who already has an account. Both links open the join page (S24), where the
+ * existing accept flow takes over. The links work on any device because nothing is tied to the
+ * admin's browser. Delivery depends on the project's SMTP settings; false means it wasn't sent.
+ */
+async function emailInvite(email: string, inviteUrl: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !anonKey) return false;
+  const stateless = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
+
+  if (serviceKey) {
+    const service = createSupabaseClient(url, serviceKey, stateless);
+    const { error } = await service.auth.admin.inviteUserByEmail(email, { redirectTo: inviteUrl });
+    if (!error) return true;
+    if (error.code !== "email_exists" && !/already/i.test(error.message)) return false;
+  }
+  // An existing account (or no service key): a sign-in link that lands on the invite.
+  const mailer = createSupabaseClient(url, anonKey, { auth: { ...stateless.auth, flowType: "implicit" as const } });
+  const { error } = await mailer.auth.signInWithOtp({ email, options: { emailRedirectTo: inviteUrl, shouldCreateUser: true } });
+  return !error;
 }
 
 export async function acceptInvite(

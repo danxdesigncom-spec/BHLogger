@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 // End-to-end: invite flow (AT-09 equivalent).
-// Requires a running dev server and a connected Supabase project.
-// These tests are skipped in CI until the Supabase project is configured.
+// The signed-in parts need a real project with the seed story and an admin's session (`pnpm e2e:sessions`,
+// then E2E_STORAGE_STATE=tests/.auth/mom.json). Without it they skip; the signed-out checks always run.
+const SIGNED_IN = process.env.E2E_STORAGE_STATE;
 
 test.describe("invite flow", () => {
-  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase not configured");
+  test.skip(!SIGNED_IN, "Needs a signed-in admin: run `pnpm e2e:sessions` and set E2E_STORAGE_STATE");
+  test.use({ storageState: SIGNED_IN });
 
   test("admin can open invite sheet", async ({ page }) => {
     // This test assumes the Rodriguez Family seed is loaded.
@@ -42,7 +44,8 @@ test.describe("invite flow", () => {
 });
 
 test.describe("More tab", () => {
-  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase not configured");
+  test.skip(!SIGNED_IN, "Needs a signed-in admin: run `pnpm e2e:sessions` and set E2E_STORAGE_STATE");
+  test.use({ storageState: SIGNED_IN });
 
   test("shows people and caregivers sections", async ({ page }) => {
     await page.goto("/more");
@@ -52,7 +55,7 @@ test.describe("More tab", () => {
 });
 
 test.describe("onboarding flow", () => {
-  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase not configured");
+  // Signed out: no session cookies, whatever the project.
 
   test("new user is redirected to onboarding", async ({ page }) => {
     // Without a session, the user is redirected to login.

@@ -4,7 +4,7 @@ import { createInvite } from "@/lib/actions/invites";
 import type { Role } from "@/lib/supabase/types";
 import { t } from "@/lib/i18n";
 
-type State = null | { success: true; inviteUrl: string } | { error: string };
+type State = null | { success: true; inviteUrl: string; email: string; emailed: boolean } | { error: string };
 
 export async function sendInvite(
   _prev: State,
@@ -30,7 +30,7 @@ export async function sendInvite(
   const result = await createInvite({ householdId, email, role, profileIds });
   if ("error" in result) return { error: result.error };
 
-  return { success: true, inviteUrl: result.inviteUrl };
+  return { success: true, inviteUrl: result.inviteUrl, email: email.trim(), emailed: result.emailed };
 }
 
 export async function copyInviteLink(

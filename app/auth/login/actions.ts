@@ -22,8 +22,8 @@ export async function sendMagicLink(
   }
 
   const supabase = await createClient();
-  const headerList = await headers();
-  const origin = headerList.get("origin") ?? "http://localhost:3000";
+  // The configured app URL wins over the request's Origin header, so the link always points at this app.
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? (await headers()).get("origin") ?? "http://localhost:3000";
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

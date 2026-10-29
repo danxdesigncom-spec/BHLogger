@@ -100,7 +100,7 @@ describe("non-negotiable 6: the service-role key stays on the server", () => {
 
   it("only server actions read it", () => {
     const readers = ["app", "components", "lib"].flatMap((d) => files(join(process.cwd(), d))).filter((p) => readFileSync(p, "utf8").includes("SUPABASE_SERVICE_ROLE_KEY"));
-    expect(readers.map((p) => p.replace(process.cwd() + "/", "")).sort()).toEqual(["lib/actions/deletion.ts"]);
+    expect(readers.map((p) => p.replace(process.cwd() + "/", "")).sort()).toEqual(["lib/actions/deletion.ts", "lib/actions/invites.ts"]);
     for (const p of readers) expect(readFileSync(p, "utf8").startsWith('"use server";')).toBe(true);
   });
 });

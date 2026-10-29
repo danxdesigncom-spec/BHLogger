@@ -9,6 +9,8 @@
 /test-results
 /playwright-report
 /playwright/.cache
+# signed-in sessions for the live specs (pnpm e2e:sessions)
+/tests/.auth/
 
 # next.js
 /.next/

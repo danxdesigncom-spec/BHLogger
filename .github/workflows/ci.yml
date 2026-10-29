@@ -2,56 +2,105 @@ name: CI
 
 on:
   push:
-    branches: [main, "feature/**"]
+    branches: [main, "feature/**", "m*-*"]
   pull_request:
 
-jobs:
-  ci:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
+# The app needs a Supabase URL to start. Demo mode (what most e2e specs use) never calls it,
+# so a placeholder is enough when no project is configured.
+env:
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 12
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Lint
         run: pnpm lint
-
       - name: Typecheck
         run: pnpm typecheck
-
       - name: Contrast check
-        run: node design/scripts/check-contrast.mjs
-
+        run: pnpm check-contrast
       - name: Unit tests
-        run: pnpm test --run
-
+        run: pnpm test
       - name: Build
         run: pnpm build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
 
-      - name: E2E tests (Chromium)
-        run: pnpm e2e --project=chromium
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
-
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit, mobile-safari]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install the browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.project == 'mobile-safari' && 'webkit' || matrix.project }}
+      # Demo-mode specs (AT-01 to AT-07, AT-10 to AT-14, axe in light, dark and night). Specs that need a
+      # signed-in session skip here; run them locally with `pnpm e2e:sessions` (see scripts/e2e-sessions.ts).
+      - name: E2E (${{ matrix.project }})
+        run: pnpm test:e2e --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: playwright-report/
           retention-days: 7
+
+  # AT-09: role checks in the database. Runs only when a seeded test project is configured
+  # (RLS_TEST_SUPABASE_URL and RLS_TEST_SUPABASE_ANON_KEY). Never point these at the pilot project:
+  # the tests sign in as the seed users and attempt writes that the database must refuse.
+  rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RLS_URL: ${{ secrets.RLS_TEST_SUPABASE_URL }}
+      RLS_KEY: ${{ secrets.RLS_TEST_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Skip without a test project
+        if: env.RLS_URL == ''
+        run: echo "No RLS test project configured; skipping AT-09."
+      - uses: actions/checkout@v4
+        if: env.RLS_URL != ''
+      - uses: pnpm/action-setup@v4
+        if: env.RLS_URL != ''
+        with:
+          version: 12
+      - uses: actions/setup-node@v4
+        if: env.RLS_URL != ''
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        if: env.RLS_URL != ''
+        run: pnpm install --frozen-lockfile
+      - name: RLS tests (AT-09)
+        if: env.RLS_URL != ''
+        run: |
+          printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$RLS_URL" "$RLS_KEY" > .env.local
+          pnpm test:rls

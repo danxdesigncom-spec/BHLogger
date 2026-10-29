@@ -4,6 +4,11 @@ import type { Database } from "@/lib/supabase/types";
 import { DEMO_COOKIE, DEMO_COOKIE_VALUE, DEMO_ENABLED } from "@/lib/demo";
 
 export async function updateSession(request: NextRequest) {
+  // Demo mode never talks to Supabase, so it skips the session check (and works with no reachable project, as in CI).
+  const isDemo =
+    DEMO_ENABLED && request.cookies.get(DEMO_COOKIE)?.value === DEMO_COOKIE_VALUE;
+  if (isDemo) return NextResponse.next({ request });
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -46,10 +51,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/icons/") ||
     pathname === "/sw.js";
 
-  const isDemo =
-    DEMO_ENABLED && request.cookies.get(DEMO_COOKIE)?.value === DEMO_COOKIE_VALUE;
-
-  if (!user && !isPublic && !isDemo) {
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);

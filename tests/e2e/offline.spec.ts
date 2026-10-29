@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 // AT-08: offline logging. Needs a signed-in session against a real Supabase project
 // (demo mode never syncs, so it can't prove "sync exactly once").
 test.describe("Offline outbox (AT-08)", () => {
-  test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.E2E_STORAGE_STATE, "Needs Supabase and a signed-in storage state");
+  test.skip(!process.env.E2E_STORAGE_STATE, "Needs a signed-in session on a real project: run `pnpm e2e:sessions` and set E2E_STORAGE_STATE");
   test.use({ storageState: process.env.E2E_STORAGE_STATE });
 
   test("three entries logged offline wait to sync, then sync exactly once", async ({ page, context }) => {
