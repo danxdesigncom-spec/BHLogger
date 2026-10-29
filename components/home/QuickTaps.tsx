@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Milk } from "lucide-react";
+import { Milk, Plus } from "lucide-react";
 import { MODULE_ICONS, type ModuleType } from "@/components/log/LogSheet";
 import { ActivityIcon } from "@/components/log/activity-icons";
 import { useFavorites } from "@/lib/data/hooks";
@@ -23,8 +23,11 @@ function iconFor(tpl: FavoriteTemplate): ReactNode {
   return MODULE_ICONS[tpl.type as ModuleType] ?? null;
 }
 
-/** QL-09 / DESIGN 4.5: up to six one-tap presets; each logs at the current time and shows the Undo toast. */
-export function QuickTaps({ profileId, onTap }: { profileId: string; onTap: (template: FavoriteTemplate, label: string) => Promise<Result | null> }) {
+/**
+ * QL-09 / DESIGN 4.5: up to six one-tap presets; each logs at the current time and shows the Undo toast.
+ * At night (S26) they're labeled "One tap" and drawn as wide pills, two to a row, for an easier target in the dark.
+ */
+export function QuickTaps({ profileId, night = false, onTap }: { profileId: string; night?: boolean; onTap: (template: FavoriteTemplate, label: string) => Promise<Result | null> }) {
   const t = useTranslations("quickTaps");
   const favorites = useFavorites(profileId);
   const [busy, setBusy] = useState<string | null>(null);
@@ -38,28 +41,46 @@ export function QuickTaps({ profileId, onTap }: { profileId: string; onTap: (tem
 
   return (
     <section aria-labelledby="quick-taps-h" className="space-y-2.5">
-      <h2 id="quick-taps-h" className="font-display text-title-4">{t("title")}</h2>
-      <div className="flex flex-wrap gap-x-[14px] gap-y-3">
-        {rows.map((r) => (
-          <button
-            key={r.id}
-            type="button"
-            disabled={busy !== null}
-            onClick={async () => {
-              setBusy(r.id);
-              setError(null);
-              const result = await onTap(r.tpl, r.label);
-              if (result && "error" in result) setError(result.error);
-              setBusy(null);
-            }}
-            className="w-[76px] flex flex-col items-center gap-1.5 text-caption font-extrabold text-foreground text-center disabled:opacity-60"
-          >
-            <span className="w-[60px] h-[60px] rounded-full bg-card shadow-raised text-profile flex items-center justify-center [&_svg]:w-6 [&_svg]:h-6">
-              {iconFor(r.tpl)}
-            </span>
-            {r.label}
-          </button>
-        ))}
+      {night ? (
+        <h2 id="quick-taps-h" className="text-label font-extrabold text-muted-foreground">{t("titleNight")}</h2>
+      ) : (
+        <h2 id="quick-taps-h" className="font-display text-title-4">{t("title")}</h2>
+      )}
+      <div className={night ? "grid grid-cols-2 gap-2" : "flex flex-wrap gap-x-[14px] gap-y-3"}>
+        {rows.map((r) => {
+          const tap = async () => {
+            setBusy(r.id);
+            setError(null);
+            const result = await onTap(r.tpl, r.label);
+            if (result && "error" in result) setError(result.error);
+            setBusy(null);
+          };
+          return night ? (
+            <button
+              key={r.id}
+              type="button"
+              disabled={busy !== null}
+              onClick={tap}
+              className="min-h-button min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-full border border-border bg-secondary text-body font-bold leading-tight text-foreground text-center disabled:opacity-60"
+            >
+              <Plus size={16} strokeWidth={2} className="flex-none text-profile" aria-hidden="true" />
+              <span className="min-w-0">{r.label}</span>
+            </button>
+          ) : (
+            <button
+              key={r.id}
+              type="button"
+              disabled={busy !== null}
+              onClick={tap}
+              className="w-[76px] flex flex-col items-center gap-1.5 text-caption font-extrabold text-foreground text-center disabled:opacity-60"
+            >
+              <span className="w-[60px] h-[60px] rounded-full bg-card shadow-raised text-profile flex items-center justify-center [&_svg]:w-6 [&_svg]:h-6">
+                {iconFor(r.tpl)}
+              </span>
+              {r.label}
+            </button>
+          );
+        })}
       </div>
       {error && <p role="alert" className="text-caption font-bold text-destructive">{error}</p>}
     </section>

@@ -17,6 +17,7 @@ import { updateProfile } from "@/lib/actions/settings";
 import { clearDemoData } from "@/lib/data/demo-repo";
 import { clearLocalData } from "@/lib/data/outbox";
 import { useOnClient } from "@/lib/use-on-client";
+import { formatHour } from "@/lib/prefs";
 
 function Row({ href, children, onClick }: { href?: string; children: React.ReactNode; onClick?: () => void }) {
   const cls = "w-full min-h-[60px] flex items-center gap-3 px-3.5 py-2 text-left";
@@ -35,7 +36,7 @@ function Avatar({ profile }: { profile: ProfileSummary }) {
 
 export default function MorePage() {
   const { mode, profiles, archivedProfiles, members, currentMember, householdSettings, activeProfileId, householdName } = useHousehold();
-  const { theme } = useTheme();
+  const { theme, night, nightPrefs } = useTheme();
   const settings = useProfileSettings(activeProfileId);
   const pending = usePendingCount();
   const router = useRouter();
@@ -157,7 +158,13 @@ export default function MorePage() {
             <Row href="/more/settings/theme">
               <Moon size={20} strokeWidth={2} className="flex-none text-profile" aria-hidden="true" />
               <span className="flex-1 text-body-md">{t("theme")}</span>
-              <span className="text-caption text-muted-foreground">{t("themeValue", { theme })}</span>
+              <span className="text-caption text-muted-foreground text-right">
+                {night
+                  ? t("themeNightOn", { theme: t("themeValue", { theme }) })
+                  : nightPrefs.auto
+                    ? t("themeNightAt", { theme: t("themeValue", { theme }), time: formatHour(Number(nightPrefs.from.slice(0, 2))) })
+                    : t("themeValue", { theme })}
+              </span>
               <ChevronRight size={20} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
             </Row>
             <Row href="/more/settings/data">

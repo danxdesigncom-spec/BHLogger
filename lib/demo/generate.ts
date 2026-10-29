@@ -85,8 +85,8 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
   };
 
   const anchor = opts.anchor;
-  const startOfAnchorDay = new Date(anchor);
-  startOfAnchorDay.setHours(0, 0, 0, 0);
+  const overnight = isOvernight(anchor);
+  const startOfAnchorDay = storyDayStart(anchor);
   const dayStart = (daysAgo: number) => {
     const d = new Date(startOfAnchorDay);
     d.setDate(d.getDate() - daysAgo);
@@ -364,6 +364,13 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
   push(ids.maya, at(today, 17, 0), "eating", { method: "bottle", contents: "formula", amount_ml: 118 }, cg.dad);
   push(ids.maya, at(today, 18, 30), "mood", { scope: "moment", level: 4, feelings: ["calm"], behaviors: [] }, cg.dad);
 
+  // ─── That night (S26, S27 at 3:05 AM): Melatonin given, then Maya's late diaper and bottle ──
+  if (overnight) {
+    push(ids.leo, at(today, 19, 32), "medication", dose(ids.leoMelatonin, 1, "mg", "given", at(today, 19, 30)), cg.mom);
+    push(ids.maya, at(today, 22, 35), "bathroom", { kind: "pee", location: "diaper", flags: [] }, cg.mom);
+    push(ids.maya, at(today, 22, 40), "eating", { method: "bottle", contents: "formula", amount_ml: 118 }, cg.mom);
+  }
+
   entries.sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
 
   // ─── Appointments ──────────────────────────────────────────────────────────
@@ -410,6 +417,19 @@ export function generateHouseholdData(opts: GenerateOptions): GeneratedData {
   }
 
   return { household, members, profiles, medications, medicationChanges, entries, appointments, options, favorites };
+}
+
+/** Midnight to 5 AM belongs to the night after the story's day, like the night mockups at 3:05 AM. */
+export function isOvernight(anchor: Date): boolean {
+  return anchor.getHours() < 5;
+}
+
+/** The start of the day the story's "today" is set on: the anchor's day, or the day before overnight. */
+export function storyDayStart(anchor: Date): Date {
+  const d = new Date(anchor);
+  d.setHours(0, 0, 0, 0);
+  if (isOvernight(anchor)) d.setDate(d.getDate() - 1);
+  return d;
 }
 
 /** The mockup story's moment: Mon, Oct 26, 2026 at 7:05 PM, 25 minutes before Melatonin is due. */

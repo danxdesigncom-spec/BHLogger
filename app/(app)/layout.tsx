@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { TabBar } from "@/components/layout/TabBar";
-import { ThemeProvider, type Theme, type ProfileColor } from "@/lib/theme-context";
+import { ThemeProvider, type ProfileColor } from "@/lib/theme-context";
+import { readThemeCookies } from "@/lib/theme-cookies";
 import { HouseholdProvider, type MemberSummary, type ProfileSummary } from "@/lib/context/household-provider";
 import { toProfileSummary } from "@/lib/profiles";
 import { ReactQueryProvider } from "@/lib/query-client";
@@ -35,7 +36,7 @@ function pickActive(profiles: ProfileSummary[], cookie: string | null) {
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const theme = (cookieStore.get("bl-theme")?.value ?? "light") as Theme;
+  const { theme, night, nightNow } = await readThemeCookies();
   const profileColorCookie = (cookieStore.get("bl-profile-color")?.value ?? "violet") as ProfileColor;
   const activeProfileCookie = cookieStore.get("bl-active-profile")?.value ?? null;
 
@@ -44,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const active = pickActive(demo.profiles, activeProfileCookie);
     const color = demo.profiles.find((p) => p.id === active)?.color ?? "violet";
     return (
-      <ThemeProvider initialTheme={theme} initialProfileColor={color as ProfileColor}>
+      <ThemeProvider initialTheme={theme} initialNight={night} serverNight={nightNow} initialProfileColor={color as ProfileColor}>
         <HouseholdProvider
           mode="demo"
           householdId={DEMO_HOUSEHOLD_ID}
@@ -120,7 +121,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const color = profiles.find((p) => p.id === active)?.color ?? profileColorCookie;
 
   return (
-    <ThemeProvider initialTheme={theme} initialProfileColor={color as ProfileColor}>
+    <ThemeProvider initialTheme={theme} initialNight={night} serverNight={nightNow} initialProfileColor={color as ProfileColor}>
       <HouseholdProvider
         mode="live"
         householdId={member.household_id}

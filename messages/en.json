@@ -1304,7 +1304,9 @@
     "delivery": "How was it given?",
     "deliveryLabel": "Delivery",
     "flush": "Water flush",
-    "flushLabel": "Water flush amount"
+    "flushLabel": "Water flush amount",
+    "lastFeedHint": "Last feed {when} · {amount}",
+    "lastBottleHint": "Last bottle {when} · {amount}"
   },
   "moodSheet": {
     "dayQuestion": "How was today overall?",
@@ -1362,7 +1364,15 @@
     "hintToilet": "Size, pain, blood, note",
     "hintFeeding": "Note, flag for doctor",
     "hintEating": "Food groups, reactions, note",
-    "hintMood": "Energy, note, flag for doctor"
+    "hintMood": "Energy, note, flag for doctor",
+    "quietHours": "Quiet hours",
+    "nightUntil": "Night mode is on until {time}",
+    "nightOnManual": "Night mode is on until you turn it off",
+    "nightOnShort": "Night mode is on",
+    "turnOffNight": "Turn off night mode",
+    "nightOffUntil": "Night mode is off. It comes back on at {time}.",
+    "nightOff": "Night mode is off",
+    "nothingTonight": "Nothing due tonight"
   },
   "meta": {
     "medications": "Medications"
@@ -1416,7 +1426,9 @@
     "unsyncedTitle": "Some entries haven't synced",
     "unsyncedBody": "{count, plural, one {# entry is still on this phone. Signing out now deletes it.} other {# entries are still on this phone. Signing out now deletes them.}}",
     "staySignedIn": "Stay signed in",
-    "signOutAnyway": "Sign out anyway"
+    "signOutAnyway": "Sign out anyway",
+    "themeNightOn": "{theme} · Night mode on",
+    "themeNightAt": "{theme} · Night from {time}"
   },
   "settings": {
     "backToMore": "Back to More",
@@ -1463,13 +1475,25 @@
       "adminOnlyAlerts": "Only an admin can change alert settings."
     },
     "theme": {
-      "title": "Theme",
+      "title": "Theme and night mode",
       "appearance": "Appearance",
       "hint": "Saved on this device",
       "light": "Light",
       "dark": "Dark",
       "system": "Automatic",
-      "note": "Automatic follows your phone’s light or dark setting."
+      "note": "Automatic follows your phone’s light or dark setting.",
+      "nightTitle": "Night mode",
+      "nightHint": "Dim, warm screens for logging in the dark",
+      "nightOnUntil": "On until {time}",
+      "nightOnManual": "On until you turn it off",
+      "nightComesOn": "Comes on at {time}",
+      "auto": "Turn on automatically",
+      "autoHint": "Every night from {from} to {to}",
+      "starts": "Starts at",
+      "ends": "Ends at",
+      "nightNote": "Night mode is saved on this phone. Other caregivers choose their own. On Home, the moon button turns it off until the next night.",
+      "nightNow": "Turn on now",
+      "nightReplaces": "While night mode is on, it takes the place of this choice."
     },
     "data": {
       "exported": "Exported {entries, plural, one {# entry} other {# entries}} for {people, plural, one {# person} other {# people}}.",

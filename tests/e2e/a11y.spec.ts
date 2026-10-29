@@ -1,17 +1,18 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { enterDemo, STORY } from "./helpers";
+import { enterDemo, setNightCookie, STORY } from "./helpers";
 
-// PRD section 9: zero critical axe violations in light and dark. Serious ones are reported too.
+// PRD section 9: zero critical axe violations in light and dark, and night mode (DESIGN 8). Serious ones are reported too.
 // Pinned to the story's 7:05 PM so the same banners and prompts are scanned on every run. Next.js's
 // dev-tools overlay (<nextjs-portal>) isn't part of the app and only exists in dev, so it's excluded.
 const PAGES = ["/", "/?log=bathroom", "/?log=mood", "/meds", "/timeline", "/insights", "/insights/trends", "/insights/patterns", "/reports", "/more", "/more/settings/units"];
 
-for (const theme of ["light", "dark"] as const) {
+for (const theme of ["light", "dark", "night"] as const) {
   test.describe(`axe, ${theme} theme`, () => {
     test(`main screens have no critical or serious violations (${theme})`, async ({ page, context, baseURL }) => {
       test.setTimeout(180_000);
-      await context.addCookies([{ name: "bl-theme", value: theme, url: baseURL ?? "http://localhost:3000" }]);
+      if (theme === "night") await setNightCookie(page, { override: { on: true, until: null } });
+      else await context.addCookies([{ name: "bl-theme", value: theme, url: baseURL ?? "http://localhost:3000" }]);
       await enterDemo(page, { at: STORY });
       const failures: string[] = [];
       for (const path of PAGES) {

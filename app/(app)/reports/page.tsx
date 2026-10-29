@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarPlus, Check, Download, FileText, Plus, Share2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -39,19 +39,23 @@ export default function ReportsPage() {
   const [custom, setCustom] = useState({ from: ymd(addDays(new Date(), -13)), to: today });
   const [template, setTemplate] = useState<TemplateKey>("doctor");
   const [sections, setSections] = useState<SectionKey[]>(TEMPLATES.doctor.sections);
-  const [questions, setQuestions] = useState<string[]>([]);
+  // Saved per person on this device. Read when the state is created (the builder only renders on the client)
+  // and again when the person changes, rather than in an effect that could undo a tap made before it ran.
+  const [questions, setQuestions] = useState<string[]>(() => savedQuestions(profileId));
   const [draft, setDraft] = useState("");
-  const [items, setItems] = useState<ReportItem[]>([]);
-  const [cardFields, setCardFields] = useState<CardField[]>([]);
+  const [items, setItems] = useState<ReportItem[]>(() => reportItems(profileId));
+  const [cardFields, setCardFields] = useState<CardField[]>(() => savedCardFields(profileId));
+  const [loadedFor, setLoadedFor] = useState(profileId);
   const [appt, setAppt] = useState({ date: today, provider: "" });
   const [addingAppt, setAddingAppt] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  if (loadedFor !== profileId) {
+    setLoadedFor(profileId);
     setQuestions(savedQuestions(profileId));
     setItems(reportItems(profileId));
     setCardFields(savedCardFields(profileId));
-  }, [profileId]);
+  }
 
   const lastAppt = (appointments.data ?? []).filter((a) => a.date < today).at(-1);
   const nextAppt = (appointments.data ?? []).find((a) => a.date >= today);

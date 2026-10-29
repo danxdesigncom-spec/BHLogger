@@ -3,6 +3,10 @@ import { Fredoka, Nunito } from "next/font/google";
 import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
+import tokens from "@/design/tokens.json";
+import { themeScript } from "@/lib/night";
+import { readThemeCookies } from "@/lib/theme-cookies";
+import type { ProfileColor, Theme } from "@/lib/theme";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -37,20 +41,26 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F1FC" },
-    { media: "(prefers-color-scheme: dark)",  color: "#13101E" },
-  ],
-};
+const bar = (theme: Theme) => tokens.color[theme].background;
 
-type Theme = "light" | "dark" | "night";
-type ProfileColor = "violet" | "teal" | "rose" | "amber" | "blue";
+/** The browser and status bar color follows the device's theme; ThemeProvider updates it when night mode turns on. */
+export async function generateViewport(): Promise<Viewport> {
+  const { theme, nightNow } = await readThemeCookies();
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor: nightNow
+      ? bar("night")
+      : theme === "system"
+        ? [
+            { media: "(prefers-color-scheme: light)", color: bar("light") },
+            { media: "(prefers-color-scheme: dark)", color: bar("dark") },
+          ]
+        : bar(theme),
+  };
+}
 
-const DEFAULT_THEME: Theme = "light";
 const DEFAULT_PROFILE_COLOR: ProfileColor = "violet";
 
 export default async function RootLayout({
@@ -59,8 +69,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const pref = cookieStore.get("bl-theme")?.value ?? DEFAULT_THEME;
-  const theme = (["light", "dark", "night"].includes(pref) ? pref : "light") as Theme;
+  const { theme: pref, night, nightNow } = await readThemeCookies();
+  // The server can't know the device's time zone, so the head script settles "system" and automatic night hours.
+  const theme: Theme = nightNow ? "night" : pref === "system" ? "light" : pref;
   const profileColor = (
     cookieStore.get("bl-profile-color")?.value ?? DEFAULT_PROFILE_COLOR
   ) as ProfileColor;
@@ -73,15 +84,9 @@ export default async function RootLayout({
       className={`${fredoka.variable} ${nunito.variable}`}
       suppressHydrationWarning
     >
-      {pref === "system" && (
-        <head>
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `document.documentElement.dataset.theme=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"`,
-            }}
-          />
-        </head>
-      )}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript(pref, night) }} />
+      </head>
       <body className="bg-background text-foreground font-sans antialiased">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
       </body>

@@ -191,6 +191,8 @@ export function formatWhen(iso: string, now = new Date()): string {
   if (diffMin < 1) return t("common.justNow");
   if (diffMin < 60) return t("common.minAgo", { count: diffMin });
   const clock = formatTime(at);
+  // Overnight (S26, S27): at 3:05 AM a 10:40 PM feed reads "10:40 PM", not "Yesterday 10:40 PM".
+  if (diffMin < 6 * 60) return clock;
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
   const dayDiff = Math.floor((startOfToday.getTime() - new Date(at).setHours(0, 0, 0, 0)) / 86_400_000);

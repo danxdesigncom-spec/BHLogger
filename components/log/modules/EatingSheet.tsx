@@ -9,6 +9,7 @@ import { TimerStart } from "../TimerStart";
 import { PersonalListPicker } from "./FoodPicker";
 import { useHousehold } from "@/lib/context/household-provider";
 import { useLatestEntry } from "@/lib/data/hooks";
+import { formatWhen } from "@/lib/entries/summary";
 import {
   ageInMonths, BOTTLE_CONTENTS, BREAST_DURATIONS, BREAST_SIDES, DRINKS, eatingMethodLabel, eatingMethods, FOOD_GROUPS,
   FLUSH_ML_CHIPS, formatVolume, labelFor, mealTypeForHour, MEAL_TYPES, ML_CHIPS, mlToOz, OZ_CHIPS, ozToMl, PORTIONS, REACTIONS, TUBE_DELIVERY,
@@ -138,6 +139,10 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
   const amountChips = unit === "oz" ? OZ_CHIPS.map((oz) => ({ ml: ozToMl(oz), label: e("oz", { n: oz }) })) : ML_CHIPS.map((ml) => ({ ml, label: e("ml", { n: ml }) }));
   const step = unit === "oz" ? ozToMl(0.5) : 10;
   const sameAsLast = lastAmountMl !== null && Math.abs(effAmount - lastAmountMl) < 2;
+  // S19 / S27: "Same as last feed", otherwise when the last bottle was and how much.
+  const lastBottleHint = lastBottle.data && lastAmountMl !== null
+    ? e(last.data?.id === lastBottle.data.id ? "lastFeedHint" : "lastBottleHint", { when: formatWhen(lastBottle.data.occurred_at), amount: formatVolume(lastAmountMl, unit) })
+    : undefined;
   const isMealLike = effMethod === "meal" || effMethod === "snack";
 
   return (
@@ -187,7 +192,7 @@ export function EatingSheet({ ctx, initial }: { ctx: ModuleFormContext; initial?
           <Group label={e("howMuch")}>
             <Stepper
               display={formatVolume(effAmount, unit)}
-              caption={sameAsLast ? e("sameAsLast") : undefined}
+              caption={sameAsLast ? e("sameAsLast") : lastBottleHint}
               onDecrease={() => setAmountMl(Math.max(step, effAmount - step))}
               onIncrease={() => setAmountMl(Math.min(ozToMl(16), effAmount + step))}
               canDecrease={effAmount > step}

@@ -28,6 +28,10 @@ import { todaySlots } from "@/lib/meds/schedule";
 import { bmAlert } from "@/lib/home/alerts";
 import { startOfDay } from "@/lib/dates";
 import { orderTiles, wideTiles } from "@/lib/home/tiles";
+import { useTheme } from "@/lib/theme-context";
+import { nightUntil } from "@/lib/night";
+import { formatHour, formatTime } from "@/lib/prefs";
+import { useOnClient } from "@/lib/use-on-client";
 
 const LOG_PARAM: Record<string, ModuleType> = {
   bathroom: "bathroom", diaper: "bathroom", eating: "eating", feeding: "eating", activity: "activity", mood: "mood",
@@ -47,6 +51,10 @@ export function HomeClient() {
   const { showToast, toastElement } = useUndoToast();
   const quick = useQuickLog(showToast);
   const settings = useProfileSettings(activeProfileId);
+  // SET-03 / S26: "Quiet hours" while night mode is on; the moon button turns it off until the next night.
+  const { night, nightPrefs, setNight } = useTheme();
+  const onClient = useOnClient();
+  const [nightNote, setNightNote] = useState("");
 
   const stage = activeProfile?.careStage ?? "child";
   const toileting = activeProfile?.toileting ?? "toilet";
@@ -82,15 +90,21 @@ export function HomeClient() {
   const givenCount = slots.filter((s) => s.state === "given").length;
   const notLogged = slots.filter((s) => s.state === "not_logged");
   const nextSlot = slots.filter((s) => s.state === "due" || s.state === "upcoming").sort((a, b) => a.slot.getTime() - b.slot.getTime())[0];
+  // S26: at night, say whether anything is due before morning rather than counting today's doses.
+  const nightEnds = night && onClient ? nightUntil(nightPrefs, now) ?? null : null;
+  const morning = nightEnds ?? new Date(now.getTime() + 6 * 3_600_000);
+  const dueTonight = slots.some((s) => (s.state === "due" || s.state === "upcoming") && s.slot <= morning);
   const medStatus = !meds.isFetched || !todayDoses.isFetched
     ? ""
     : !meds.data?.some((m) => m.active)
     ? h("noMeds")
-    : slots.length
-      ? notLogged.length
-        ? h("notLogged", { count: notLogged.length })
-        : h("givenToday", { given: givenCount, total: slots.length })
-      : h("asNeededOnly");
+    : notLogged.length
+      ? h("notLogged", { count: notLogged.length })
+      : night && !dueTonight
+        ? h("nothingTonight")
+        : slots.length
+          ? h("givenToday", { given: givenCount, total: slots.length })
+          : h("asNeededOnly");
 
   // ─── Banners (QL-08) ─────────────────────────────────────────────────────
   const banners: BannerItem[] = [];
@@ -161,6 +175,15 @@ export function HomeClient() {
     medication: t("modules.medication"),
   };
 
+  // The end time reads the device clock, so it's filled in after hydration.
+  const nightLine = !onClient ? h("nightOnShort") : nightEnds ? h("nightUntil", { time: formatTime(nightEnds) }) : h("nightOnManual");
+  const turnOffNight = () => {
+    setNight(false);
+    // The button goes away with night mode, so focus moves to the profile pill and the change is announced.
+    switcherPill.current?.focus();
+    setNightNote(nightPrefs.auto ? h("nightOffUntil", { time: formatHour(Number(nightPrefs.from.slice(0, 2))) }) : h("nightOff"));
+  };
+
   const tiles = orderTiles(settings.tile_order).filter((m) => enabled.has(m));
   const wide = wideTiles(tiles);
   const latest = { eating, mood, activity };
@@ -173,27 +196,47 @@ export function HomeClient() {
           type="button"
           aria-label={t("common.switchProfile", { name: activeProfile?.name ?? "" })}
           onClick={() => setSwitcherOpen(true)}
-          className="min-h-touch flex items-center gap-2 py-1.5 pl-1.5 pr-3.5 rounded-full bg-card shadow-raised"
+          className="min-h-touch flex items-center gap-2 py-1.5 pl-1.5 pr-3.5 rounded-full bg-card shadow-raised night:border night:border-border"
         >
           <span aria-hidden="true" data-profile-color={activeProfile?.color} data-initial={activeProfile?.initials} className="w-9 h-9 rounded-full bg-profile text-on-profile flex items-center justify-center font-display text-title-5 before:content-[attr(data-initial)]" />
           <span className="text-body-lg">{activeProfile?.name}</span>
           <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
         </button>
-        {other && (
-          <button
-            type="button"
-            aria-label={h("switchTo", { name: other.name })}
-            onClick={() => setActiveProfile(other.id)}
-            data-profile-color={other.color}
-            className="w-12 h-12 rounded-full border-[3px] border-card bg-profile text-on-profile shadow-raised flex items-center justify-center font-display text-title-5"
-          >
-            {other.initials}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {night && (
+            <button
+              type="button"
+              aria-label={h("turnOffNight")}
+              onClick={turnOffNight}
+              className="w-12 h-12 flex-none rounded-full border border-border bg-card text-night-amber flex items-center justify-center"
+            >
+              <Moon size={22} strokeWidth={2} aria-hidden="true" />
+            </button>
+          )}
+          {other && (
+            <button
+              type="button"
+              aria-label={h("switchTo", { name: other.name })}
+              onClick={() => setActiveProfile(other.id)}
+              data-profile-color={other.color}
+              className="w-12 h-12 rounded-full border-[3px] border-card night:border-background bg-profile text-on-profile shadow-raised flex items-center justify-center font-display text-title-5"
+            >
+              {other.initials}
+            </button>
+          )}
+        </div>
       </header>
+      <p role="status" className="sr-only">{nightNote}</p>
 
       <div className="px-5 pt-3.5 pb-4 space-y-4">
-        <h1 className="font-display text-display-1">{h("greeting", { name: activeProfile?.name ?? h("everyone") })}</h1>
+        {night ? (
+          <div className="flex flex-col gap-1">
+            <h1 className="font-display text-display-1">{h("quietHours")}</h1>
+            <p className="text-label font-normal text-muted-foreground">{nightLine}</p>
+          </div>
+        ) : (
+          <h1 className="font-display text-display-1">{h("greeting", { name: activeProfile?.name ?? h("everyone") })}</h1>
+        )}
 
         {canLog && <RunningTimers onStop={quick.save} />}
         {canLog && <Banners items={banners} />}
@@ -245,7 +288,7 @@ export function HomeClient() {
         </nav>
 
         {canLog && activeProfileId && (
-          <QuickTaps profileId={activeProfileId} onTap={(tpl, label) => quick.logTemplate(activeProfileId, tpl, label)} />
+          <QuickTaps profileId={activeProfileId} night={night} onTap={(tpl, label) => quick.logTemplate(activeProfileId, tpl, label)} />
         )}
       </div>
 

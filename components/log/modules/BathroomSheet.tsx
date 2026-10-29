@@ -166,7 +166,7 @@ export function BathroomSheet({ ctx, initial }: { ctx: ModuleFormContext; initia
                     style={sel ? { boxShadow: "0 0 0 3px var(--card), 0 0 0 5px var(--profile)" } : undefined}
                   >
                     {sel ? (
-                      <Check size={16} strokeWidth={3} className={c.key === "white_pale_clay" || c.key === "yellow" || c.key === "other" ? "text-foreground" : "text-white"} aria-hidden="true" />
+                      <Check size={16} strokeWidth={3} className={c.key === "other" ? "text-foreground" : c.key === "white_pale_clay" || c.key === "yellow" ? "text-stool-black" : "text-stool-pale"} aria-hidden="true" />
                     ) : c.key === "other" ? (
                       <Plus size={16} strokeWidth={2} aria-hidden="true" />
                     ) : null}

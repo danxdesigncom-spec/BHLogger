@@ -15,6 +15,8 @@ import { startTimer as storeTimer, type TimerModule } from "@/lib/timers";
 import { favoriteLabel } from "@/lib/entries/summary";
 import { templateFromEntry } from "@/lib/favorites";
 import { useQuickLog } from "./useQuickLog";
+import { useTheme } from "@/lib/theme-context";
+import { useOnClient } from "@/lib/use-on-client";
 
 export type ModuleType = "bathroom" | "eating" | "activity" | "mood" | "medication";
 
@@ -73,6 +75,10 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
   const repo = useRepo();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const t = useTranslations("log");
+  // S27: at night the sheet also says the time ("for Maya · 3:05 AM"); it reads the device clock, so after hydration.
+  const { night } = useTheme();
+  const onClient = useOnClient();
+  const nightTime = night && onClient && !subtitle ? formatTime(new Date()) : null;
   const tc = useTranslations("common");
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId);
@@ -243,7 +249,7 @@ export function LogSheet({ module, moduleLabel, open, onClose, onSaved, detailsH
             </h2>
             <p className="flex items-center gap-1.5 text-label font-bold text-muted-foreground">
               <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-profile" />
-              {subtitle ? t("forWith", { name: activeProfile?.name ?? "", subtitle }) : t("for", { name: activeProfile?.name ?? "" })}
+              {subtitle || nightTime ? t("forWith", { name: activeProfile?.name ?? "", subtitle: subtitle ?? nightTime ?? "" }) : t("for", { name: activeProfile?.name ?? "" })}
             </p>
           </div>
           <button

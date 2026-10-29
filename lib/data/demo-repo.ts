@@ -1,7 +1,7 @@
 "use client";
 
 import Dexie, { type Table } from "dexie";
-import { generateHouseholdData, SEED_IDS } from "@/lib/demo/generate";
+import { generateHouseholdData, SEED_IDS, storyDayStart } from "@/lib/demo/generate";
 import { validateEntryData } from "@/lib/schemas/entry";
 import { medicationChangesFor } from "@/lib/meds/changes";
 import type { Json } from "@/lib/supabase/types";
@@ -15,7 +15,7 @@ import { MAX_FAVORITES } from "@/lib/favorites";
 import { clearAllTimers } from "@/lib/timers";
 
 const DEMO_DB = "bl-demo";
-const DATA_VERSION = 7;
+const DATA_VERSION = 8;
 
 class DemoDb extends Dexie {
   entries!: Table<LocalEntry, string>;
@@ -51,8 +51,8 @@ function openDb(): Promise<DemoDb> {
     const db = new DemoDb();
     const seeded = await db.meta.get("version");
     const seededDay = await db.meta.get("day");
-    const today = new Date().toDateString();
-    // Sample data follows the clock: a new day regenerates the story so "today" is never empty.
+    const today = storyDayStart(new Date()).toDateString();
+    // Sample data follows the clock: a new story day (from 5 AM) regenerates it so "today" is never empty.
     if (seeded?.value !== DATA_VERSION || seededDay?.value !== today) {
       const data = generateHouseholdData({ anchor: new Date(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone });
       await db.transaction("rw", [db.entries, db.revisions, db.medications, db.medicationChanges, db.appointments, db.options, db.profileSettings, db.favorites, db.meta], async () => {

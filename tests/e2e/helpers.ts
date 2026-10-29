@@ -11,7 +11,17 @@ export async function enterDemo(page: Page, opts: { at?: Date } = {}) {
   if (opts.at) await page.clock.install({ time: opts.at });
   await page.goto("/auth/login");
   await page.getByRole("button", { name: "Continue without saving" }).click();
-  await expect(page.getByRole("heading", { name: /How.s .+ doing\?/ })).toBeVisible({ timeout: 30_000 });
+  // Night mode (SET-03) titles Home "Quiet hours".
+  await expect(page.getByRole("heading", { name: /How.s .+ doing\?|Quiet hours/ })).toBeVisible({ timeout: 30_000 });
+}
+
+/** S26/S27: 3:05 AM the night after the story's day. */
+export const STORY_NIGHT = new Date(2026, 9, 27, 3, 5);
+
+/** Sets this device's night mode cookie (SET-03) before the app reads it. */
+export async function setNightCookie(page: Page, value: { auto?: boolean; from?: string; to?: string; override?: { on: boolean; until: string | null } | null }) {
+  const night = { auto: false, from: "20:00", to: "06:00", override: null, ...value };
+  await page.context().addCookies([{ name: "bl-night", value: encodeURIComponent(JSON.stringify(night)), url: "http://localhost:3000" }]);
 }
 
 export async function switchTo(page: Page, name: "Leo" | "Maya") {
