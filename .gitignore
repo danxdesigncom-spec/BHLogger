@@ -53,3 +53,8 @@ behavior-logger-claude-code-kit/
 public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
+
+.DS_Store
+node_modules/
+.next/
+.env*
