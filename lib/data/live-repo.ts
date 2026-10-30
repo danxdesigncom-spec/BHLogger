@@ -16,9 +16,12 @@ export function createLiveRepo(actor: Actor, householdId: string): Repo {
     mode: "live",
 
     async listEntries(q: EntryQuery) {
+      // Someone in more than one household sees only the active one's entries: RLS would allow them all,
+      // and this device's cache and outbox can hold entries from a household used earlier.
+      const here = (rows: LocalEntry[]) => rows.filter((e) => e.household_id === householdId);
       const rows: LocalEntry[] = [];
       for (let from = 0; ; from += PAGE) {
-        let query = supabase.from("entries").select("*").order("occurred_at", { ascending: false });
+        let query = supabase.from("entries").select("*").eq("household_id", householdId).order("occurred_at", { ascending: false });
         query = q.deleted === "only" ? query.not("deleted_at", "is", null) : query.is("deleted_at", null);
         if (q.profileId) query = query.eq("profile_id", q.profileId);
         if (q.types?.length) query = query.in("type", q.types);
@@ -28,17 +31,17 @@ export function createLiveRepo(actor: Actor, householdId: string): Repo {
         const { data, error } = await query.range(from, from + take - 1);
         if (error) {
           // Offline or failing: fall back to entries cached on this device.
-          return outbox.cachedEntries(q);
+          return here(await outbox.cachedEntries(q));
         }
         rows.push(...(data as LocalEntry[]));
         if (data.length < take || (q.limit && rows.length >= q.limit)) break;
       }
       await outbox.cacheEntries(rows);
-      return outbox.mergePending(rows, q);
+      return here(await outbox.mergePending(rows, q));
     },
 
     async latestEntry(profileId, type, match) {
-      let query = supabase.from("entries").select("*").eq("profile_id", profileId).eq("type", type).is("deleted_at", null);
+      let query = supabase.from("entries").select("*").eq("household_id", householdId).eq("profile_id", profileId).eq("type", type).is("deleted_at", null);
       for (const [k, v] of Object.entries(match ?? {})) query = query.eq(`data->>${k}`, v);
       const { data, error } = await query.order("occurred_at", { ascending: false }).limit(1).maybeSingle();
       const pending = (await outbox.pendingEntries())

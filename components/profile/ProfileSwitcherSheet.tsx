@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Check, IdCard, Plus } from "lucide-react";
+import { Check, ChevronRight, House, IdCard, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useHousehold } from "@/lib/context/household-provider";
 import { ageLabel, careStageLabel } from "@/lib/options";
+import { switchHousehold } from "@/lib/households/active";
+import { dateLocale } from "@/lib/prefs";
 import { CareCardView } from "./CareCardView";
 
 export function ProfileSwitcherSheet({ open, onClose, opener }: { open: boolean; onClose: () => void; opener?: RefObject<HTMLElement | null> }) {
-  const { profiles, activeProfileId, setActiveProfile, currentMember } = useHousehold();
+  const { profiles, activeProfileId, setActiveProfile, currentMember, householdName, otherHouseholds } = useHousehold();
   const t = useTranslations("profiles");
   // ACC-12: the care card opens inside this sheet, so it's 2 taps from any tab screen.
   const [cardFor, setCardFor] = useState<string | null>(null);
@@ -71,6 +73,8 @@ export function ProfileSwitcherSheet({ open, onClose, opener }: { open: boolean;
         ) : (
           <>
             <h2 id="switch-title" ref={titleRef} tabIndex={-1} className="font-display text-title-1 px-5 pt-4 pb-3 outline-none">{t("switchTitle")}</h2>
+            {/* With more than one household, say which one these people belong to. */}
+            {otherHouseholds.length > 0 && <p className="px-5 -mt-1 pb-2 text-label text-muted-foreground">{householdName}</p>}
             <ul className="px-4 space-y-2">
               {profiles.map((p) => {
                 const active = p.id === activeProfileId;
@@ -119,6 +123,34 @@ export function ProfileSwitcherSheet({ open, onClose, opener }: { open: boolean;
                 </li>
               )}
             </ul>
+            {otherHouseholds.length > 0 && (
+              <section aria-labelledby="other-households-h" className="px-4 pt-4 space-y-2">
+                <h3 id="other-households-h" className="px-1 text-label text-muted-foreground">{t("otherHouseholds")}</h3>
+                <ul className="space-y-2">
+                  {otherHouseholds.map((h) => (
+                    <li key={h.id}>
+                      <button
+                        type="button"
+                        aria-label={t("switchHousehold", { name: h.name })}
+                        onClick={() => switchHousehold(h.id, h.people[0]?.id)}
+                        className="w-full flex items-center gap-3.5 px-3.5 min-h-16 rounded-xl bg-secondary text-left"
+                      >
+                        <span aria-hidden="true" className="w-9 h-9 flex-none rounded-full bg-card flex items-center justify-center text-foreground-2">
+                          <House size={18} strokeWidth={2} />
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-body-lg">{h.name}</span>
+                          <span className="block text-caption text-muted-foreground">
+                            {h.people.length ? new Intl.ListFormat(dateLocale(), { type: "conjunction" }).format(h.people.map((p) => p.name)) : t("noPeopleYet")}
+                          </span>
+                        </span>
+                        <ChevronRight size={20} strokeWidth={2} className="flex-none text-muted-foreground" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </>
         )}
       </section>

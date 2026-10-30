@@ -2,7 +2,9 @@
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { ACTIVE_HOUSEHOLD_COOKIE } from "@/lib/households/active";
 import type { Role } from "@/lib/supabase/types";
 import { t } from "@/lib/i18n";
 
@@ -93,6 +95,10 @@ export async function acceptInvite(
   initials: string,
 ): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const householdsOf = async () =>
+    user ? ((await supabase.from("household_members").select("household_id").eq("user_id", user.id)).data ?? []).map((m) => m.household_id) : [];
+  const before = await householdsOf();
 
   const { error } = await supabase.rpc("accept_invite", {
     p_token: token,
@@ -101,6 +107,10 @@ export async function acceptInvite(
   });
 
   if (error) return { error: error.message };
+
+  // ACC-07: an accepted invite opens that household, even for someone who already belongs to another.
+  const joined = (await householdsOf()).find((id) => !before.includes(id));
+  if (joined) (await cookies()).set(ACTIVE_HOUSEHOLD_COOKIE, joined, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
 
   revalidatePath("/", "layout");
   return { success: true };

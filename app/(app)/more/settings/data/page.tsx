@@ -22,7 +22,7 @@ import { forgetSavedReport } from "@/lib/reports/templates";
 import { clearTimersFor } from "@/lib/timers";
 
 export default function DataPage() {
-  const { mode, profiles, archivedProfiles, members, householdName, householdSettings, currentMember } = useHousehold();
+  const { mode, profiles, archivedProfiles, members, householdName, householdSettings, currentMember, otherHouseholds } = useHousehold();
   const repo = useRepo();
   const router = useRouter();
   const t = useTranslations("settings");
@@ -35,8 +35,27 @@ export default function DataPage() {
   const isAdmin = currentMember.role === "admin";
   const everyone = [...profiles, ...archivedProfiles];
   const nameOf = (id: string) => everyone.find((p) => p.id === id)?.name ?? "";
-  const account = accountDeletion(mode, members, currentMember);
-  const people = new Intl.ListFormat(dateLocale(), { type: "conjunction" }).format(everyone.map((p) => p.name));
+  const list = (names: string[]) => new Intl.ListFormat(dateLocale(), { type: "conjunction" }).format(names);
+  const people = list(everyone.map((p) => p.name));
+  // SET-07 covers every household this person belongs to, not just the one on screen.
+  const account = accountDeletion(mode, [
+    { name: householdName, memberCount: members.length, adminCount: members.filter((m) => m.role === "admin").length, myRole: currentMember.role },
+    ...otherHouseholds.map((h) => ({ name: h.name, memberCount: h.memberCount, adminCount: h.adminCount, myRole: h.role })),
+  ]);
+  const accountText =
+    account.kind === "demo"
+      ? t("data.account.demo")
+      : account.kind === "last_admin"
+        ? t("data.account.last_admin", { household: account.household })
+        : !otherHouseholds.length
+          ? account.deletes.length
+            ? t("data.account.sole", { household: householdName, people })
+            : t("data.account.leave", { household: householdName })
+          : [
+              account.deletes.length ? t("data.account.multiDeletes", { households: list(account.deletes), count: account.deletes.length }) : "",
+              account.leaves.length ? t("data.account.multiLeaves", { households: list(account.leaves) }) : "",
+              t("data.account.multiSignIn"),
+            ].filter(Boolean).join(" ");
 
   /** SET-06: all profiles, entries (including deleted), medications, change history and appointments. */
   const exportAll = () =>
@@ -81,6 +100,7 @@ export default function DataPage() {
           <h2 id="export-h" className="font-display text-title-5">{t("data.exportTitle")}</h2>
           <p className="text-label font-normal text-foreground-2">
             {t("data.exportBody")}
+            {otherHouseholds.length > 0 && ` ${t("data.exportHousehold", { household: householdName })}`}
           </p>
           <button type="button" disabled={busy} onClick={exportAll} className="w-full h-button flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground text-body-lg disabled:opacity-60">
             <FileJson size={20} strokeWidth={2} aria-hidden="true" /> {busy ? t("data.preparing") : t("data.exportButton")}
@@ -141,11 +161,11 @@ export default function DataPage() {
           <section aria-labelledby="delete-account-h" className="space-y-2">
             <h3 id="delete-account-h" className="text-label text-muted-foreground">{t("data.deleteAccountTitle")}</h3>
             <p id="delete-account-what" className="text-label font-normal text-foreground-2">
-              {t(`data.account.${account}`, { household: householdName, people })}
+              {accountText}
             </p>
             <button
               type="button"
-              disabled={busy || account === "last_admin"}
+              disabled={busy || account.kind === "last_admin"}
               aria-describedby="delete-account-what"
               onClick={() => setDeletingAccount(true)}
               className="w-full h-button flex items-center justify-center gap-2 rounded-full border-[1.5px] border-destructive-border bg-card text-destructive text-body-lg disabled:opacity-40"
@@ -189,8 +209,8 @@ export default function DataPage() {
         <ConfirmDialog
           title={mode === "demo" ? t("data.deleteDemoTitle") : t("data.deleteAccountConfirmTitle")}
           body={[
-            t(`data.account.${account}`, { household: householdName, people }),
-            account !== "demo" && (pending.data ?? 0) > 0 ? t("data.accountUnsynced", { count: pending.data ?? 0 }) : "",
+            accountText,
+            account.kind !== "demo" && (pending.data ?? 0) > 0 ? t("data.accountUnsynced", { count: pending.data ?? 0 }) : "",
           ].filter(Boolean).join(" ")}
           acknowledge={mode === "demo" ? undefined : t("data.understand")}
           cancelLabel={t("data.keepAccount")}

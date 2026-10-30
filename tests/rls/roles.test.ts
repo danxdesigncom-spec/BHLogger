@@ -111,4 +111,20 @@ describe.skipIf(!enabled)("RLS role enforcement (AT-09)", () => {
     expect(after.map((m) => m.household_id).sort()).toEqual(before.map((m) => m.household_id).sort());
     expect(after.some((m) => m.household_id === HOUSEHOLD)).toBe(true);
   });
+
+  // People in more than one household. Needs the service-role key to clean up the household it makes.
+  it.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)("someone in two households reads both, and other people can't read or write the second", async () => {
+    const service = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: second, error } = await dad.client.rpc("create_household", { p_name: "RLS second household", p_display_name: "Dad", p_initials: "DR" });
+    expect(error).toBeNull();
+    try {
+      const { data: dadSees } = await dad.client.from("households").select("id").in("id", [HOUSEHOLD, second as string]);
+      expect(dadSees).toHaveLength(2);
+      expect((await mom.client.from("households").select("id").eq("id", second as string)).data).toEqual([]);
+      const { error: momWrites } = await mom.client.from("profiles").insert({ household_id: second as string, name: "Not Mom's", color: "blue", care_stage: "child" });
+      expect(momWrites).not.toBeNull();
+    } finally {
+      await service.from("households").delete().eq("id", second as string);
+    }
+  });
 });

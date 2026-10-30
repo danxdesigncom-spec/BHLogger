@@ -1188,7 +1188,10 @@
     "switchTitle": "Switch profile",
     "addPerson": "Add a person",
     "careCard": "Care card",
-    "careCardFor": "Care card: {name}"
+    "careCardFor": "Care card: {name}",
+    "otherHouseholds": "Your other households",
+    "switchHousehold": "Switch to {name}",
+    "noPeopleYet": "No one added yet"
   },
   "install": {
     "label": "Add to Home Screen",
@@ -1528,14 +1531,18 @@
         "sole": "You’re the only member, so this also deletes {household} and everything in it: {people}, and every entry, medication and appointment.",
         "last_admin": "{household} has other caregivers, and you’re its only admin. Make one of them an admin first in More → Caregivers, then you can delete your account.",
         "leave": "You leave {household} and your sign-in is deleted. Entries you logged stay in the household record, labeled with your name.",
-        "demo": "This is the demo. Deleting clears its sample data from this browser and leaves the demo."
+        "demo": "This is the demo. Deleting clears its sample data from this browser and leaves the demo.",
+        "multiDeletes": "This deletes {households} and everything in {count, plural, one {it} other {them}}, because you’re the only member.",
+        "multiLeaves": "You leave {households}; entries you logged there stay, labeled with your name.",
+        "multiSignIn": "Your sign-in is deleted."
       },
       "deleteAccount": "Delete my account",
       "deleteAccountConfirmTitle": "Delete your account?",
       "deleteDemo": "Delete demo data",
       "deleteDemoTitle": "Delete the demo data?",
       "accountUnsynced": "{count, plural, one {# entry on this phone hasn’t synced and will be lost.} other {# entries on this phone haven’t synced and will be lost.}}",
-      "keepAccount": "Keep my account"
+      "keepAccount": "Keep my account",
+      "exportHousehold": "This exports {household} only. Switch households in the profile switcher to export another."
     }
   },
   "profileSettings": {

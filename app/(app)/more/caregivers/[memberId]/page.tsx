@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveMembership } from "@/lib/households/server";
 import { ManageCaregiverClient } from "./ManageCaregiverClient";
 import type { ProfileColor } from "@/lib/supabase/types";
 
@@ -23,11 +24,7 @@ export default async function ManageCaregiverPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: viewer } = await supabase
-    .from("household_members")
-    .select("id, household_id, role")
-    .eq("user_id", user.id)
-    .single();
+  const { member: viewer } = await getActiveMembership(supabase, user.id);
 
   if (!viewer || viewer.role !== "admin") redirect("/more");
 

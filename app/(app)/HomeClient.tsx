@@ -38,7 +38,7 @@ const LOG_PARAM: Record<string, ModuleType> = {
 };
 
 export function HomeClient() {
-  const { profiles, activeProfile, activeProfileId, setActiveProfile, householdSettings, currentMember } = useHousehold();
+  const { profiles, activeProfile, activeProfileId, setActiveProfile, householdSettings, currentMember, householdName, otherHouseholds } = useHousehold();
   const t = useTranslations();
   const h = (k: string, v?: Record<string, string | number>) => t(`home.${k}`, v);
   const router = useRouter();
@@ -237,6 +237,8 @@ export function HomeClient() {
         ) : (
           <h1 className="font-display text-display-1">{h("greeting", { name: activeProfile?.name ?? h("everyone") })}</h1>
         )}
+        {/* Someone in more than one household always sees which one they're logging in. */}
+        {otherHouseholds.length > 0 && <p className="-mt-3 text-label text-muted-foreground">{householdName}</p>}
 
         {canLog && <RunningTimers onStop={quick.save} />}
         {canLog && <Banners items={banners} />}

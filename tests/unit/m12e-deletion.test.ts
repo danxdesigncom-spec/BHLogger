@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { accountDeletion } from "@/lib/account-deletion";
+import { pickMembership } from "@/lib/households/active";
 import { demoHousehold } from "@/lib/demo/household";
 import { SEED_IDS } from "@/lib/demo/generate";
 import { addReportItem, forgetReportItems, reportItems } from "@/lib/report-items";
@@ -12,26 +13,48 @@ const MIGRATIONS = join(process.cwd(), "supabase/migrations");
 const sql = (name: string) => readFileSync(join(MIGRATIONS, name), "utf8");
 
 describe("SET-07 what deleting your account does", () => {
-  const admin = { id: "mom", role: "admin" };
-  const dad = { id: "dad", role: "caregiver" };
-  const grandma = { id: "grandma", role: "viewer" };
+  const home = (memberCount: number, adminCount: number, myRole: string, name = "Rodriguez Family") => ({ name, memberCount, adminCount, myRole });
 
   it("the only member takes the household with them", () => {
-    expect(accountDeletion("live", [admin], admin)).toBe("sole");
+    expect(accountDeletion("live", [home(1, 1, "admin")])).toEqual({ kind: "go", deletes: ["Rodriguez Family"], leaves: [] });
   });
 
   it("the only admin of a shared household has to make someone else an admin first", () => {
-    expect(accountDeletion("live", [admin, dad, grandma], admin)).toBe("last_admin");
-    expect(accountDeletion("live", [admin, { id: "dad", role: "admin" }], admin)).toBe("leave");
+    expect(accountDeletion("live", [home(3, 1, "admin")])).toEqual({ kind: "last_admin", household: "Rodriguez Family" });
+    expect(accountDeletion("live", [home(2, 2, "admin")])).toEqual({ kind: "go", deletes: [], leaves: ["Rodriguez Family"] });
   });
 
   it("anyone else leaves, and their entries stay", () => {
-    expect(accountDeletion("live", [admin, dad, grandma], dad)).toBe("leave");
-    expect(accountDeletion("live", [admin, dad, grandma], grandma)).toBe("leave");
+    expect(accountDeletion("live", [home(3, 1, "caregiver")])).toEqual({ kind: "go", deletes: [], leaves: ["Rodriguez Family"] });
+    expect(accountDeletion("live", [home(3, 1, "viewer")])).toEqual({ kind: "go", deletes: [], leaves: ["Rodriguez Family"] });
+  });
+
+  it("covers every household: any one that would lose its only admin stops it, otherwise each is deleted or left", () => {
+    const sitter = [home(3, 1, "caregiver"), home(1, 1, "admin", "Lee Family")];
+    expect(accountDeletion("live", sitter)).toEqual({ kind: "go", deletes: ["Lee Family"], leaves: ["Rodriguez Family"] });
+    expect(accountDeletion("live", [home(3, 1, "caregiver"), home(2, 1, "admin", "Lee Family")])).toEqual({ kind: "last_admin", household: "Lee Family" });
   });
 
   it("in the demo it clears the demo", () => {
-    expect(accountDeletion("demo", [admin, dad], admin)).toBe("demo");
+    expect(accountDeletion("demo", [home(3, 1, "admin")])).toEqual({ kind: "demo" });
+  });
+});
+
+describe("Which household is active (people in more than one)", () => {
+  const m = (household_id: string, created_at: string) => ({ household_id, created_at });
+  const both = [m("rodriguez", "2026-09-01T00:00:00Z"), m("lee", "2026-10-20T00:00:00Z")];
+
+  it("this device's choice wins while it's still one of theirs", () => {
+    expect(pickMembership(both, "rodriguez")?.household_id).toBe("rodriguez");
+  });
+
+  it("otherwise the household joined most recently, so an accepted invite lands there", () => {
+    expect(pickMembership(both, undefined)?.household_id).toBe("lee");
+    expect(pickMembership(both, "a-household-they-left")?.household_id).toBe("lee");
+  });
+
+  it("no memberships, no household (onboarding)", () => {
+    expect(pickMembership([], "rodriguez")).toBeNull();
   });
 });
 

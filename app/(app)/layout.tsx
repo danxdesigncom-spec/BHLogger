@@ -13,6 +13,7 @@ import { DemoBanner } from "@/components/layout/DemoBanner";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import { demoHousehold, DEMO_HOUSEHOLD_ID } from "@/lib/demo/household";
 import { readDemoOverrides } from "@/lib/demo/overrides";
+import { getActiveMembership, getOtherHouseholds } from "@/lib/households/server";
 
 function Shell({ demo, children }: { demo: boolean; children: React.ReactNode }) {
   return (
@@ -71,15 +72,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: member } = await supabase
-    .from("household_members")
-    .select("id, household_id, role, display_name, initials, access_from")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  // People can belong to more than one household; one is active on this device (lib/households).
+  const { member, memberships } = await getActiveMembership(supabase, user.id);
   if (!member) redirect("/onboarding/profile");
 
-  const [{ data: household }, { data: profileRows }, { data: memberRows }] = await Promise.all([
+  const [{ data: household }, { data: profileRows }, { data: memberRows }, otherHouseholds] = await Promise.all([
     supabase.from("households").select("name, settings").eq("id", member.household_id).maybeSingle(),
     supabase
       .from("profiles")
@@ -87,6 +84,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .eq("household_id", member.household_id)
       .order("created_at"),
     supabase.from("household_members").select("id, user_id, role, display_name, initials, access_from").eq("household_id", member.household_id),
+    getOtherHouseholds(supabase, memberships.filter((m) => m.household_id !== member.household_id)),
   ]);
 
   const { data: accessRows } = await supabase
@@ -132,6 +130,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         members={members}
         currentMember={currentMember}
         initialActiveProfileId={active}
+        otherHouseholds={otherHouseholds}
       >
         <ReactQueryProvider>
           <RepoProvider>

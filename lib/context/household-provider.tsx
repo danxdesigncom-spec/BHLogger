@@ -5,6 +5,7 @@ import type { ProfileColor, Toileting } from "@/lib/supabase/types";
 import { HouseholdSettingsSchema, type HouseholdSettings } from "@/lib/schemas/household";
 import { setDateLocale, setDisplayPrefs } from "@/lib/prefs";
 import { setLocale } from "@/lib/i18n";
+import type { OtherHousehold } from "@/lib/households/active";
 
 export interface ProfileSummary {
   id: string;
@@ -42,6 +43,8 @@ interface HouseholdContextValue {
   activeProfileId: string | null;
   activeProfile: ProfileSummary | null;
   setActiveProfile: (id: string) => void;
+  /** The person's other households (none in demo mode), for the switcher and account deletion. */
+  otherHouseholds: OtherHousehold[];
 }
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null);
@@ -57,6 +60,7 @@ export function HouseholdProvider({
   members,
   currentMember,
   initialActiveProfileId,
+  otherHouseholds = [],
 }: {
   children: ReactNode;
   mode?: "live" | "demo";
@@ -68,6 +72,7 @@ export function HouseholdProvider({
   members: MemberSummary[];
   currentMember: MemberSummary;
   initialActiveProfileId: string | null;
+  otherHouseholds?: OtherHousehold[];
 }) {
   const settings = HouseholdSettingsSchema.parse(householdSettings ?? {});
   // SET-01: time format and week start for every formatter (client only).
@@ -108,6 +113,7 @@ export function HouseholdProvider({
         activeProfileId,
         activeProfile: profiles.find((p) => p.id === activeProfileId) ?? null,
         setActiveProfile,
+        otherHouseholds,
       }}
     >
       {children}
