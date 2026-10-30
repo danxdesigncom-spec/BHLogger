@@ -16,22 +16,37 @@ alter table entry_revisions    alter column changed_by drop not null;
 alter table medication_changes alter column changed_by drop not null;
 alter table audit_events       alter column user_id    drop not null;
 
-alter table entries
-  drop constraint if exists entries_logged_by_fkey,
-  add  constraint entries_logged_by_fkey foreign key (logged_by) references auth.users(id) on delete set null;
-alter table entry_revisions
-  drop constraint if exists entry_revisions_changed_by_fkey,
-  add  constraint entry_revisions_changed_by_fkey foreign key (changed_by) references auth.users(id) on delete set null;
-alter table medication_changes
-  drop constraint if exists medication_changes_changed_by_fkey,
-  add  constraint medication_changes_changed_by_fkey foreign key (changed_by) references auth.users(id) on delete set null;
-alter table audit_events
-  drop constraint if exists audit_events_user_id_fkey,
-  add  constraint audit_events_user_id_fkey foreign key (user_id) references auth.users(id) on delete set null;
+-- Drop the existing foreign keys on these columns whatever they're called, then add them back with a rule.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select c.conrelid::regclass as tbl, c.conname
+    from   pg_constraint c
+    join   pg_class cl     on cl.oid = c.conrelid
+    join   pg_namespace ns on ns.oid = cl.relnamespace and ns.nspname = 'public'
+    join   pg_attribute a  on a.attrelid = c.conrelid and a.attnum = any (c.conkey)
+    where  c.contype = 'f'
+      and  (cl.relname::text, a.attname::text) in (
+             ('entries', 'logged_by'), ('entry_revisions', 'changed_by'), ('medication_changes', 'changed_by'),
+             ('audit_events', 'user_id'), ('invites', 'created_by'))
+  loop
+    execute format('alter table %s drop constraint %I', r.tbl, r.conname);
+  end loop;
+end;
+$$;
 
+alter table entries
+  add constraint entries_logged_by_fkey foreign key (logged_by) references auth.users(id) on delete set null;
+alter table entry_revisions
+  add constraint entry_revisions_changed_by_fkey foreign key (changed_by) references auth.users(id) on delete set null;
+alter table medication_changes
+  add constraint medication_changes_changed_by_fkey foreign key (changed_by) references auth.users(id) on delete set null;
+alter table audit_events
+  add constraint audit_events_user_id_fkey foreign key (user_id) references auth.users(id) on delete set null;
 alter table invites
-  drop constraint if exists invites_created_by_fkey,
-  add  constraint invites_created_by_fkey foreign key (created_by) references household_members(id) on delete cascade;
+  add constraint invites_created_by_fkey foreign key (created_by) references household_members(id) on delete cascade;
 
 -- Returns what happened on the household side:
 --   'household_deleted'  the caller was the only member, so the household and everything in it is gone
