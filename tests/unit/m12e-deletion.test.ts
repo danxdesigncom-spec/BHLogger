@@ -84,10 +84,15 @@ describe("SET-07 migrations", () => {
     const profile = sql("20261029000004_set07_delete_profile.sql");
     expect(profile).toMatch(/get_member_role\(v_hid\) is distinct from 'admin'/);
     expect(profile).toMatch(/revoke all on function delete_profile\(uuid\) from public, anon/);
-    const account = sql("20261029000005_set07_account_deletion.sql");
-    expect(account).toMatch(/raise exception 'last_admin'/);
-    expect(account).toMatch(/for update/);
-    expect(account).toMatch(/revoke all on function delete_my_account\(\) from public, anon/);
+    // The latest definition of delete_my_account() is the one the database runs.
+    const latest = readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort().map(sql).filter((m) => m.includes("create or replace function delete_my_account()")).at(-1)!;
+    expect(latest).toMatch(/raise exception 'last_admin'/);
+    expect(latest).toMatch(/for update/);
+    expect(latest).toMatch(/revoke all on function delete_my_account\(\) from public, anon/);
+    // Every household the caller is in is checked before any is changed; one picked with LIMIT 1 isn't enough.
+    const code = latest.replace(/--.*$/gm, "");
+    expect(code).not.toMatch(/limit 1/i);
+    expect(code.indexOf("raise exception 'last_admin'")).toBeLessThan(code.indexOf("delete from households"));
   });
 });
 

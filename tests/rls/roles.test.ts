@@ -11,7 +11,8 @@ const LEO = "a1000000-0000-0000-0000-000000000008";
 
 async function signIn(email: string): Promise<{ client: SupabaseClient; userId: string }> {
   const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false },
+    // Each person gets their own storage key, so two signed-in clients in one process don't share one.
+    auth: { persistSession: false, autoRefreshToken: false, storageKey: `rls-${email}` },
   });
   const { data, error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
   if (error || !data.user) throw new Error(`Sign-in failed for ${email}: ${error?.message}`);
@@ -74,7 +75,7 @@ describe.skipIf(!enabled)("RLS role enforcement (AT-09)", () => {
     expect(data ?? []).toEqual([]);
   });
 
-  // SET-07 (needs migrations 20261029000004 and 20261029000005). These leave the seed story as it was.
+  // SET-07 (needs migrations 20261029000004 to 20261030000006). These leave the seed story as it was.
   it("a caregiver can't delete a profile", async () => {
     const { error } = await dad.client.rpc("delete_profile", { p_profile_id: LEO });
     expect(error?.message).toContain("admin_only");
@@ -100,11 +101,14 @@ describe.skipIf(!enabled)("RLS role enforcement (AT-09)", () => {
     expect(audit).toEqual([{ action: "profile.deleted" }]);
   });
 
-  it("the only admin can't delete their account while other members remain", async () => {
-    // If this ever succeeds, Mom has left the seed household: run `pnpm db:seed` to restore it.
+  it("the only admin can't delete their account while other members remain, in any of their households", async () => {
+    // Mom may belong to other households too; the refusal must come before anything in any of them changes.
+    const before = (await mom.client.from("household_members").select("household_id").eq("user_id", mom.userId)).data ?? [];
     const { error } = await mom.client.rpc("delete_my_account");
     expect(error?.message).toContain("last_admin");
-    const { data } = await mom.client.from("household_members").select("id").eq("user_id", mom.userId);
-    expect(data).toHaveLength(1);
+    // If this ever fails, Mom has left the seed household: run `pnpm db:seed` to restore it.
+    const after = (await mom.client.from("household_members").select("household_id").eq("user_id", mom.userId)).data ?? [];
+    expect(after.map((m) => m.household_id).sort()).toEqual(before.map((m) => m.household_id).sort());
+    expect(after.some((m) => m.household_id === HOUSEHOLD)).toBe(true);
   });
 });
