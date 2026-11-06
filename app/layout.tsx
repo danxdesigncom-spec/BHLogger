@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fredoka, Nunito } from "next/font/google";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -9,16 +9,23 @@ import { readThemeCookies } from "@/lib/theme-cookies";
 import type { ProfileColor, Theme } from "@/lib/theme";
 import "./globals.css";
 
-const fredoka = Fredoka({
-  subsets: ["latin"],
-  weight: ["500", "600"],
+// Self-hosted (latin subset, from Fontsource; SIL OFL, licenses in app/fonts). next/font/google in
+// Next 15.3 can't parse Google Fonts' current file URLs, which broke builds on Vercel.
+const fredoka = localFont({
+  src: [
+    { path: "./fonts/fredoka-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/fredoka-latin-600-normal.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-fredoka",
   display: "swap",
 });
 
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "700", "800"],
+const nunito = localFont({
+  src: [
+    { path: "./fonts/nunito-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/nunito-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/nunito-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-nunito",
   display: "swap",
 });
